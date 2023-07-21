@@ -1,0 +1,13 @@
+name = "WaSiM"
+uuid = "e0f3dd4f-fa5e-4d93-9b0e-31e0064a6b5e"
+authors = ["consumere <christian.schaefer.1985@gmail.com> and contributors"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
