@@ -6773,10 +6773,10 @@ function greet_your_package_name()
     println("Hello WaSiM")
 end
 
+end
+
 function toMain()
     for submodule in names(WaSiM, all=true)
         @eval import Main.WaSiM.$submodule
     end
-end
-
 end
