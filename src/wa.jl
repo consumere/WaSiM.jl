@@ -1,8 +1,8 @@
 module wa
 using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions
 using DelimitedFiles, Grep , Printf
-using Rasters
 using PrettyTables
+using Rasters
 import NCDatasets
 default(show = true)
 
