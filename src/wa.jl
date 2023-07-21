@@ -4,6 +4,7 @@ using DelimitedFiles, Grep , Printf
 using PrettyTables
 using Rasters
 import NCDatasets
+import ArchGDAL
 default(show = true)
 
 function wread(x::String;skip=3)
@@ -1038,35 +1039,6 @@ function xx(ext::AbstractString)
    end
 end	
 
-function cattoyrsum(df::DataFrame)
-ln = Symbol.(filter(x->!occursin("date",x),names(df)))
-df[!, :year] = year.(df[!,:date]);
-#ot=DataFrame[]
-it=[]
-od=(by(df,:year,ln[1]=>sum));
-for i in ln[2:end];
-x=(by(df[Not(:date)],:year,i=>sum));
-push!(it,x[end])      
-end ;
-ot = hcat(od,DataFrame(it))  
-#ot=join(od,x[end],:year,makeuniuqe=true)
-#ot = hcat(od,it)
-return(ot)
-end
-
-function cattoyrmean(df::DataFrame)
-ln = Symbol.(filter(x->!occursin("date",x),names(df)))
-df[!, :year] = year.(df[!,:date]);
-it=[]
-od=(by(df[Not(:date)],:year,ln[1]=>mean));
-for i in ln[2:end];
-x=(by(df,:year,i=>mean));
-push!(it,x[end])      
-end ;
-ot = hcat(od,DataFrame(it))  
-return(ot)
-end
-
 function lplot(regex::AbstractString,dfs::Vector{DataFrame})
     "selects first match and plots..."
     df = dfs[map(n->occursin(Regex(regex,"i"),n),
@@ -1091,7 +1063,6 @@ end
     @df df Plots.plot(:date,cols(ln),yaxis=:log,title=ti)     
 end
 
-
 function lplot(df::String)
     df=readdf(df)
     nm = propertynames(df)[1:end-1];
@@ -1107,7 +1078,6 @@ function lplot(x::Regex)
     ln = Symbol.(filter(x->!occursin("date",x),names(df)))
     @df df Plots.plot(:date,cols(ln),yaxis=:log,title=o)     
 end
-
 
 function dfl(regex::Regex)
     "selects first match and plots in log y-axis..."
@@ -1326,15 +1296,12 @@ function vars(pt::AbstractString)
     varinfo(Main,Regex(".*pt*"))
 end
 
-
-
 #if (occursin(Regex(prefix,"i"),filename))
 function regand(v::Vector{String},x1::AbstractString,y1::AbstractString)
     needle=join([x1,y1],"+.*");
     z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))] 
 return(z)
 end
-
  
 function regand(v::Vector{String},xv::Tuple{String, String})
     needle=join([xv[1],xv[2]],"+.*");
@@ -1378,7 +1345,6 @@ function regand(v::Vector{Any},a::String, b::String)
     end
 end
 
-
 function regand(v::Vector{Any},xv::Regex)
     """
     here you can put any regex to filter the Vector
@@ -1387,7 +1353,6 @@ function regand(v::Vector{Any},xv::Regex)
     z = v[(broadcast(x->occursin(xv,x),v))] 
 return(z)
 end
-
 
 function nconly(x1::AbstractString)
     v::Vector{String} = readdir();
@@ -1462,7 +1427,6 @@ function denseplot(df::String)
     @df df density(cols(s), legend = :topright)
 end
 
-
 function dfp(mm::Regex)
     """
     plots wasim timeseries
@@ -1496,7 +1460,6 @@ function dfp(df::DataFrame)
     end
 end
 
-
 function dfp(df::String)
     df=readdf(df)
     o = DataFrames.metadata(df)|>collect
@@ -1525,7 +1488,6 @@ function dfp(regex::AbstractString,dfs::Vector{DataFrame})
     @df df Plots.plot(:date,cols(s),legend = :topright, title=ti)
     end
 end
-
 
 function dfp!(df::DataFrame)
     ti = try
@@ -1843,13 +1805,6 @@ function vgjl(snippet::AbstractString)
     cd(owd)
 end
 
-
-
-# for (root, dirs, files) in walkdir(owd)
-#     z = filter(file -> (endswith(file, ".jl")) && isfile(file), files)
-#     println(z)   
-# end
-
 function vgjlrec(snippet::AbstractString)
     """
     recursive grep
@@ -2159,10 +2114,6 @@ function fdd()
     return(s)
 end
 
-# cdb()
-# fdd()
-
-
 function vgr(regex, file_ending)
     rootdir=pwd()
     println("starting on: $rootdir...\n searching for >> $regex << with file ending >> $file_ending <<\n")
@@ -2259,12 +2210,6 @@ function filterplot!(regex::AbstractString,dfs::Vector{DataFrame})
     @df df Plots.plot!(:date,cols(s),legend = :topright)
 end
 
-# filterplot("win",dfs)
-# filterplot!("qg",dfs)
-# filterplot!("qout",dfs)
-#dfs[5] |>dfp
-#convert(DataFrame,dfs[5]|>DataFrames.metadata|>only)
-
 function fread(ext::AbstractString)
     cwd = pwd() 
     m = DataFrame[]
@@ -2303,18 +2248,6 @@ function dfpall(files::Vector{Any})
                #legend = :bottom)
                legend = false)
 end
-
-#dfpall(dxx)
-# function dfpall(dfs::Vector{DataFrame})
-#     for xx in 2:length(dfs)
-#         dfp(first(dfs))
-#         y = filter(x->!occursin("date",x),
-#         names(dfs[xx]))
-#         s = map(y -> Symbol(y),y)
-#         px=@df dfs[xx] Plots.plot!(:date,cols(s),legend = :topright)
-#         return(px)
-#     end
-# end
 
 function dfpall(dfs::Vector{DataFrame})
     "reduces + merges by date and plots"
@@ -2702,8 +2635,6 @@ function filterdf(regex::AbstractString,dfs::Vector{DataFrame})
     # )
 end
 
-
-
 function llf()
     cwd = pwd()
     #n = length(readdir(cwd))
@@ -2723,50 +2654,6 @@ function llf()
         return(v)
     end
 end
-        
-#kge_read(pwd(),"out")
-#println("try ",kge_read(pwd(),"out"))
-
-# md = loadso(p,"so")
-# md[end-1]|>vio
-
-# z = loadalldfs(p)
-# vv = listdfs(p)
-# px = z[end-1]|>vio;
-# plot!(title=vv[end-1])
-
-#repl location
-#C:\Users\chs72fw\.julia\logs\repl_history.jl
-
-# #Rcalls
-# using RCall
-# jmtcars = reval("mtcars");
-# gg = rimport("ggplot2")
-# gg.ggplot(jmtcars,gg.aes(:mpg, :wt))+gg.geom_point()
-
-# @rlibrary "data.table"
-# # mode: r
-# wa.dd <- function(x,flag=T) {
-#     x <-
-#       data.table::fread(
-#         file = x,
-        
-#         header = T,
-#         check.names = T,
-#         skip = ifelse(test=flag, yes="YY",no=0),
-#         na.strings = "-9999"
-#       )
-#     x = na.omit(x[, lapply(.SD, function(z)
-#       as.numeric(as.character(z)))], cols = 1:4)
-#     x[, t := do.call(paste, c(.SD, sep = "-")), .SDcols = 1:4]
-#       x = x[, t := data.table::as.IDate(t)][, -c(1:4)]
-#     data.table::setkey(x = x, 't')
-#     }
-# # time: 2023-03-30 11:32:45 W. Europe Summer Time
-# # mode: r
-#   oo=wa.dd("preci_1970.txt")
-#   md = rcopy(R"oo")
-#   describe(md)
 
 function readras(file::AbstractString)
     x=read(Raster(file,missingval=0)) #read all in RAM
@@ -2826,54 +2713,6 @@ function median_filter(ras::Raster)
     # Return a new raster with the filtered array
     return rebuild(ras,out)
 end
-
-# function kge_df(ext::String;recursive::Bool)
-#     path = pwd()
-#     files = readdir(path)
-#     v = []
-#     for file in files
-#         file_path = joinpath(path, file)
-#         if isfile(file_path) && endswith(file, ext)
-#             dd = CSV.read(file_path,DataFrame,missingstring="-9999",delim="\t")
-#             observed  = dd[:,5]
-#             simulated = dd[:,6]
-#             kge_value = kge2(observed, simulated)
-#             nse_value = nse(observed, simulated)
-#             nm = basename(file_path)
-#             println(replace("KGE value is $kge_value on $nm", "\\"  => "/"))
-#             printstyled(replace("NSE value is $nse_value on $nm\n", "\\"  => "/"),color=:green)
-#             push!(v,Dict(:KGE=>kge_value,:NSE=>nse_value,:name=>nm))
-#             v = DataFrame(v)
-#         elseif isdir(file_path) & (recursive==true)
-#             dfs_in_subdir = kge_df(file_path, ext)
-#          end
-#     end
-#     return(v)
-# end
-
-# function kge_df(path::String,ext::String;recursive=true)
-#     path = pwd()
-#     files = readdir(path)
-#     v = []
-#     for file in files
-#         file_path = joinpath(path, file)
-#         if isfile(file_path) && endswith(file, ext)
-#             dd = CSV.read(file_path,DataFrame,missingstring="-9999",delim="\t")
-#             observed  = dd[:,5]
-#             simulated = dd[:,6]
-#             kge_value = kge2(observed, simulated)
-#             nse_value = nse(observed, simulated)
-#             nm = basename(file_path)
-#             println(replace("KGE value is $kge_value on $nm", "\\"  => "/"))
-#             printstyled(replace("NSE value is $nse_value on $nm\n", "\\"  => "/"),color=:green)
-#             push!(v,Dict(:KGE=>kge_value,:NSE=>nse_value,:name=>nm))
-#             v = DataFrame(v)
-#         elseif isdir(file_path) & (recursive==true)
-#             dfs_in_subdir = kge_df(file_path, ext)
-#          end
-#     end
-#     return(v)
-# end
 
 function kge_df(ext::String)
     """
@@ -3691,34 +3530,6 @@ function glob(x::Regex)
     filter(file -> occursin(x,file), readdir())
 end
 
-# function zzg(snippet::AbstractString)
-#     """
-#     greps from repl_history
-#     """
-#     #file = raw"/home/ubu/.julia/logs/repl_history.jl"
-#     file = raw"C:\Users\chs72fw\.julia\logs\repl_history.jl"
-#         open(file) do f
-#             counter = 0 # Zähler initialisieren
-#             before  = counter - 1
-#             after   = counter + 2
-#             for line in eachline(f)
-#                 counter += 1 # Zähler erhöhen
-#                 if (counter==before) || (counter==after)
-#                     #printstyled("$counter:\t",color=:light_red) 
-#                     printstyled("$file:\t",color=:light_magenta,bold=false) 
-#                     printstyled("$line\n",color=:yellow,bold=true) 
-#                 end
-#                 if contains(line,snippet)
-#                     printstyled("$counter:\t",color=:light_red) 
-#                     printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-#                     printstyled("$line\n",color=:green,bold=true)
-
-#                 end
-#             end
-#         end
-# end
-
-
 function ll(; reg::Bool=false,
     x::AbstractString="nc")
     """
@@ -3732,7 +3543,6 @@ end
 # ll(;reg=true)    #<- here only nc files
 # ll()
 # @edit readdir()
-
 
 ##
 second(x) = x[2]
@@ -4670,21 +4480,6 @@ function latx()
         printstyled(rpad(size,7)," MB\n",color=:yellow)    
     end
 end
-
-# function lat(directory::String)
-#     """
-#     list_files_sorted_by_last_change
-#     """
-#     files = readdir(directory)
-#     file_times = Dict{String, Dates.DateTime}()
-#     for file in files
-#         file_path = joinpath(directory, file)
-#         stat_info = stat(file_path)
-#         file_times[file] = Dates.unix2datetime(stat_info.mtime)
-#     end
-#     sorted_files = sort(files, by=file -> file_times[file], rev=true)
-#     return DataFrame(name=sorted_files,last_modified=file_times[file])
-# end
 
 function lf()
     """
@@ -5639,9 +5434,6 @@ function jldf(x::Vector{String})
     return result
 end
 
-#dfs = jldfnm(globdf(r"so"))
-#dfs = jldf(globdf(r"so"))
-
 function malldf(files::Vector{DataFrame},on::Symbol)
     "reduces + merges by date"
     df = reduce((left, right) -> 
@@ -5719,67 +5511,33 @@ function ctl()
     println("looks for control file in all xmls")
     # Loop through the current directory and its subdirectories
     matches::Vector{Any} = []
-    for (root, dirs, files) in walkdir(".")
-      # Loop through each file name
-      for file in files
-        # If the file name ends with .xml
-        if endswith(file, ".xml")
-          # Join the root and file name to get the full path
-          path = joinpath(root, file)
-          # Open the file for reading
-          open(path) do f
-            # Loop through each line of the file
-            for line in eachline(f)
-              # If the line contains 'compiling symbols in control file '
-              if occursin("compiling symbols in control file ", line)
-                # Split the line by whitespace and get the fields from index 9 to 15
-                fields = split(line)[8:end] #," "
-                # Join the fields by space and print them
-                println(join(fields, " "))
-                out=join(fields, " ")
-                push!(matches,out)
-              end
+        for (root, dirs, files) in walkdir(".")
+        # Loop through each file name
+        for file in files
+            # If the file name ends with .xml
+            if endswith(file, ".xml")
+            # Join the root and file name to get the full path
+            path = joinpath(root, file)
+            # Open the file for reading
+            open(path) do f
+                # Loop through each line of the file
+                for line in eachline(f)
+                # If the line contains 'compiling symbols in control file '
+                if occursin("compiling symbols in control file ", line)
+                    # Split the line by whitespace and get the fields from index 9 to 15
+                    fields = split(line)[8:end] #," "
+                    # Join the fields by space and print them
+                    println(join(fields, " "))
+                    out=join(fields, " ")
+                    push!(matches,out)
+                end
+                end
             end
-          end
+            end
         end
-      end
-    end
+        end
     return(matches)
-  end
-
-
-
-
-
-# function umlauts(input_file::AbstractString, output_file::AbstractString)
-#     # Read input file
-#     data = readdlm(input_file, String)
-
-#     # Apply string replacements
-#     for i in 1:size(data, 1)
-#         data[i] = replace(data[i], r"ß" => "ss")
-#         # data[i] = replace(data[i], r"\/" => "_")
-#         # data[i] = replace(data[i], r"_" => "-")
-#         # data[i] = replace(data[i], r",," => "")
-#         # data[i] = replace(data[i], r"\xc4" => "Ae")
-#         # data[i] = replace(data[i], r"\xd6" => "Oe")
-#         # data[i] = replace(data[i], r"\xdc" => "Ue")
-#         # data[i] = replace(data[i], r"\xe4" => "ae")
-#         # data[i] = replace(data[i], r"\xf6" => "oe")
-#         # data[i] = replace(data[i], r"\xfc" => "ue")
-#         # data[i] = replace(data[i], r"\xdf" => "ss")
-#     end
-
-#     # Write modified data back to the file
-#     output_file = open(output_file, "w")
-#     for i in 1:size(data, 1)
-#         println(output_file, data[i])
-#     end
-#     close(output_file)
-# end
- 
-#umlauts(input_file, output_file)
-
+end
 
 macro bash_str(s) open(`bash`,"w",stdout) do io; print(io, s); end;end
 #bash""" which python """
@@ -5818,8 +5576,6 @@ function rsqgrep()
     end
 end
 
-#rsqgrep()
-
 function kgegrep()
     path = pwd()
     files = glob(r"_output.txt|_outputjl") #non-recurse
@@ -5839,50 +5595,6 @@ function kgegrep()
     end
 end
 
-# function nsegrep()
-#     """
-#     ...sort try... but... hmm
-#     When j=1, the modified NSeff is not inflated by the squared values 
-#     of the differences, because the squares are replaced 
-#     by absolute values.
-#     """
-#     path = pwd()
-#     #match = Dict(SubString{String}, Vector{String})
-#     match = []
-#     files = glob(r"_output.txt|_outputjl") #non-recurse
-#     #@printf("Searching for values > 0.3 in files matching pattern %s\n", path)
-#     for file in filter(file -> endswith(file, "_output.txt"), files)
-#         output = DelimitedFiles.readdlm(file, '\t', String)
-#         DataFrame(output[4:end,:],:auto)
-
-
-#         fn = first(split(file, "_qout"))
-#         #append!(match,fn)
-#         m = [fn,Grep.grep(r"mNSE", output)]
-#         append!(match,m)
-#     end
-#         if !isempty(match)
-#             split_elements = [split(string(item[1])) for item in match]
-#             sort!(split_elements, by = x -> parse(Float64, x[end]);rev=true)
-#             # Combine the sorted elements into a string
-#             #combined_string = join([join(item, "     ") for item in split_elements], "\n")
-#             combined_string = [join(item, "     ") for item in split_elements]
-#             for line in combined_string
-#                 line = strip(line)  # remove leading and trailing whitespace
-#                 line = join(split(line), " ")  ##remove inner whitespaces
-#                 printstyled(rpad("$fn:", 55), lpad("$line\n", 10), color = :green)
-#             end
-#         end
-#     #end
-# end
-
-# z=glob(r"_output.txt|_outputjl")|>first
-# m=Grep.grep(r"mNSE", DelimitedFiles.readdlm(z, '\t', String))
-# m=only(m)
-# parse(Float64, split(m)[end])
-
-
-
 function nsegrep()
     path = pwd()
     files = glob(r"_output.txt|_outputjl") #non-recurse
@@ -5899,41 +5611,6 @@ function nsegrep()
         end
     end
 end
-
-#nsegrep()
-# #filterplot("ar",dfs)
-# xdd = mall(dfs)
-# dfp(xdd)
-
-# function filterplot(regex::AbstractString,dfs::Vector{Any})
-#     "selects first match and plots..."
-#     df = dfs[map(n->occursin(Regex(regex,"i"),n),
-#     map(x->basename(only(DataFrames.metadata(x))[2]),dfs)
-#     )] |> first
-#     dfp(df)
-# end
-# waread(file_path|>first)
-
-# v=[]
-# for z in file_path;
-#     df = waread(z);
-#     dropmissing!(df)
-#     observed  = df[:,1]
-#     simulated = df[:,2]
-#     kge_value = kge1(simulated,observed)
-#     nse_value = nse(simulated,observed)
-#     #nm = basename(file_path)
-#     nm="tst"
-#     println(replace("KGE value is $kge_value on $nm", "\\"  => "/"))
-#     printstyled(replace("NSE value is $nse_value on $nm\n", "\\"  => "/"),color=:green)
-#     push!(v,Dict(:KGE=>kge_value,:NSE=>nse_value))
-#     v = DataFrame(v)    
-# end
-
-# PrettyTables.pretty_table(v)
-# xd = file_path|>lastbefore|>readdf
-# ftp(xd)
-# tpjs(xd)
 
 function rp3(x::Raster)
     """
@@ -5952,7 +5629,7 @@ function rp3(x::Raster)
     xlabel="x",ylabel="y",zlabel="value",title=ti)
 end
 
-function rpmcf(x::Regex;msk::Float64,gt=false)
+function rpmcf(x::Regex;msk::AbstractFloat,gt=false)
     """
     subset raster by mask and last dimension.
     excludelayer and plot the rest.
@@ -5978,7 +5655,7 @@ function rpmcf(x::Regex;msk::Float64,gt=false)
         size=(1200*fact, 800*fact))
 end
 
-function rpm(x::Regex;msk::Float64,gt=false)
+function rpm(x::Regex;msk::AbstractFloat,gt=false)
     """
     subset raster by mask and last dimension.
     excludelayer and plot the rest.
@@ -6005,7 +5682,9 @@ function rpm(x::Regex;msk::Float64,gt=false)
 end
 
 
-function maskplot(xs::Raster;msk::Float64,gt=true)
+function maskplot(xs::Raster;msk::AbstractFloat,gt=true)
+    #Float64 <: AbstractFloat
+
     """
     subset raster by mask and plot.
     no subset on last dim!
@@ -6896,7 +6575,6 @@ function vio(df::DataFrame)
     end
 end
 
-
 function mbx(df::DataFrame)
     """
     annotated boxplot with mean
@@ -7107,8 +6785,5 @@ end
 
 end ##end of module
 
-
-#xdd = wa.xread(pt)
-#wa.dfp(pt)
 #include(raw"C:\Users\Public\Documents\Python_Scripts\julia\wa.jl")
 #wa.aplot(xdd)
