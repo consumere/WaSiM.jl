@@ -6773,6 +6773,75 @@ function greet_your_package_name()
     println("Hello WaSiM")
 end
 
+function addname(indf::DataFrame,nmdf::DataFrame)
+    """
+    addname(indf::DataFrame,nmdf::DataFrame)
+    indf: input dataframe
+    nmdf: name dataframe
+
+    ofl="route.txt"
+    begin
+        df = CSV.read(ofl,DataFrame,header=false,skipto=8,delim="\t",footerskip=1,lazystrings=false)
+        rename!(df,1=>"sim",2=>"obs",3=>"name")
+        df.name=map(x->replace(x,r"#" => "",r" " => "",r"-" => "_"),df[:,3])
+        df.name=map(x->replace(x,r"_>.*" => ""),df.name)
+        sort!(df, :sim)
+    end
+    
+    addname(indf,nmdf::df)
+    select(indf,Not(Cols(r"^[0-9]")))|>dfp
+
+    """
+    rename!(indf,map(x->replace(x,r"^C" => ""),names(indf)))
+    for row in eachrow(nmdf)
+        old_name = string(row.sim)
+        new_name = string(row.name)
+        if old_name in names(indf)
+            println("renaming $old_name")
+            rename!(indf, (old_name) => (new_name*"_"*old_name))
+        end
+    end
+    return indf
+end
+
+function rmdub(;directory=pwd())
+    """
+    recursively removes duplicates 
+    uses SHA
+    """
+    
+    # Create a dictionary to store file hashes as keys and file paths as values
+    #hash_dict = Dict{String, String}()
+    hash_dict = Dict{Vector{UInt8}, String}()
+
+    # Get a list of all files in the directory
+    #files = readdir(directory)
+    for (root, dirs, files) in walkdir(directory)
+        for file in files
+            filepath = joinpath(directory, file)
+            if isfile(filepath)
+                # Calculate the SHA-256 hash of the file's contents
+                #hash = string(sha256(open(filepath, "r")))
+                io = open(filepath, "r")
+                #filehash = string(sha256(io))
+                #filehash = string(hash(io))
+                filehash = sha256(io)
+                #println(filehash)
+                close(io)
+
+                # If the hash is not already in the dictionary, add it
+                if !haskey(hash_dict, filehash)
+                    hash_dict[filehash] = filepath
+                else
+                    # If a file with the same hash is found, delete it
+                    println("Deleting duplicate file: $filepath")
+                    rm(filepath)
+                end
+            end
+        end
+    end
+end
+
 end
 
 function toMain()
