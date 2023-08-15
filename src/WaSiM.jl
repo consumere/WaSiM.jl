@@ -7213,8 +7213,665 @@ module WaSiM
     
         display(p)
     end
+    function kgewrite(;output_file="kge-table.txt")
+        path = pwd()
+        files = glob(r"_output.txt|_outputjl") #non-recurse
+        
+        # Create an empty vector to store the matched lines
+        matched_lines = Vector{String}()
+        
+        for file in filter(file -> endswith(file, "_output.txt"), files)
+            output = DelimitedFiles.readdlm(file, '\t', String)
+            match = Grep.grep(r"KGE", output)
+            if !isempty(match)
+                fn = first(split(file, "_qout"))
+                for line in sort(match, by = x -> parse(Float64, split(x)[end]); rev = true)
+                    line = strip(line)  # remove leading and trailing whitespace
+                    line = join(split(line), " ")  # remove inner whitespaces
+                    push!(matched_lines, "$fn: $line")  # collect the matched line
+                end
+            end
+        end
+        
+        #output_file = "matched_results.csv"
+        writedlm(output_file, matched_lines, '\t')
+        println("Matched results saved to $output_file")
+    end
+
+    function subset_dataframe_by_mask(df::DataFrame, msk::DataFrame)
+        """
+        map(typeof, eachcol(df)) #check types of cols
+        msk = broadcast(x->typeof(x)==Vector{Float64},df)
+        """
+        # Get column names that satisfy the condition
+        columns_to_keep = names(df)[collect(msk[1, :])]
+        # Subset DataFrame using the mask
+        subset_df = select(df, columns_to_keep)
+        return subset_df
+    end
+
+    function getmoduleorder(file1::AbstractString)
+        # Run the awk command and capture the STDOUT
+        result = read(`awk '$0 ~ /^[[]/{c=1} c&&c--' $file1`, String)
+    
+        # Split the result into lines and strip \r and \t characters
+        lines = replace(split(result, "\n"), r"[\r\t]" => "")
+    
+        # Extract the names inside square brackets using regular expressions
+        pattern = r"\[(.*?)\]"
+        names_inside_brackets = [match(pattern, line) === nothing ? "" : match(pattern, line).captures[1] for line in lines]
+    
+        # Create a DataFrame with the extracted names inside the square brackets
+        df = DataFrame(Line = names_inside_brackets)
+    
+        return df
+    end
+
+    function ctg(match::String ; dir=".", file_ending=".ctl")
+        for file in readdir(dir)
+            if occursin(file_ending, file)
+                fx = joinpath(dir, file)
+                prevline = ""
+                for (i, line) in enumerate(eachline(fx))
+                    if findfirst(match, line) !== nothing
+                        printstyled("File: $file\n",color=:red)
+                        println("$(prevline)")
+                        printstyled("$line\n",color=:green)
+                        nextline = readline(fx)
+                        println("$(nextline)")
+                    end
+                    prevline = line
+                end
+            end
+        end
+    end
+
+    function agmask(s::AbstractString;step=50,lyr=1,lower=0,upper=1000)
+        """
+        AG only.
+        plots heatmap from raster with ArchGDAL
+        upper and lower bound
+        """
+        if !isfile(s)
+            error("file not found!")
+        end
+        if !endswith(s,".nc")
+            @warn("file seems not to be a NetCDF !")
+        end
+        r = ArchGDAL.readraster(s)
+        dx = ArchGDAL.getband(r,lyr)
+        #ArchGDAL.getnodatavalue(dx)
+        
+        if endswith(s,".nc")
+            dx = reverse(dx, dims=2)
+            dx = reverse(dx, dims=1)
+        end
+        #findmin(dx)
+        if (minimum(dx) <= -9999.0) # || (maximum(dx) >= 9999.0)
+            println("extrema: ",join(extrema(dx)," <-> "))
+            dmin=minimum(dx)
+            @info "
+            $dmin set to NaN!
+            lower bound: $lower
+            upper bound: $upper
+            "
+            dx = replace(dx, minimum(dx)=>NaN)
+            #replace!(dx, minimum(dx)=>missing) #err
+            #replace!(dx, minimum(dx)=>NaN)
+        end
+        
+        #heatmap(dx)
+        #extrema(dx)
+        
+        #println("MIN:",minimum(dx),"\nMAX:",maximum(dx))
+        
+        bitmat = (dx .> lower) .& (dx .< upper)
+        # Filter the dx matrix using bitmat
+        dx_filtered = dx .* bitmat
+        dx_output = Matrix{Float32}(undef, size(dx, 1),size(dx,2))
+        dx_output .= NaN
+        dx_output[bitmat] .= dx_filtered[bitmat]
+    
+        if allequal(dx_output)
+            @error("all values are equal!")
+            return
+        end
+    
+        dx = dx_output
+        heatmap_plot = heatmap(dx, c=:matter,
+                        title=basename(s), 
+                        xaxis="", yaxis="");
+        step = step
+        for i in 1:step:size(dx, 1)
+            for j in 1:step:size(dx, 2)
+                value = round(dx[i, j]; digits=2)
+                color = isnan(value) ? :white : :black
+                annotate!(j, i, Plots.text(string(value), 7, color, :center, 
+                    halign=:center, rotation=-35.0))
+            end
+        end
+        # Show the plot
+        display(heatmap_plot)
+    end
+
+    function all_values_equal(df::DataFrame)
+        for col in eachcol(df)
+            if any(col .!= col[1])
+                return false
+            end
+        end
+        return true
+    end
+
+    function pall(files::Vector{DataFrame};toyr=false)
+        """
+        reduces + merges by date + plots all
+        """
+        #files = dfs
+        bns = try
+            broadcast(x->DataFrames.metadata(x)|>only|>last|>basename,files)
+        catch
+            @warn "No basenames in metadata!"
+            raw""
+            end
+    
+        try
+            for i in 1:length(files)
+                s = Symbol.(filter(x->!occursin(r"year|date",x),names(files[i])))
+                nn = bns[i]|>x->split(x,".")|>first
+                for x in s
+                    #println(string(x)*"-"*nn)
+                    newname = string(x)*"-"*nn
+                    #rename!(i,s[x]=>s[x]*"-"*bns[x])
+                    rename!(files[i],x=>newname)
+                end
+            end
+        catch
+            @warn "error in renaming!"
+            @debug begin
+                nms=map(x->names(x),files)
+                "names are: $nms"
+            end
+            #@warn "error in renaming!"
+        end
+    
+        if toyr==true
+            dfs = broadcast(x->yrsum(x),files)
+            df = reduce((left, right) -> 
+            innerjoin(left, right, on = :year,
+            makeunique=true
+            ),dfs)
+        else
+            df = reduce((left, right) -> 
+            innerjoin(left, right, on = :date,
+            makeunique=true
+            #renamecols = lowercase => uppercase
+            ),files)
+        end
+        
+        
+        ti = try
+            #DataFrames.metadata(df)|>only|>last|>basename
+            z = map(x->split(x,".")|>first,bns)
+            if length(z)>5
+                z = z[1:5]
+                "Merged Series"
+            end
+            #"Series of "*join(z," ")
+            join(z," ")
+        catch
+            @warn "No basenames for title"
+        ti = raw""
+            end
+    
+        if length(ti)>30
+            ti = ti[1:30]*"..."
+        end
+    
+        if all_values_equal(df[!,Not(Cols(r"date|year|month|day"))])==true
+            @error "all values are equal!"
+            return
+        end
+    
+        if (any(x->occursin("year",x),names(df)))
+            s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
+        #    df = df[!,Not(:date)]
+            p = @df df Plots.plot(:year,cols(s),legend = :outerbottomright, title=ti)
+        else    
+            s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
+            p = @df df Plots.plot(:date,cols(s),legend = :outerbottomright, title=ti)
+        end
+        return p
+    end
+
+    function mall(left::DataFrame, right::DataFrame)
+        "reduces + merges by date"
+        df = innerjoin(left, right, on = :date,makeunique=true)
+        return(df)
+    end
+
+    function cpinto(src::Vector{String}, dst::AbstractString;force=false)
+        """
+        mkdir("route-bak")
+        cpinto(glob("so_inf"), "route-bak")
+        rglob("so_inf")
+        force=true will first remove an existing dst.
+        """
+        map(x->cp(x,"$dst/$x";force=force),src)
+    end
+
+    function climateplot(temp::Regex,prec::Regex;col="tot_average")
+        """
+        col = subbasin of interest
+        wa.climateplot(r"temp",r"pre";col="tot_average")
+        ws. prc and temp tauschen un opacitiy einstellen....
+
+        """
+        col = Symbol(col)
+        prec = waread(prec)
+        yrs = year.(prec.date)|>unique|>length
+        prec = monsum(prec)
+        precvec = vec(Matrix(select(prec, col)))
+        precvec = precvec ./ yrs
+        
+        temp = waread(temp)|>monmean
+        tempvec = vec(Matrix(select(temp, col)))
+        month_abbr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        p1 = Plots.bar(prec.month, precvec, color=:cornflowerblue, 
+            xlabel="", 
+            #xlabel="Months", 
+            xflip=false,
+            ylabel="Precipitation [mm]", 
+            legend=false, yflip=true);
+        xticks!(1:12, month_abbr)
+        for i in prec.month
+            val = round(precvec[i]; digits=1)
+            annotate!(i, precvec[i], text("$(val)",8, :bottom))
+        end
+        p2 = twinx();
+        #ann2 = map(x->string.(round(x;sigdigits=0)),tempvec)
+        plot!(p2, tempvec, xlabel="", 
+            ylabel="Temperature [°C]", color=:coral2,
+            #annotations = (temp.month,tempvec, ann2, :center),
+            label=false, linewidth=3);
+        # # Add annotations for temperature values
+        # for i in 1:length(tempvec)
+        #     val = round(tempvec[i]; sigdigits=1)
+        #     annotate!(i, tempvec[i], text("$(val)",7, :center))
+        # end
+        return p1
+    end
+
+    function climateplot(temp::DataFrame,prec::DataFrame;col::AbstractString)
+        """
+        ws. prc and temp tauschen un opacitiy einstellen....
+        ,col::String name of 
+        twinx() dreht komplett alles.
+        """
+        #col = propertynames(temp)[col]
+        #temp = t
+        
+        #col = first(Symbol.(filter(x->occursin(r"$col"i,x),names(temp))))
+        #prec = pr
+        yrs = year.(prec.date)|>unique|>length
+        prec = monsum(prec)
+        precvec = vec(Matrix(select(prec, col)))
+        #precvec = vec(Matrix(select(prec, Not(:month))))
+        precvec = precvec ./ yrs
+        
+        temp = (temp)|>monmean
+        tempvec = vec(Matrix(select(temp, col)))
+        #tempvec = vec(Matrix(select(temp, Not(:month))))
+        month_abbr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        p1 = Plots.plot(temp.month,tempvec, xlabel="", 
+            ylabel="Temperature [°C]", color=:coral2,
+            yflip = false,
+            label=false, linewidth=3)
+        # # Add annotations for temperature values
+        for i in 1:length(tempvec)
+            val = round(tempvec[i]; sigdigits=1)
+            annotate!(i, tempvec[i], text("$(val)",7, :center))
+        end
+        
+        #twinx()
+        #prec.month, 
+        Plots.bar!(precvec, color=:cornflowerblue, 
+        xlabel="",     #xlabel="Months", 
+        xflip=false,
+        ylabel="Precipitation [mm]", 
+        legend=false    #, yflip=true
+        )
+        xticks!(1:12, month_abbr)
+        for i in prec.month
+            val = round(precvec[i]; digits=1)
+            annotate!(i, precvec[i], text("$(val)",8, :bottom))
+        end
+        return p1
+    end
+
+    function cntcolv(x::String)
+        # Get a list of all files in the directory
+        #x = "."
+        files = filter(file -> (occursin(Regex(x, "i"), file) & 
+                            (!occursin(r"xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg|txt", file))
+                            ), readdir())
+
+        files = filter(inF->isfile(inF),files)
+                            #if isfile(inF)
+        file_columns = []
+        
+        for file in files
+            # Open the file for reading
+            open(file, "r") do io
+                # Read the first line of the file
+                line = readline(io)
+                # Split the line on tabs
+                columns = split(line, '\t')
+                # Count the number of columns
+                num_columns = length(columns)
+                push!(file_columns, (file, num_columns))
+            end
+        end
+        
+        # Sort the file_columns array based on the number of columns in descending order
+        sorted_files = sort(file_columns, by = x -> x[2], rev = true)
+        
+        for (file, num_columns) in sorted_files
+            printstyled(
+                rpad("File: $file",45),
+            lpad(" | Columns: $num_columns\n",10),color=:green,bold=true)
+        end
+        return file_columns
+    end
+
+    function pydf_to_julia(py_df::PyObject)
+        """
+        no transposing
+        """
+        # Convert each column of the Python DataFrame to a Julia array
+        col_names = py_df.columns  # Get the column names from the Python DataFrame
+        col_arrays = [convert(Array, py_df[col]) for col in col_names]
+        # Create a Julia DataFrame using the converted arrays and column names
+        julia_df = DataFrame(Symbol(col) => arr for (col, arr) in zip(col_names, col_arrays))    
+        return julia_df
+    end 
+    
+    function pydf(py_df::PyObject)
+        """
+        Convert each column of the Python DataFrame to a Julia array
+        """
+        # fn = filename
+        # pyo = py"""waread3($fn).reset_index(drop=False)"""
+        # pdf = wa.pydf(pyo)
+        # names(pdf)
+        # dfp(pdf)
+        col_names = py_df.columns  # Get the column names from the Python DataFrame
+        col_names = convert(Array, col_names)
+        col_arrays = [convert(Array, py_df[col]) for col in col_names]
+        jdf = DataFrame(col_arrays, :auto)
+        #size(jdf)
+        fn = try
+            py_df.filename
+        catch
+            @info "no filename present"
+        end
+
+        metadata!(jdf, "filename", fn, style=:note);
+        rename!(jdf, col_names);
+        return jdf
+    end
+
+    function tovec(x::DataFrame, col::Any)
+        df = select(x,col)
+        println(names(df))
+        return vec(Matrix(df))
+    end
+
+    function zp(func::Any)
+        """
+        prints out the function definition
+        """
+        #pt = joinpath(@__DIR__,"func-win.jl")
+        pt = "C:\\Users\\Public\\Documents\\Python_Scripts\\julia\\func-win.jl"
+        readbetween(open(pt),string(func), "end")
+    end
+
+    function print_lines_between_patterns(filename::AbstractString, start_pattern::AbstractString, end_pattern::AbstractString)
+        in_range = false
+        
+        for line in eachline(filename)
+            if occursin(start_pattern, line)
+                in_range = true
+            end
+            
+            if in_range
+                println(line)
+            end
+            
+            if occursin(end_pattern, line)
+                in_range = false
+            end
+        end
+    end
+
+    function read_soildata_raw(filename::String)
+        """
+         soil types
+         returns a DataFrame
+         needs rework
+        """
+        #data = readlines(filename)
+        # data = open(fl) do io
+        #     a = readbetween(io,"{","}")
+        #     return(a)
+        # end
+        data = open(filename) do io
+            a = readbetween(io, "soil_table", "special_output")
+            return(a)
+        end
+        
+        output = DelimitedFiles.readdlm(filename,';', String)
+        data = Grep.grep(r"^th.*|^[0-9]",output)
+        data = broadcast(x -> replace(x,    
+                r"^#.*" => "",
+                r"[[]].*" => "",
+                r"[{].*" => "",
+                r"method" => "",
+                r"MultipleHorizons" => "",
+                r"}" => ""), data)
+        bks = broadcast(x -> split(x, " ",limit=3), data)
+        nos = broadcast(x -> if length(x)==2 x[1] end, bks)
+        nos = filter(x -> !isnothing(x),nos)
+        nos = broadcast(x -> parse.(Int, x),nos)
+        
+        #tck = broadcast(x -> if (length(x)==3  & startswith(x[1],"thickness")) x[3] end, bks)
+        tck = broadcast(x -> if (startswith(x[1],"thickness")) x[3] end, bks)
+        filter!(x -> !isnothing(x),tck)
+        tck = broadcast(x -> split(x),tck)
+        
+        #foreach(x -> parse.(Int, x[1]),tck)
+        
+        #collect(tck)
+        
+        Z=[]
+        for m in (tck)
+            i = [parse(Float64, x) for x in m]
+            push!(Z,i)
+        end
+        
+        #[cumsum(arr) for arr in Z]
+        
+        #zd = DataFrame(permutedims(Z),:auto)
+        zd = DataFrame((Z),:auto)
+        for x in 1:length(nos)
+            newname = Symbol.(nos[x])
+            rename!(zd,Dict(names(zd)[x]=>newname))
+        end
+        # col_sums = sum.(eachcol(zd))
+        # hcat(col_sums*.1, nos)
+       
+    
+        return zd
+    end
+    
+    function pyread_meteo(s::AbstractString;hdr=0)
+        pd = pyimport("pandas")
+        ddf = pd.read_csv(s, delim_whitespace=true, 
+            header=hdr,
+            na_values=-9999,
+            low_memory=false,
+            verbose=true)
+
+        ddf = wa.pydf(ddf)
+        
+        #dt = Date.(map(x -> join(x, "-"), eachrow(ddf[:, 1:3])))
+        dt = select(ddf,1:3)
+        Z = []
+        for i in eachcol(dt)
+            col = tryparse.(Int, i)
+            push!(Z,col)
+        end
+        dt = DataFrame(Z,:auto)
+        
+        msk = tryparse.(Int, ddf.YY)
+        ddf = ddf[findall(!isnothing,msk),:]
+        dt = dt[findall(!isnothing, dt.x1),:]
+        dt = Date.(map(k -> join(k, "-"), eachrow(dt[:, 1:3])))
+        nd = hcat(ddf[!, 5:end], dt)
+       
+        for col in names(nd)[(eltype.(eachcol(nd)) .<: String)]
+            nd[!, col] .= tryparse.(Float64, col)
+        end
+        rename!(nd, ncol(nd) =>"date")
+        metadata!(nd, "filename", s, style=:note);
+        return nd
+    end
+
+    function pyread(s::AbstractString;hdr=0)
+        pd = pyimport("pandas")
+        ddf = pd.read_csv(s, delim_whitespace=true, 
+            header=hdr,
+            na_values=-9999,
+            low_memory=false,
+            verbose=true)
+        #ddf.filename=basename(s)
+        ddf = wa.pydf(ddf)
+        
+        dt = Date.(map(x -> join(x, "-"), eachrow(ddf[:, 1:3])))
+        
+        nd = hcat(ddf[!, 5:end], dt)
+
+        for col in names(nd)[(eltype.(eachcol(nd)) .<: String)]
+            nd[!, col] .= tryparse.(Float64, col)
+        end
+        rename!(nd, ncol(nd) =>"date")
+        metadata!(nd, "filename", s, style=:note);
+        return nd
+    end
+
+    function waread3_py(x, flag=true)
+        # use py"""...""" syntax to access the Python function
+        py"""
+        import pandas as pd
+        import datetime
+
+        def waread3(x, flag=True):
+            if flag:
+                df = pd.read_csv(x, delim_whitespace=True, header=0,
+                                na_values=-9999, verbose=True,engine='c')
+                if 'YY' not in df.columns:
+                    print("Column 'YY' not found in the CSV file.")
+                    return None
+                if df.iloc[:, 0].dtype == 'object':
+                    print('First column contains strings, subsetting to Int...')
+                    df = df[~df.iloc[:, 0].str.contains("[A-z]|-", na=False)]
+                source_col_loc = df.columns.get_loc('YY')        
+                df['date'] = df.iloc[:, source_col_loc:source_col_loc +
+                                    3].apply(lambda x: "-".join(x.astype(str)), axis=1)
+                df = df.iloc[:, 4:]
+                df['date'] = pd.to_datetime(df['date'])
+                #df.set_index('date', inplace=True)
+                df.iloc[:,0:-2] = df.iloc[:,0:-2].apply(lambda x: x.astype(float), axis=1)
+                df.filename = x
+                print(df.filename,"done!")
+                return df
+            else:
+                print('Date parse failed, try reading without date transformation...')
+                df = pd.read_csv(x, delim_whitespace=True, comment="Y", skip_blank_lines=True).dropna()
+                df.filename = x
+                print(df.filename,"done!")
+                return df
+        """
+        # call the Python function with the arguments and return the result
+        return py"waread3($x, $flag)"
+    end
+
+    import InteractiveUtils: clipboard
+    function mywd()
+        wd = pwd()
+        wd = replace(wd,"\\"=>"/")
+        println("qouted $wd in clipboard!")
+        #println("\"",wd,"\"")
+        # wd|>clipboard
+        return "\""*wd*"\"" |>clipboard
+        #InteractiveUtils.clipboard()
+    end
+
+    function dfilter(df::DataFrame, col, val)
+        DataFrames.subset(df,Symbol(col)=> ByRow(==(val)))
+    end
+
+    function nqp(a::Regex,b::Regex;)
+        #col="tot_average"
+        #col = Symbol(col) 
+        # a = select(waread(a),Cols(col,:date))
+        # b = select(waread(b),Cols((col,:date))
+        a = waread(a)
+        b = waread(b)
+        col = ncol(a)-1
+    
+        a = a[!,Cols(col,:date)]
+        b = b[!,Cols(col,:date)]  
+    
+        df = mall(a,b)
+        #qplot(x::Vector{Float64},y::Vector{Float64})
+        return qplot(df)
+    end
+
+    function cntcolread(x::Vector{Any})
+        # Get a list of all files in the directory
+        files = x
+    
+        files = filter(inF->isfile(inF),files)
+                            #if isfile(inF)
+        file_columns = []
+        
+        for file in files
+            # Open the file for reading
+            open(file, "r") do io
+                # Read the first line of the file
+                line = readline(io)
+                # Split the line on tabs
+                columns = split(line, '\t')
+                # Count the number of columns
+                num_columns = length(columns)
+                push!(file_columns, (file, num_columns))
+            end
+        end
+        
+        # Sort the file_columns array based on the number of columns in descending order
+        sorted_files = sort(file_columns, by = x -> x[2], rev = true)
+        
+        for (file, num_columns) in sorted_files
+            printstyled(
+                rpad("File: $file",45),
+            lpad(" | Columns: $num_columns\n",10),color=:green,bold=true)
+        end
+        return file_columns
+    end
 
 end ##end of module
+
 
 function toMain()
     for submodule in names(WaSiM, all=true)
