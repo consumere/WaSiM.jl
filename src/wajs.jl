@@ -2,7 +2,7 @@ module wajs
 
     using PlotlyJS
     using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions
-    using DelimitedFiles, Grep , Printf
+    using DelimitedFiles, Grep, Printf
 
     function dfyrs(df::DataFrame;logy=true)
         ti = DataFrames.metadata(df)|>only|>last|>basename
@@ -94,14 +94,37 @@ module wajs
     end
 
     function dfpjs(df::String;)
-        df = readf(df)
-        nrows=size(df)[2]-1 
+        df = waread(df)
+
+        if names(df)[end]!="date"
+            df = hcat(df[!,Not(Cols(r"date"))],df[:,Cols(r"date")])
+        end
+        
         ti = try
             DataFrames.metadata(df)|>only|>last|>basename
         catch
             @warn "No basename in metadata!"
             ti = raw""
         end
+
+        s = (filter(x->!occursin(r"year|date",x),names(df)))
+        #renamer - remove char _   
+        for x in s
+            newname=replace(x,"_"=>" ")
+            rename!(df,Dict(x=>newname))
+        end
+        s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
+
+        ##make scores
+        overall_pearson_r = cor(df[!,2], df[!,1])
+        r2 = overall_pearson_r^2
+        nse_score = nse(df)
+        kge_score = kge(df)
+
+        subs = "Pearson R²: $(round(r2, digits=2))<br>NSE: $(round(nse_score, digits=2))<br>KGE: $(round(kge_score, digits=2))"
+
+        nrows=size(df)[2]-1
+
         fig = PlotlyJS.make_subplots(
             shared_xaxes=true, 
             shared_yaxes=true    
@@ -111,28 +134,89 @@ module wajs
             PlotlyJS.scatter(x=df.date, y=df[:,i],
             name=names(df)[i]));
         end
-        fact,logy = .66,0
-        if logy == true
-            PlotlyJS.relayout!(fig,yaxis_type="log",
-            height=600*fact,width=900*fact,
-            title_text="Series of "*ti)
-        else
-            PlotlyJS.relayout!(fig,
-            height=600*fact,width=900*fact,
-            title_text="Series of "*ti)
-        end
-        display(fig)
+        fact = .66
+        PlotlyJS.relayout!(fig,
+            template="seaborn",
+            #template="simple_white",
+            height=650*fact,
+            width=1200*fact,
+            title_text=ti,
+            xaxis_rangeslider_visible=true,
+            annotations=[attr(
+                        text=subs,
+                        #x=minimum(df[!,2]),
+                        x=maximum(df.date),
+                        xanchor="right",
+                        yanchor="bottom",
+                        xref="x",
+                        yref="y",
+                        showarrow=false,
+                        bordercolor="#c7c7c7",
+                        borderwidth=2,
+                        borderpad=4,
+                        bgcolor="#ff7f0e",
+                        opacity=0.6
+                    )],
+            updatemenus=[
+                Dict(
+                    "type" => "buttons",
+                    "direction" => "left",
+                    "buttons" => [
+                        Dict(
+                            "args" => [Dict("yaxis.type" => "linear")],
+                            "label" => "Linear Scale",
+                            "method" => "relayout"
+                        ),
+                        Dict(
+                            "args" => [Dict("yaxis.type" => "log")],
+                            "label" => "Log Scale",
+                            "method" => "relayout"
+                        )
+                    ],
+                    "pad" => Dict("r" => 1, "t" => 10),
+                    "showactive" => true,
+                    "x" => 0.11,
+                    "xanchor" => "left",
+                    "y" => 1.1,
+                    "yanchor" => "auto"
+                ),
+            ]
+            )
+
+        return fig
     end
 
     function dfpjs(df::Regex;)
         df = waread(df)
-        nrows=size(df)[2]-1 
+        if names(df)[end]!="date"
+            df = hcat(df[!,Not(Cols(r"date"))],df[:,Cols(r"date")])
+        end
+        
         ti = try
             DataFrames.metadata(df)|>only|>last|>basename
         catch
             @warn "No basename in metadata!"
             ti = raw""
         end
+
+        s = (filter(x->!occursin(r"year|date",x),names(df)))
+        #renamer - remove char _   
+        for x in s
+            newname=replace(x,"_"=>" ")
+            rename!(df,Dict(x=>newname))
+        end
+        s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
+
+        ##make scores
+        overall_pearson_r = cor(df[!,2], df[!,1])
+        r2 = overall_pearson_r^2
+        nse_score = nse(df)
+        kge_score = kge(df)
+
+        subs = "Pearson R²: $(round(r2, digits=2))<br>NSE: $(round(nse_score, digits=2))<br>KGE: $(round(kge_score, digits=2))"
+
+        nrows=size(df)[2]-1
+
         fig = PlotlyJS.make_subplots(
             shared_xaxes=true, 
             shared_yaxes=true    
@@ -142,19 +226,56 @@ module wajs
             PlotlyJS.scatter(x=df.date, y=df[:,i],
             name=names(df)[i]));
         end
-        fact,logy = .66,0
-        if logy == true
-            PlotlyJS.relayout!(fig,yaxis_type="log",
+        fact = .66
+        PlotlyJS.relayout!(fig,
             template="seaborn",
-            height=600*fact,width=900*fact,
-            title_text="Series of "*ti)
-        else
-            PlotlyJS.relayout!(fig,
-            template="seaborn",
-            height=600*fact,width=900*fact,
-            title_text="Series of "*ti)
-        end
-        display(fig)
+            #template="simple_white",
+            height=650*fact,
+            width=1200*fact,
+            title_text=ti,
+            xaxis_rangeslider_visible=true,
+            annotations=[attr(
+                        text=subs,
+                        #x=minimum(df[!,2]),
+                        x=maximum(df.date),
+                        xanchor="right",
+                        yanchor="bottom",
+                        xref="x",
+                        yref="y",
+                        showarrow=false,
+                        bordercolor="#c7c7c7",
+                        borderwidth=2,
+                        borderpad=4,
+                        bgcolor="#ff7f0e",
+                        opacity=0.6
+                    )],
+            updatemenus=[
+                Dict(
+                    "type" => "buttons",
+                    "direction" => "left",
+                    "buttons" => [
+                        Dict(
+                            "args" => [Dict("yaxis.type" => "linear")],
+                            "label" => "Linear Scale",
+                            "method" => "relayout"
+                        ),
+                        Dict(
+                            "args" => [Dict("yaxis.type" => "log")],
+                            "label" => "Log Scale",
+                            "method" => "relayout"
+                        )
+                    ],
+                    "pad" => Dict("r" => 1, "t" => 10),
+                    "showactive" => true,
+                    "x" => 0.11,
+                    "xanchor" => "left",
+                    "y" => 1.1,
+                    "yanchor" => "auto"
+                ),
+            ]
+            )
+
+        return fig
     end
 
     function dfbarjs(df::Regex;)
@@ -189,6 +310,13 @@ module wajs
             title_text="Series of "*ti)
         end
         display(fig)
+    end
+
+    function kge1(simulations, evaluation)
+        r = cor(simulations, evaluation)
+        α = std(simulations) / std(evaluation)
+        β = mean(simulations) / mean(evaluation)
+        return 1 - sqrt((r - 1)^2 + (α - 1)^2 + (β - 1)^2)
     end
 
     function tpjs(x::DataFrame)
@@ -338,6 +466,10 @@ module wajs
     baryrjs = plotlybaryr
 
     function dfpjs(df::DataFrame;)
+
+        if names(df)[end]!="date"
+            df = hcat(df[!,Not(Cols(r"date"))],df[:,Cols(r"date")])
+        end
         
         ti = try
             DataFrames.metadata(df)|>only|>last|>basename
@@ -381,7 +513,7 @@ module wajs
             annotations=[attr(
                         text=subs,
                         #x=minimum(df[!,2]),
-                        y=maximum(df.date),
+                        x=maximum(df.date),
                         xanchor="right",
                         yanchor="bottom",
                         xref="x",
@@ -419,7 +551,7 @@ module wajs
             ]
             )
 
-            display(fig)
+        return fig
 
     end
 
@@ -866,8 +998,38 @@ module wajs
         return 1 - sqrt((r - 1)^2 + (α - 1)^2 + (β - 1)^2)
     end
 
-    
-    
+
+    #function dfpl(df::DataFrame;logy::Bool,fact::Float64)
+    function dfljs(df::DataFrame;logy=true,fact=.66)
+        nrows=size(df)[2]-1 
+        o = DataFrames.metadata(df)|>collect
+        ti = basename(o[1][2])
+        fig = PlotlyJS.make_subplots(
+            shared_xaxes=true, 
+            shared_yaxes=true    
+            );
+        for i in 1:nrows;
+            PlotlyJS.add_trace!(fig, 
+            PlotlyJS.scatter(x=df.date, y=df[:,i],
+            name=names(df)[i]));
+        end
+        fact = isnothing(fact) ? 1 : fact; #nice
+        logy = isnothing(logy)==true ? logy==false : logy==true;
+        if logy == true
+            PlotlyJS.relayout!(fig,
+            template = "seaborn",
+            yaxis_type="log",
+            height=600*fact,width=900*fact,
+            title_text=o[1][2]*" (log)")
+        else
+            PlotlyJS.relayout!(fig,
+            height=600*fact,width=900*fact,
+            title_text="Series of "*ti)
+        end
+        return fig
+    end
+
+      
 
 
 end #module

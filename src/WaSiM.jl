@@ -1,3 +1,5 @@
+##C:\Users\chs72fw\.julia\dev\WaSiM
+
 module WaSiM
 
     export @bash_str
@@ -258,12 +260,17 @@ module WaSiM
     export yrmean
     export yrsum
 
+    
+    using Revise
+
     using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions
     using DelimitedFiles, Grep , Printf
     using PrettyTables
     using Rasters
     import NCDatasets
     import ArchGDAL
+    import InteractiveUtils: clipboard
+    using PyCall
     default(show = true)
 
     function wread(x::String;skip=3)
@@ -7805,8 +7812,7 @@ module WaSiM
         # call the Python function with the arguments and return the result
         return py"waread3($x, $flag)"
     end
-
-    import InteractiveUtils: clipboard
+    
     function mywd()
         wd = pwd()
         wd = replace(wd,"\\"=>"/")
@@ -7869,6 +7875,305 @@ module WaSiM
         end
         return file_columns
     end
+
+    function cntcolread(x::Vector{Any})
+        # Get a list of all files in the directory
+        files = x
+    
+        files = filter(inF->isfile(inF),files)
+                            #if isfile(inF)
+        file_columns = []
+        
+        for file in files
+            # Open the file for reading
+            open(file, "r") do io
+                # Read the first line of the file
+                line = readline(io)
+                # Split the line on tabs
+                columns = split(line, '\t')
+                # Count the number of columns
+                num_columns = length(columns)
+                push!(file_columns, (file, num_columns))
+            end
+        end
+        
+        # Sort the file_columns array based on the number of columns in descending order
+        sorted_files = sort(file_columns, by = x -> x[2], rev = true)
+        
+        for (file, num_columns) in sorted_files
+            printstyled(
+                rpad("File: $file",45),
+            lpad(" | Columns: $num_columns\n",10),color=:green,bold=true)
+        end
+        return file_columns
+    end
+
+    function wqsum()
+        #vw = glob("^wq") #same as
+        vw::Vector{String} = filter(f->occursin(Regex("^wq"),f),readdir())
+        out::Vector{Float64} = []
+        for w in vw
+        m = Grep.grep("catchment area",readlines(w))|>first
+        m = split(m,":")|>last|>strip
+        push!(out,parse.(Float64,String((m))))
+        end
+        out|>println
+        A=sum(out)
+        println("total sum is $A km²")
+    end
+
+    function wqlen()
+        vw = glob("^wq")
+        out::Vector{Float64} = []
+        for w in vw
+        m = Grep.grep("channel length",readlines(w))|>first
+        m = split(m,":")|>last|>strip
+        push!(out,parse.(Float64,String((m))))
+        end
+        out|>println
+        A=round(sum(out)/1000,digits=2)
+        println("total channel length is $A km")
+    end
+
+    function wqpand(x::AbstractString)
+        """
+        wqpand("catchment area")
+        wqpand("spec")
+        wqpand("max. spec")
+        """
+        vw::Vector{String} = filter(f->occursin(Regex("^wq"),f),readdir())
+        out::Vector{Float64} = []
+        for w in vw
+            m = Grep.grep(x,readlines(w))|>first
+            m = split(m,":")|>last|>strip
+            push!(out,parse.(Float64,String((m))))
+        end
+        u = Grep.grep(x,readlines(vw[end]))|>first
+        println("match of ",vw[end]," is: \n$u")
+        u = split(u," [")|>last|>n -> split(n,"]")|>first
+        out|>println
+        A=sum(out)
+        println("total sum of $x is $A $u")
+    end
+
+    function read_wq(file_path::AbstractString)
+        data = CSV.File(file_path,header=false,skipto=24,delim=" ",
+        maxwarnings=2,ignorerepeated=true,
+        debug=true) |> DataFrame
+        col_names = CSV.File(file_path,skipto=21,limit=2,
+        maxwarnings=2,ignorerepeated=true,delim=" ",header=21) |> DataFrame
+        rename!(data, propertynames(col_names))
+        return data    
+    end
+
+    function wqplot(file_path::AbstractString)
+        data = read_wq(file_path)
+        p = @df data plot(data[!,1],cols(propertynames(data)[2:end]))
+        println(describe(data))
+        return p
+    end
+
+    function kge_rec()
+        """
+        reads recursively
+        """
+        #fls = rglob("qout")
+        needle = r"qout"
+        rootdir = pwd()
+        results = []
+        for (looproot, dirs, filenames) in walkdir(rootdir)
+            for filename in filenames
+                if (occursin(needle,filename)
+                    && 
+                    !occursin(r"yr|mon|grid|scn"i,filename) && 
+                    !occursin(r"\.(log|png|svg|txt|html|ftz|ftz_0|list|nc|xml|sh|grd|yrly|eps)$", filename)
+                    )
+                    push!(results, joinpath(looproot, filename)) 
+                end
+            end
+        end
+        # results = filter(x -> isfile(x) && 
+        # !occursin(r"yr|mon|grid|scn"i,x) && 
+        # !occursin(r"\.(log|png|svg|txt|html|ftz|ftz_0|list|nc|xml|sh|grd|yrly|eps)$", x), results)
+        out = []
+        for x in results
+            println("reading $x ...")
+            try
+                dd = CSV.read(x,DataFrame,
+                missingstring="-9999",
+                #maxwarnings=1,
+                silencewarnings=true,
+                ignorerepeated=true,
+                delim="\t")
+            push!(out,Dict("name"=>x,"KGE"=>kge2(dd)))
+            catch
+                @warn("$x can't be loaded as a DataFrame, skipping ...")
+                continue
+            end
+            
+            
+        end
+        df = DataFrame(out)
+        df.KGE .= replace(df.KGE, NaN => missing)
+        dropmissing!(df)
+        return sort(df,:KGE;rev = true)
+    end
+
+    function grep_with_context(pattern, filename, context)
+        lines = readlines(filename)   
+        for (i, line) in enumerate(lines)
+            if occursin(pattern, line)
+                    #println("$(filename):$(i): $(line)")
+                    for j in max(1, i - context):min(length(lines), i + context)
+                        #printstyled("$(filename):$j: $(lines[j])\n",color=:red)
+                        printstyled("$(filename):$j:",color=:red)
+                        printstyled("$(lines[j])\n",color=:green)
+                    end
+                    println("-" ^ 80)
+            end
+        end
+    end
+        
+    #grep_with_context("routing_model", file_paths[1], 2)
+    
+    function grep_files(pattern, file_paths, context)
+        """
+        pts = readdir(dirname(infile);join=true)
+        filter!(x->occursin(r"ctl",x),pts)
+        grep_files("routing_model", pts, 2)
+        """
+        for file_path in file_paths
+            grep_with_context(pattern, file_path, context)
+        end
+    end
+
+    function dfonly(x::Vector{Any})
+        
+        z = try filter(f->!occursin(r"^wq|xml|nc|png|svg|jpg",f),x)
+        catch
+            @warn "vector should be of type string.."
+            return
+        end
+        # z = filter(file -> occursin(x,file), 
+        # readdir()[broadcast(x->!occursin(r"^wq|xml|nc|png|svg|jpg",x),readdir())]);
+        return(z)
+    end
+
+    function rmeq_rec(; rootdir = ".")
+        """
+        removes empty TS recursively; 
+        use with caution!
+        """
+        
+        ext_regex = r".R|.py|.jl|.tex|.pl|.sh|.csv|.html|.xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg|txt"i
+        ms = ["-9999", "lin", "log", "--"]
+        
+        files::Vector{String} = []       #String[]
+        for (looproot, dirs, filenames) in walkdir(rootdir)
+            for filename in filenames
+                if !occursin(ext_regex, filename)
+                    push!(files, joinpath(looproot, filename))
+                end
+            end
+        end
+        
+        for inF in files
+            if isfile(inF)
+                println("reading ", inF, "...")
+                df = CSV.File(inF; delim = "\t", header = 1,
+                              silencewarnings = true, 
+                              normalizenames = false, 
+                              missingstring = ms, 
+                              types = Float64) |> DataFrame
+                if (isempty(df) || nrow(dropmissing(df,ncol(df)))==0 || ncol(df)==0) 
+                    rm(inF)
+                    println(basename(inF), " removed!")
+                end
+            end
+        end
+    end
+
+    function stp(fn::String)
+        fl = CSV.read(fn,DataFrame;limit=4)
+        xc = fl[2,5:end]|>collect
+        yc = fl[3,5:end]|>collect
+        pts = ArchGDAL.IGeometry[]
+        for i in 1:length(xc)
+            pt = ArchGDAL.createpoint([xc[i],yc[i]])
+            #pt = AG.reproject(pt,EPSG(25832),ProjString("+proj=longlat +datum=WGS84 +no_defs"))
+            push!(pts,pt)
+        end
+        nd = DataFrame(geometry=pts, name=propertynames(fl)[5:end], xc=xc, yc=yc)
+        return nd
+    end
+
+    function stplot(fn::String)
+        """
+        reads from stationdata, reprojects and plots
+        """
+        fl = CSV.read(fn,DataFrame;limit=4)
+        xc = fl[2,5:end]|>collect
+        yc = fl[3,5:end]|>collect
+        pts = ArchGDAL.IGeometry[]
+        for i in 1:length(xc)
+            pt = ArchGDAL.createpoint([xc[i],yc[i]])
+            pt = ArchGDAL.reproject(pt,EPSG(25832),ProjString("+proj=longlat +datum=WGS84 +no_defs"))
+            push!(pts,pt)
+        end
+        od = DataFrame(geometry=pts, name=propertynames(fl)[5:end], xc=xc, yc=yc)
+        p = plot(od.geometry);
+        for (i, pt) in enumerate(od.geometry)
+            #x = od.xc[i]
+            x = ArchGDAL.getx(od.geometry[i], 0)
+            #y = od.yc[i]
+            y = ArchGDAL.gety(od.geometry[i], 0)
+            name = od.name[i]
+            annotate!(x, y, text(name, 8, :black, :bottom, :left))
+        end
+        return plot!(p)
+    end
+
+    function ctsum(xx, filename)
+        """
+        usage: 
+        
+        nd = ctsum("thickness",infile)
+        nd = ctsum("ksat",infile)
+        nd = ctsum("Par_n",infile)
+        nd = ctsum("theta_sat",infile)
+    
+        """
+        #M = regand("^[0-9]+.*MultipleHorizons",xx)
+        #xx="thickness"
+        M = Regex("^[0-9]+.*MultipleHorizons+.*"*xx)
+        #data = Grep.grep(r"^[0-9]+.*MultipleHorizons+.*thickness", readlines(infile))
+        data = Grep.grep(M, readlines(filename))
+        # Initialize variables to store the control file information
+        controlfile_info = "controlfile: $filename"
+        no = Int64[]
+        lck = Float64[]
+        for ln in data
+            num,flds = split(ln," {")
+            num = parse.(Int64,strip(num))
+            push!(no,num)
+            #tck = Grep.grep(r"thickness",split(flds,";"))
+            tck = Grep.grep(Regex(xx),split(flds,";"))
+            ts = split(tck[1],"=")[2]
+            #ts = parse.(Float64,split(ts," ")[2:end])
+            #length.(ts)
+            ts = split(ts," ")    #strip also possible
+            ts = filter(x->x!="",ts)
+            ts = parse.(Float64,ts)
+            push!(lck,sum(ts))
+        end
+    
+        df = DataFrame(bfid=no,res=lck)
+        # Print the control file information and the extracted values
+        println(controlfile_info)
+        return df
+    end
+   
+
 
 end ##end of module
 
