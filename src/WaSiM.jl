@@ -8172,6 +8172,48 @@ module WaSiM
         println(controlfile_info)
         return df
     end
+
+    function plot_correlation_barplot(a::Regex, b::Regex)
+        # Load the DataFrames
+        df_A = DataFrame(a |> dfonly |> first |> readdf)
+        df_B = DataFrame(b |> dfonly |> first |> readdf)
+    
+        nma = DataFrames.metadata(df_A)|>only|>last|>basename
+        nmb = DataFrames.metadata(df_B)|>only|>last|>basename
+    
+        # Remove last column from df_B
+        select!(df_B, Not(ncol(df_B)))
+        select!(df_A, propertynames(df_B)) 
+    
+        # Calculate correlations and replace NaN with 0
+        #correlations = cor.(eachcol(df_A_subset), eachcol(df_B)).^2
+        for i in 1:size(df_A, 2)
+            correlations[i] = cor(df_A[:, i], df_B[:, i])^2
+        end
+        replace!(correlations, NaN => 0)
+    
+        p0 = bar(1:size(df_A, 2), correlations,
+            legend = false,
+            title = "$nma vs $nmb",
+            fillcolor = ifelse.(correlations .> 0.35, 
+                "cornflowerblue", "coral2"),
+            xticks = (1:size(df_A, 2), propertynames(df_A)),
+            xrotation = 45,
+            xlabel = "",
+            ylabel = "Correlation R²",
+            left_margin = 10mm,
+            bottom_margin = 2mm);
+    
+        ann = map(x->string.(round(x;sigdigits=2)),correlations)
+    
+        for i in 1:size(df_A, 2)
+            Plots.annotate!(i,correlations[i],
+            (ann[i],9,:center,:top,:black))
+            println("R² "*ann[i]*" of Basin "*names(df_A)[i]*" added")
+        end
+    
+       return p0
+    end
    
 
 
