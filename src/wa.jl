@@ -1,9 +1,12 @@
 module wa
-    using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions
+    using DataFrames, DataFramesMeta, CSV, 
+    Statistics, Dates, StatsPlots, Distributions
+    
     using DelimitedFiles, Grep, Printf
     using Rasters, ArchGDAL
     # using PrettyTables
     using PyCall
+    using PyPlot            #for pyplot_df
     import NCDatasets
     default(show = true)
 
@@ -2114,9 +2117,21 @@ module wa
     end
 
     #like jdd to vector of strings.
-    function fdd()
-        cwd = pwd()
-        dirs = readdir(".")
+    function fdd(;cwd=pwd())
+        dirs = readdir(cwd)
+        
+        if length(dirs) == 0 
+            println("$cwd is empty!")
+            return
+        end
+        
+        if filter(x -> (isdir(x)),dirs) == []
+            bn = basename(cwd)
+            @info "no dirs in $bn !"
+            dd()
+            return
+        end
+        
         s = []
         for dir in dirs
             if isdir(dir)
@@ -2128,15 +2143,10 @@ module wa
                     end
                 end
             @printf("%-40s %15.2f MB\n","$(cwd)\\$dir:",size/1024^2);
-    #        else
-    #	    @printf("%-40s\n","$(cwd)");
         end
         end
         return(s)
     end
-
-    # cdb()
-    # fdd()
 
 
     function vgr(regex, file_ending)
@@ -4118,7 +4128,7 @@ module wa
 
     function gofbatch()
         println("batch R Script for GOF")
-        arr = filter(x -> isfile(x) && endswith(x, "_qout") && !occursin(r"\.(png|svg|txt|html|ftz|ftz_0|list|nc|xml|sh|grd|yrly)$", x), readdir())
+        arr = filter(x -> isfile(x) && endswith(x, "_qout") && !occursin(r"\.(png|svg|txt|html|ftz|ftz_0|list|nc|zip|7z|xml|sh|grd|yrly)$", x), readdir())
         for i in arr
             println(i)
         end
@@ -4430,7 +4440,7 @@ module wa
 
     function ggofbatch()
         println("batch R Script for GOF")
-        arr = filter(x -> isfile(x) && endswith(x, "qoutjl") && !occursin(r"\.(png|svg|txt|html|ftz|ftz_0|list|nc|xml|sh|grd|yrly)$", x), readdir())
+        arr = filter(x -> isfile(x) && endswith(x, "qoutjl") && !occursin(r"\.(png|svg|txt|html|ftz|ftz_0|list|nc|zip|7z|xml|sh|grd|yrly)$", x), readdir())
         for i in arr
             println(i)
         end
@@ -4953,7 +4963,7 @@ module wa
 
     function gofbatch_nosvg()
         println("batch R Script for GOF")
-        arr = filter(x -> isfile(x) && endswith(x, "qoutjl") && !occursin(r"\.(png|svg|txt|html|ftz|ftz_0|list|nc|xml|sh|grd|yrly)$", x), readdir())
+        arr = filter(x -> isfile(x) && endswith(x, "qoutjl") && !occursin(r"\.(png|svg|txt|html|ftz|ftz_0|list|nc|zip|7z|xml|sh|grd|yrly)$", x), readdir())
         for i in arr
             println(i)
         end
@@ -7999,7 +8009,7 @@ module wa
                 if (occursin(needle,filename)
                     && 
                     !occursin(r"yr|mon|grid|scn"i,filename) && 
-                    !occursin(r"\.(log|png|svg|txt|html|ftz|ftz_0|list|nc|xml|sh|grd|yrly|eps)$", filename)
+                    !occursin(r"\.(log|png|svg|txt|html|ftz|ftz_0|list|nc|zip|7z|xml|sh|grd|yrly|eps)$", filename)
                     )
                     push!(results, joinpath(looproot, filename)) 
                 end
@@ -8007,7 +8017,7 @@ module wa
         end
         # results = filter(x -> isfile(x) && 
         # !occursin(r"yr|mon|grid|scn"i,x) && 
-        # !occursin(r"\.(log|png|svg|txt|html|ftz|ftz_0|list|nc|xml|sh|grd|yrly|eps)$", x), results)
+        # !occursin(r"\.(log|png|svg|txt|html|ftz|ftz_0|list|nc|zip|7z|xml|sh|grd|yrly|eps)$", x), results)
         out = []
         for x in results
             println("reading $x ...")
@@ -8312,7 +8322,7 @@ module wa
                 if (occursin(needle,filename)
                     && 
                     !occursin(r"yr|mon|grid|scn"i,filename) && 
-                    !occursin(r"\.(log|png|svg|txt|html|ftz|ftz_0|list|nc|xml|sh|grd|yrly|eps)$", filename)
+                    !occursin(r"\.(log|png|svg|txt|html|ftz|ftz_0|list|nc|zip|7z|xml|sh|grd|yrly|eps)$", filename)
                     )
                     push!(results, joinpath(looproot, filename)) 
                 end
@@ -8410,7 +8420,7 @@ module wa
                 if (occursin(needle,filename)
                     && 
                     !occursin(r"yr|mon|grid|scn"i,filename) && 
-                    !occursin(r"\.(log|png|svg|txt|html|ftz|ftz_0|list|nc|xml|sh|grd|yrly|eps)$", filename)
+                    !occursin(r"\.(log|png|svg|txt|html|ftz|ftz_0|list|nc|zip|7z|xml|sh|grd|yrly|eps)$", filename)
                     )
                     push!(results, joinpath(looproot, filename)) 
                 end
@@ -8698,7 +8708,9 @@ module wa
     end
 
     function pyread(x)
-        #df = pd.read_table(x, header=0, na_values=-9999, verbose=true)
+        """
+        pyreader, reads all as stings, conversion later.
+        """
         pd = pyimport("pandas")
         df = pd.read_table(x, 
             engine="c",
@@ -8706,6 +8718,7 @@ module wa
             low_memory=false,
             header=0,
             skipinitialspace=true,
+            dtype="str",              #new!
             na_values=[-9999]
             )
         col_names = df.columns  # Get the column names from the Python DataFrame
@@ -8745,6 +8758,16 @@ module wa
             end
         end
 
+        #map(y->typeof(y),eachcol(df))
+
+        # Iterate over column names
+        for colname in names(df)
+            # Check if the column type is not Date
+            if eltype(df[!, colname]) != Date
+                df[!, colname] .= tryparse.(Float64, df[!, colname])
+            end
+        end
+
         DataFrames.metadata!(df, "filename", x, style=:note)
         return df 
     end
@@ -8773,59 +8796,6 @@ module wa
             Plots.annotate!(x, y, Plots.text(name, 8, :black, :bottom, :left))
         end
         Plots.plot!()
-    end
-
-    function dfm(x::Union{Regex,String,DataFrame};leg = :topright, fun=wa.monmean,mode=:line)
-        """
-        plots a df and applies a function
-            default: monmean
-            monsum, yrsum, yrmean
-            mode can be :bar, :scatter, :line, :steppre, :steppost,
-            :hist, :box
-
-            wa.dfm(s;fun=yrsum,mode=:scatter,leg=false)
-            wa.dfm(s;fun=monmean,mode=:box,leg=false)
-
-        """
-        if isa(x,DataFrame)
-            df = (x)
-        else
-            df = waread(x)
-        end
-            
-        
-        #df = waread(mm)
-        #DataFrames.metadata(df)|>collect|>only|>last
-        ti = try
-            DataFrames.metadata(df)|>only|>last|>basename
-        catch
-        @warn "No basename in metadata!"
-            ti = raw""
-        end
-        
-        if fun==false
-            #reorder           
-            dx = hcat(df[:,Cols(r"date")],df[!,Not(Cols(r"date"))])
-            #printstyled("no function applied!\n", color=:red)
-            @info "no function applied!\n"
-        else
-            @info "applying $fun ..."
-            dx = fun(df)
-        end
-                
-        ln = Symbol.(filter(x->!occursin(r"date|month|year",x),names(dx)))
-        #cols(ln)...,  # Use splatting to pass column names as separate arguments
-        
-        @df dx Plots.plot(
-            Vector(dx[!, 1]), # same as: #tovec(dx,1),
-            cols(ln),
-            legend = leg, 
-            title=ti,
-            seriestype=mode)
-        
-        if names(dx)[1]=="month"
-            Plots.xticks!(1:12, monthabbr.(1:12))
-        end
     end
 
     function qplot(x::Regex, y::Regex)
@@ -9107,5 +9077,842 @@ module wa
             )
         #     camera = (-20, 75))
     end
+
+    
+    function bardf(x::DataFrame;leg=:topright)
+        "with DataFrame input"
+            df = copy(x)
+            y = filter(x->!occursin(r"date|year|month",x),names(df))
+            s = map(y -> Symbol(y),y)
+                ti = try
+            DataFrames.metadata(df)|>only|>last|>basename
+        catch
+            @warn "No basename in metadata!"
+            ti = raw""
+        end
+            #df[!, :year] = year.(df[!,:date]);
+            #df_yearsum = DataFrames.combine(groupby(df, :year), y .=> sum .=> y);
+        nm = filter(x->occursin(r"date|year|month",x),
+            names(df))|>first
+        
+        @df df Plots.plot(select(df,Symbol(nm))|>Matrix,
+                cols(s),
+                legend = leg, 
+                title = ti,
+                seriestype=:bar)
+    end
+
+    function ncdf(xs::RasterSeries)
+        """
+        use of Rasters.lookup
+        @info "this extracts values from the midpoint of the raster.
+        rename!(df,1=>Rasters._maybename(rr),2=>...)
+        last dimension is time..."
+        """
+        #for rr in xs;println(name(rr));end
+        dfs = []
+        for rr in xs;
+            @info "generating" (name(rr))
+            nm = Rasters._maybename(rr)
+            if dims(rr)[1]|>name != :X
+                new_dims = (X(parent(Rasters.lookup(rr,1))), Y(parent(Rasters.lookup(rr,2))), Ti(parent(Rasters.lookup(rr,3))))
+                # Create a new raster with the new dimensions and the same data
+                rr = try
+                    Raster(rr.data, dims=new_dims)
+                catch
+                    @error "var conversion failed!"
+                    return
+                end 
+            end
+        
+            ti = Rasters.lookup(rr,3)
+            x,y = map(x->round(x ./2;digits=0),size(rr)[1:2])
+            df = DataFrame(rr[X=Int(x),Y=Int(y)]',:auto)|>permutedims
+            df = hcat(df, parent(ti), makeunique=true)
+            #rename!(df,1=>Rasters._maybename(rr),2=>"date")
+            rename!(df,1=>Symbol(nm),2=>:date)
+            #DataFrames.metadata!(df, "filename", str, style=:note); 
+            push!(dfs,df)
+           
+            end
+               
+        odf = reduce((left, right) -> 
+            innerjoin(left, right, on = :date,makeunique=true), 
+            dfs)
+
+        return hcat(odf[!,Not(Cols(r"date"))],odf[:,Cols(r"date")])
+    end
+
+    function colsums(df::DataFrame)
+        colsum = sum.(eachcol(df[!,Not(Cols(r"date|month|year"))]))
+        return colsum
+    end
+
+    function subsum(df::DataFrame)
+        """
+        Subset a DataFrame to exclude only columns with zero sums.
+        """
+        column_sums = sum.(eachcol(df[!, Not(:date)]))
+        # Find the column indices with sums equal to 0.0
+        zero_sum_columns = findall(==(0.0), column_sums)
+        # Subset the DataFrame to include only columns with zero sums
+        dout = hcat(df.date, select(df, Not(zero_sum_columns)))
+        rename!(dout, 1=>"date")
+        return dout
+    end
+
+    function xrfacets(a::AbstractString;maskval=0)
+        """
+        uses xarray to plot a 4xn grid of wasim stacks.
+        """
+        xr  = pyimport("xarray")
+        plt = pyimport("matplotlib.pyplot")
+        ad = xr.open_dataset(a)
+        m = ad.keys()|>collect|>last    
+        ad[m].where(ad[m]>maskval).transpose().plot(
+            col="t",
+            col_wrap=4,
+            robust=true,
+            cmap=plt.cm.RdYlBu_r);
+        #return p1.fig #now we can see the plot inside vscode, if PyCall gui works
+        # pygui_start()
+        #p1.fig.show()
+        #display(p1)
+        plt.show()     #thats the right way.
+    end
+
+    function xrplot(x::AbstractString;maskval=0,lyr=0)
+        x = nconly(x)|>last
+        py"""
+        from xarray import open_dataset
+        from matplotlib.pyplot import show
+        maskval = float($maskval)
+        dx = open_dataset($x,mask_and_scale=True).isel(t=$lyr).transpose().to_array()
+        dx.where(dx.values>maskval).plot(cmap="cividis")
+        show()
+        """
+    end
+
+    function xrp(x::Regex; maskval=0, lyr=0,c="cividis")
+        """
+        using PyCall
+        """
+        xr = pyimport("xarray")
+        plt = pyimport("matplotlib.pyplot")
+        x = nconly(x)|>last
+        dx = xr.open_dataset(x,mask_and_scale=true)
+        m = dx.keys()|>collect|>last    
+        dx[m].where(dx[m]>maskval).isel(t=lyr).transpose().plot(cmap=c)
+        #.isel(t=lyr).transpose().to_array()
+        #p1 = dx.where(dx.values>maskval).plot(cmap="turbo")
+        #@pyimport matplotlib.pyplot as plt #plt as const
+        plt.show()
+    end
+
+    function xrp(x::AbstractString; maskval=0, lyr=0,c="cividis")
+        xr = pyimport("xarray")
+        plt = pyimport("matplotlib.pyplot")
+        dx = xr.open_dataset(x,mask_and_scale=true)
+        m = dx.keys()|>collect|>last    
+        dx[m].where(dx[m]>maskval).isel(t=lyr).transpose().plot(cmap=c)
+        plt.show()
+    end
+
+    function fsz(;rec=false)
+        """
+        Returns the total size of all files in the current directory non recursively.
+        """
+        total_size = 0
+        files = readdir()  # Get a list of files in the current directory
+        
+        for file in files
+            filepath = joinpath(pwd(), file)  # Get the full path of the file
+            if isfile(filepath)
+                size = stat(filepath).size  # Get the file size
+                total_size += size
+            end
+        end
+        
+        nr=length(files)
+    
+        total_size_mb = total_size / (1024 * 1024)  # Convert size to megabytes
+        total_size_mb = round(total_size_mb, digits=2)  # Round to 2 decimal places
+        printstyled("Total size of $nr files in $(pwd()): $total_size_mb MB\n", color=:green)
+        
+        if rec
+            dirs = readdir()
+            for dir in dirs
+                if isdir(dir)
+                    cd(dir)
+                    fsz()
+                    cd("..")
+                end
+            end
+        end
+    end
+    
+    function fsize()
+        """
+        ALL names and size in MB via readdir
+        """
+        files = filter(x -> isfile(x), readdir())
+        fzs = [(file, filesize(file) / 2^20) for file in files]
+        tot = round(sum(map(x->x[2],fzs));digits=3)
+        #printstyled("Total Size: $tot MB\n",color=:green)
+        #return(DataFrame(Dict(fzs)))
+        fzs = sort(fzs, by = x -> x[2], rev = true)
+        #fzs = Dict(fzs)
+        odf = rename(DataFrame(fzs),["file","size"])
+        DataFrames.metadata!(odf, "Total Size", tot, style=:note)
+        #DataFrames.metadata(odf)
+        printstyled("Total Size: $tot MB\n",color=:green)
+        return(odf)
+    end
+
+    function dfm(x::Union{Regex, String, DataFrame}; 
+        ann = true, 
+        log = false, 
+        title = true,
+        leg = false,  
+        fun = wa.monmean, 
+        mode=:line)
+        """
+        Plots a DataFrame and applies a function.
+        
+        Parameters:
+        - x: Union{Regex, String, DataFrame} - Input data, can be a DataFrame or file path.
+        - leg: Symbol - Legend position, default is :topright.
+        - fun: Function - The function to apply to the DataFrame, default is wa.monmean.
+        - mode: Symbol - Plot mode, can be :bar, :scatter, :line, :steppre, :steppost, :hist, :box; default is :line.
+        - log: Bool - Logarithmic y-axis, default is false.
+        - title: Bool - Title of the plot, default is true.
+        
+        Example Usage:
+        dfm(s; fun=yrsum, mode=:scatter, leg=false)
+        dfm(s; fun=wa.monmean, mode=:box, leg=false)
+        """
+        if isa(x, DataFrame)
+            df = x
+        else
+            df = waread(x)
+        end
+        
+        ti = try
+            DataFrames.metadata(df)|>only|>last|>basename
+        catch
+        @warn "No basename in metadata!"
+            ti = raw""
+        end
+
+        ln = Symbol.(filter(x -> !occursin(r"date|month|year", x), names(df)))
+        
+        if fun == false
+            # Reorder the DataFrame
+            dx = hcat(df[:, Cols(r"date")], df[!, Not(Cols(r"date"))])
+            @info "No function applied!"
+        else
+            @info "Applying $fun ..."
+            dx = fun(df)
+        end
+
+        if (ann == false || names(dx)[1] == "date")
+            @info "No annotations to plot..."
+            p1 = @df dx Plots.plot(
+                Vector(dx[!, 1]),
+                cols(ln),
+                legend = leg,
+                title = ti,
+                seriestype = mode)
+            #return p1
+        else
+            # Annotate column names along the lines
+            anns = map(x->string(x),ln)
+            #anns, fontsize, rotation, halign, color
+            #xans = map(x->Plots.text(x, 8, -20.0, :top, :red), anns) #bottom
+            fnt = Plots.font(
+                family="sans-serif",
+                pointsize=8, 
+                #halign=:hcenter, 
+                valign=:bottom, 
+                #valign=:top, #:vcenter, 
+                rotation= -10.0, 
+                color=:red)
+            
+            xans = map(x->Plots.text(x, fnt), anns)
+            # y_offset = map(x->median(dx[!,x]),ln)
+            # y_offset = map(x->minimum(dx[!,x]),ln)
+            #y_offset = map(x->minimum(dx[!,x]),ln) .* map(x->maximum(dx[!,x]),ln)
+            #y_offset = map(x->maximum(dx[!,x]),ln) .- map(x->mean(dx[!,x]),ln)
+            y_offset = map(x->minimum(dx[!,x]),ln) .+ map(x->mean(dx[!,x]),ln)
+            #col_annotations = (median(Vector(dx[!, 1])), y_offset, xans) #middle of x-axis
+            col_annotations = (median(Vector(dx[!, 1])), y_offset, xans) #middle of x-axis
+            #col_annotations = (y_offset, y_offset, xans)
+            
+            # annotations = [(
+            #     x_position, y_offset, 
+            # Plots.text(label, fnt)) 
+            # for (x_position, label) in 
+            # zip(y_offset, anns)]
+
+
+
+            p1 = @df dx StatsPlots.plot(
+                Vector(dx[!, 1]),
+                cols(ln),
+                legend = leg,
+                title = ti,
+                seriestype = mode,
+                annotations = col_annotations)  # Add annotations to the plot
+            #return p1
+
+            # for annotation in annotations
+            #     Plots.annotate!(annotation)
+            # end
+
+
+        end
+
+        # if names(dx)[1] == "date"
+        #     col_annotations = nothing
+        # end
+        
+        if names(dx)[1] == "month"
+            Plots.xticks!(
+                1:12, monthabbr.(1:12))
+        end
+
+        if log === true
+            yaxis!(:log10)
+        end
+
+        if title !== true
+            title!(raw"")
+        end
+
+        return p1
+    end
+
+    function qplot(df1::DataFrame,df2::DataFrame;col1=1,col2=1)
+        """
+        takes two dfs and plots r2 QQ of selected cols
+        """
+        if any(map(x->contains(x,"date"),names(df1)))
+            df1 = df1[!,Not(:date)]
+        end
+
+        if any(map(x->contains(x,"date"),names(df2)))
+            df2 = df2[!,Not(:date)]
+        end
+
+        try
+            df1 = select!(df1, col1)
+            df2 = select!(df2, col2)
+        catch
+            @error "col not found!"
+            return
+        end
+
+        
+
+        # if ncol(df)>2
+        #     df = df[!,1:2]
+        # end
+
+        r2 = round(cor(df1[!,1], df2[!,1])^2, digits=3)
+        
+        p = qqplot(df1[!,1], df2[!,1], 
+            #title = "R² = "*string(ti),
+            qqline = :fit)
+            #color = :grays) # erstellt ein QQ-Diagramm <- black
+        xlabel!(p,names(df1)[1])
+        ylabel!(p,names(df2)[1])
+        annotate!(p,:bottomright, text("R² = "*string(r2), :black))
+                
+    end
+
+    function tocb(s::Union{String,Regex})
+        """
+        greps first from current dir Regex and copies to clipboard
+        """
+        if isa(s,Regex)
+            s = Regex(s,"i")
+        end
+        y = first(filter(file -> occursin(s,file), readdir()))
+        println("abspath of $y in clipboard!")
+        abspath(y)|>cb
+    end
+
+    function pyplot_df(df::DataFrame;dt=:date)
+        x = vec(Matrix(select(df,dt)))  
+        ln = (filter(x -> !occursin(r"date|month|year", x), names(df)))
+        #for col in names(df)[1:end-1]  # Exclude the last column, assuming it's the "date" column
+        for col in ln
+            y = df[!, Symbol(col)]
+            PyPlot.plot(x, y, label=col)
+        end
+    
+        PyPlot.xlabel("Date")
+        PyPlot.ylabel("")
+        PyPlot.legend()
+        ti = only(values(DataFrames.metadata(df)))
+        PyPlot.title(ti)
+        PyPlot.grid(true)
+    end
+
+    function readroute(x::Union{String,AbstractString})
+        """
+        reads from wasim routing table 
+        usually named "route.txt"
+        from ... 
+        infile = ctl()|>first|>split|>last|>x->replace(x,r"ctl.*"=>"ctl")
+        ofl = "route.txt"
+        routeg(infile, ofl)
+        df = readroute(ofl)
+        ...        
+        """
+        df = CSV.read(x,DataFrame,header=false,
+            skipto=8,delim="\t",footerskip=1,lazystrings=false)
+        rename!(df,1=>"sim",2=>"obs",3=>"name")
+        df.name=map(x->replace(x,r"#" => "",r" " => "",r"-" => "_"),df[:,3])
+        df.name=map(x->replace(x,r"_>.*" => ""),df.name)
+        sort!(df, :sim)
+        return df
+    end
+
+    function fp(x::Regex;)
+        """
+        """
+        x = glob(x)
+        filter!(z->endswith(z,".nc"),x)
+        x = first(x)
+        r = read(Raster(x,missingval=0;lazy=true))
+        println(descr(r))
+        Plots.plot(
+            r;
+            #c=cgrad(:thermal),
+            c=cgrad(:matter),
+            xlabel="",
+            ylabel="",
+            title = name(r)
+            )
+    end
+
+    function rename_columns(df::DataFrame, name_mapping::DataFrame)
+        v = map(x->Grep.grep(x,names(df)),Regex.(string.(name_mapping.sim)))
+        for (i, name) in enumerate(reduce(vcat, v))
+            if occursin(string.(name_mapping.sim[i]),name)
+                println("renaming ",name, " <-> ",name_mapping.sim[i], " => " ,name_mapping.name[i])
+                rename!(df, name => name_mapping.name[i])
+            end
+        end
+    end
+
+    function tline(df::DataFrame, date_col::Symbol)
+        """
+        adds trendlines to plot
+        """
+        # Get the date column and column names for trendlines
+        date_data = df[!, date_col]
+        trendline_cols = setdiff(names(df), [string.(date_col)])
+    
+        p = Plots.plot()
+        
+        for y_col in trendline_cols
+            y_data = df[!, y_col]
+    
+            # Perform linear regression to get the slope and intercept
+            X = hcat(ones(length(date_data)), 1:length(date_data))
+            y = y_data
+            β = X \ y  # Linear regression
+    
+            # Extract the intercept and slope
+            intercept, slope = β[1], β[2]
+    
+            # Generate the trendline using the linear equation
+            trendline(x) = intercept + slope * x
+    
+            # Add the trendline to the plot
+            plot!(p ,date_data, 
+                trendline.(1:length(date_data)), 
+                #label="$y_col Trendline", 
+                label=false,
+                linewidth=2, linestyle=:dash)
+        end
+    
+        return p
+    end
+
+    function dtrange(start, stop, step)
+        """
+        dtrange(Date(2004),Date(2005),Month(4))
+        """
+        collect(start:step:stop)
+    end
+
+    
+    function dtrange(start, stop, step)
+        """
+        dtrange(Date(2004),Date(2005),Month(4))
+        """
+        collect(start:step:stop)
+    end
+
+    function cdof(x::Union{String,DataFrame})
+        if x isa DataFrame
+            try
+                d = collect(DataFrames.metadata(x))[1][2]|>dirname
+                cd(dirname(d))
+            catch
+                @error "no basename in $x !"
+            end
+        else
+            cd(dirname(x))
+        end
+        d=pwd()
+        println("current dir: $d")
+    end
+
+    function read_df(s::String)
+        """
+        reads a DataFrame from a file w dlm and tryparse subsetting
+        """
+        data, colnames = DelimitedFiles.readdlm(s, '\t', String, '\n', header=true)
+        df = DataFrame(Matrix{Any}(data), :auto)
+        rename!(df,Symbol.(colnames)|>vec)
+        df = df[map(x->!isnothing(x),tryparse.(Int,df[!,1])),:]
+        for i in 1:size(df, 2)
+            df[!, i] = map(x -> parse(Float64, x), df[!, i])
+        end
+        for i in 5:size(df,2)
+            df[!,i]=replace(df[!,i],-9999.0 => missing)
+        end 
+        for i in 5:size(df,2)
+            replace!(df[!,i],-9999.0 => missing)
+        end
+        
+        for i in 1:3
+            df[!,i]=map(x ->Int(x),df[!,i])
+        end
+        #and parse dates...
+        df.date = Date.(string.(df[!,1],"-",df[!,2],"-",df[!,3]),"yyyy-mm-dd");
+        df = df[:,Not(1:4)]
+        metadata!(df, "filename", s, style=:note);
+        return df
+    end
+
+    function kernelplot(df::Union{String,DataFrame})
+        """
+        using KernelDensity
+        usage: kernelplot("route.txt")
+        """
+        if df isa String
+            ofl = "route.txt"
+            df = CSV.read(ofl,DataFrame,header=false,skipto=8,delim="\t",footerskip=1,lazystrings=false)
+            rename!(df,1=>"sim",2=>"obs",3=>"name")
+            df.name=map(x->replace(x,r"#" => "",r" " => "",r"-" => "_"),df[:,3])
+            df.name=map(x->replace(x,r"_>.*" => ""),df.name)
+        end
+    
+    
+        #dsu = wa.qbb()|>last #recursive
+        dsu = wa.qba()
+        M = parse.(Float64,dsu[!,Cols(2,4)])|>y->subset(y,1=> ByRow(>(0.)))|>Matrix
+        B = kde(M)
+        plot(B);
+        dsu.basin  .= df.name
+        name_mapping = df    
+        msk = @rsubset(parse.(Float64,dsu[!,Cols(2,4)]) .> 0)
+        nmn = dsu[msk[!,1],:]
+        nmn.basin=map(x->replace(x,r"_" => " "),nmn.basin)
+        Plots.annotate!([(M[i,1], M[i,2], 
+            Plots.text(
+            nmn.basin[i], 
+            8, :left, halign=:center, rotation=-15.0)) for i in 1:size(nmn, 1)])
+        plot!(legend=false)
+    end
+
+    function corrbar(a::Vector{Float64}, b::Vector{Float64})
+        # for specific subsets of dfs....
+        df_A = a
+        df_B = b
+        #ti = "$a vs $b"
+        ti = raw""
+
+        #cor(df_A, df_B)^2
+    
+        #Calculate correlations and replace NaN with 0
+        correlations = Vector{Float64}(undef, size(df_A,1))
+        for i in 1:size(df_A, 1)
+            correlations[i] = cor(df_A, df_B)^2
+        end
+        replace!(correlations, NaN => 0)
+    
+        p0 = Plots.bar(1:size(df_A, 1), correlations,
+            legend = false,
+            title = ti,
+            fillcolor = ifelse.(correlations .> 0.35, 
+                "cornflowerblue", "coral2"),
+            xticks = (1:size(df_A, 1), propertynames(df_A)),
+            xrotation = 45,
+            xlabel = "",
+            ylabel = "Correlation R²",
+            left_margin = 10mm,
+            bottom_margin = 2mm);
+    
+        ann = map(x->string.(round(x;sigdigits=2)),correlations)
+    
+        for i in 1:size(df_A, 1)
+            Plots.annotate!(i,correlations[i],
+            (ann[i],9,:center,:top,:black))
+            # println("R² "*ann[i]*" of Basin 
+            # "*(df_A)[i]*" added")
+        end
+    
+       return p0
+    end
+    
+    #function cmplot(;temp::Regex,prec::Regex,col=1)
+    function cmplot(;temp=r"^so_temper",prec=r"^so_prec",col=1)
+        """
+        selects first dfcol (for so)
+        dt annotations
+        wa.cmplot(;temp=r"^so_temper",prec=r"^so_prec")
+        see also:
+        climateplot(r"^tem",r"^pre")
+        col = subbasin of interest
+        wa.climateplot(r"^temp",r"pre";col="tot_average")
+        ws. prc and temp tauschen un opacity einstellen....
+        """
+        temp,prec,col = (r"^so_temper",r"^so_pre",1)
+        #eig. braucht man das col argument bei so_ input nicht.
+
+        prec = waread2(prec)
+        
+        yrs = year.(prec.date)|>unique|>length
+        prec = monsum(prec)
+        if ncol(prec) > 2
+            select!(prec, Not(:month))
+            prec = prec[:,col]
+            precvec = vec(Matrix(prec))
+        else
+            precvec = vec(Matrix(select(prec, Not(:month))))
+        end
+        
+        
+        precvec = precvec ./ yrs
+        
+        temp = waread2(temp)|>monmean
+        if ncol(temp) > 2
+            select!(temp, Not(:month))
+            temp = temp[:,col]
+            tempvec = vec(Matrix(temp))
+        else
+            tempvec = vec(Matrix(select(temp, Not(:month))))
+        end
+        
+        month_abbr = ["Jan", "Feb", "Mär", "Apr", 
+            "Mai", "Jun", "Jul", "Aug", "Sep", 
+                "Okt", "Nov", "Dez"];
+
+        p1 = Plots.bar(prec.month, precvec, 
+            color=:cornflowerblue, 
+            #xlabel="", 
+            xflip=false,
+            ylabel="Niederschlag [mm]", 
+            legend=false, yflip=true);
+        xticks!(1:12, month_abbr)
+        for i in prec.month
+            val = round(precvec[i]; digits=1)
+            annotate!(i, precvec[i], text("$(val)",8,:bottom))
+        end
+
+        # val = round(maximum(tempvec); sigdigits=2)
+        # i = findmax(tempvec)[2]
+        # Plots.annotate!(i, tempvec[i], 
+        #             text("max: $(val) °C",10,:top))
+        p2 = twinx();
+        ann2 = map(x->
+            text(
+            string.(round(x; digits=1))*"°", 
+                7,:left, 
+                :red),
+                tempvec)
+        
+        plot!(p2, tempvec, xlabel="", 
+            ylabel="Temperatur [°C]", color=:coral2,
+            annotations = (temp.month .+ 0.125, 
+                tempvec .+ 0.1, ann2, :center),
+            label=false, 
+            linestyle = :dashdot,
+            linewidth=3);      
+
+        return p1
+    end
+
+    function selt(x::DataFrame, col::Any)
+        """
+        selects from dataframe date an column
+        """
+        df = select(x,Cols(col,:date))
+        println(names(df))
+        return df   #vec(Matrix(df))
+    end
+
+    function hydromon(df::DataFrame; leg = :outertopright, logy = false)
+        ti = try
+            DataFrames.metadata(df) |> only |> last |> basename
+        catch
+            @warn "No basename in metadata!"
+            raw""
+        end
+        s = Symbol.(filter(x -> !occursin(r"date|year|month"i, x), names(df)))
+        years = unique(Dates.year.(df[!, :date]))
+        ylog = logy ? :log : :identity
+    
+        begin
+            su = @rsubset df year.(:date)==years[1]
+            su = monmean(su)
+            @df su Plots.plot(:month,cols(s),
+                label = years[1], 
+                title=ti,
+                yaxis=ylog,
+                legend=leg)
+            for yr in years[2:end]
+                su = @rsubset df year.(:date)===yr
+                su = monmean(su)
+                @df su Plots.plot!(:month,
+                    cols(s),
+                    yaxis=ylog,
+                    label = yr)
+            end
+            month_abbr = ["Jan", "Feb", "Mär", "Apr", 
+                        "Mai", "Jun", "Jul", "Aug", "Sep", 
+                            "Okt", "Nov", "Dez"];
+            #xticks!(0.5:11.5 , month_abbr)
+            xticks!(1:12, month_abbr)
+            plot!()
+        end
+    end
+
+    function hydro(df::DataFrame; leg = :outertopright, logy = false)
+        """
+        hydrgraph plot
+        """
+        
+        ti = try
+            #DataFrames.metadata(df)|>last|>basename
+            DataFrames.metadata(df)|>values|>only
+        catch
+            @warn "No basename in metadata!"
+            raw""
+        end
+    
+        s = filter(x -> !occursin(r"(?i)date|year|month", 
+            string(x)), names(df))
+        years = unique(year.(df.date))
+        years_str = string.(years)
+    
+        ylog = logy ? :log : :identity
+        
+        mn = [ monthabbr(x) for x in unique(month.(df.date)) ]
+    
+        hp1 = plot(#xticks = mn,
+                   xrot = 45,
+                   xminorticks = true,
+                   yaxis = ylog,
+                   #xlim = extrema(df.date),
+                   title = ti,
+                   formatter = :plain,
+                   legend = leg)
+    
+        for yr in years
+            su = filter(row -> year(row.date) == yr, df)
+            hp1 = plot!(vec(Matrix(select(su, Not(:date)))),
+                        label = yr,
+                        formatter = :plain)
+        end
+
+        st = 15:31:size(df,1)
+        xticks!(st, mn)
+        
+    
+        return hp1
+    end
+           
+          
+    
+
+
    
 end ##end of module
+
+
+
+# function repro_tr(   
+#     input_file::AbstractString, 
+#     output_file::AbstractString, 
+#     target_srs::Int64)
+#     tr = rimport("terra")
+#     rin = tr.rast(input_file,drivers="NETCDF")
+#     """
+#     reprojection with R's terra package
+#     """
+#     # tr.NAflag(rin)=-9999
+#     # rin = tr.flip(tr.trans(
+#     #     tr.rev(rin)), 
+#     #     direction = "vertical")
+    
+#     @rput rin
+    
+#     R"""
+#     terra::crs(rin) <- 'EPSG:25832'
+#     terra::NAflag(rin) <- -9999
+
+#     rin <- terra::flip(terra::trans(
+#     terra::rev(rin)), direction = 'vertical')
+    
+#     """
+#     # @rput rin
+#     # R"""terra::crs(rin) <- 'EPSG:25832'"""
+    
+#     n = rcopy(R"rin")
+#     out = tr.project(n, "EPSG:"*string(target_srs))
+#     tr.writeCDF(out,output_file,overwrite=true)
+#     #return out
+#     println("$output_file done!")
+# end
+
+# function nctc(   
+#     input_file::AbstractString, 
+#     output_file::AbstractString, 
+#     target_srs::Int64;mask = true)
+#     """
+#     R terra reprojection
+#     """
+#     #@rput mask=T
+    
+#     if mask
+#         rmask = "TRUE"
+#     else
+#         rmask = "FALSE"
+#     end
+
+#     R"""
+#     rin = terra::rast($input_file)
+#     terra::crs(rin) <- 'EPSG:25832'
+#     terra::NAflag(rin) <- -9999
+
+#     rin <- terra::flip(terra::trans(
+#         terra::rev(rin)), direction = 'vertical')
+#     #rin[rin <= 0] <- NA #masking
+#     mask = as.logical($rmask)
+#     ifelse(mask, yes = {
+#         rin[rin <= 0] <- NA
+#       }, no = rin)
+
+#     out = terra::project(rin, paste0("EPSG:",$target_srs))
+#     writeCDF(out,$output_file,overwrite=T)
+#     """
+#     return Raster(output_file)
+#     println("$output_file done!")
+# end
