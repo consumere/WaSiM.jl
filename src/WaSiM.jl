@@ -11,6 +11,18 @@
 #module Startup
 #test WaSiM
 
+using PrecompileTools    # this is a small dependency
+    @compile_workload begin
+        using DataFrames, DataFramesMeta, CSV, Statistics, Dates, StatsPlots, Distributions
+        using Plots.PlotMeasures
+        using DelimitedFiles, Grep, Printf
+        using Rasters, ArchGDAL
+        import NCDatasets
+        using PyCall
+        using KernelDensity
+        using SHA
+    end
+
 module WaSiM
 
     using DataFrames, DataFramesMeta, CSV, Statistics, Dates, StatsPlots, Distributions
@@ -27,8 +39,7 @@ module WaSiM
 
     default(show = true)
     using PrecompileTools    # this is a small dependency
-
-    @compile_workload begin
+#    @compile_workload begin
 
     if Sys.isapple()
         platform = "osx"
@@ -8900,9 +8911,9 @@ module WaSiM
         end
 
         function toMain()
-            fnames = names(Main.wa, all=true)
+            fnames = names(Main.WaSiM, all=true)
             for submodule in fnames
-                @eval import Main.wa.$submodule
+                @eval import Main.WaSiM.$submodule
             end
         end
 
@@ -10088,6 +10099,6 @@ module WaSiM
             title!("Bandwith of duplicate values")
         end
         
-    end ##end of precompile
+#    end ##end of precompile
     
 end ##end of module

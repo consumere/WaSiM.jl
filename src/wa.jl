@@ -1,4 +1,5 @@
 #julia --startup-file=no -q --color=yes --project=. #-e 'using Pkg; Pkg.instantiate(); Pkg.API.precompile()'
+#julia --startup-file=no -q --color=yes --project="/mnt/c/Users/chs72fw/.julia/dev/WaSiM"
 #include("src/wa.jl")
 # cd(raw"C:\Users\chs72fw\.julia\dev\WaSiM")
 # pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM";cd(pt)
@@ -24,9 +25,8 @@ module wa
     using SHA
 
     default(show = true)
-    using PrecompileTools    # this is a small dependency
-
-    @compile_workload begin
+    # using PrecompileTools    # this is a small dependency
+    # @compile_workload begin
 
     if Sys.isapple()
         platform = "osx"
@@ -10086,6 +10086,6 @@ module wa
             title!("Bandwith of duplicate values")
         end
         
-    end ##end of precompile
+#    end ##end of precompile
     
 end ##end of module
