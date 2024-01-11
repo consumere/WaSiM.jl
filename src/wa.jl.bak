@@ -1,29 +1,16 @@
 #julia --startup-file=no -q --color=yes --project=. #-e 'using Pkg; Pkg.instantiate(); Pkg.API.precompile()'
+#julia --startup-file=no -q --color=yes --project="/mnt/c/Users/chs72fw/.julia/dev/WaSiM"
 #include("src/wa.jl")
 # cd(raw"C:\Users\chs72fw\.julia\dev\WaSiM")
 # pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM";cd(pt)
 # using Pkg;Pkg.activate(".") 
 
-###this is wa.jl
-
 #using WaSiM
 
 #module Startup
+#module WaSiM
 #test WaSiM
-
-# using PrecompileTools    # this is a small dependency
-    # @compile_workload begin
-        # using DataFrames, DataFramesMeta, CSV, Statistics, Dates, StatsPlots, Distributions
-        # using Plots.PlotMeasures
-        # using DelimitedFiles, Grep, Printf
-        # using Rasters, ArchGDAL
-        # import NCDatasets
-        # using PyCall
-        # using KernelDensity
-        # using SHA
-    # end
-
-module WaSiM
+module wa
 
     using DataFrames, DataFramesMeta, CSV, Statistics, Dates, StatsPlots, Distributions
     using Plots.PlotMeasures
@@ -38,8 +25,8 @@ module WaSiM
     using SHA
 
     default(show = true)
-    using PrecompileTools    # this is a small dependency
-#    @compile_workload begin
+    # using PrecompileTools    # this is a small dependency
+    # @compile_workload begin
 
     if Sys.isapple()
         platform = "osx"
@@ -8911,9 +8898,9 @@ module WaSiM
         end
 
         function toMain()
-            fnames = names(Main.WaSiM, all=true)
+            fnames = names(Main.wa, all=true)
             for submodule in fnames
-                @eval import Main.WaSiM.$submodule
+                @eval import Main.wa.$submodule
             end
         end
 
