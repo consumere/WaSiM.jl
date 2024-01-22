@@ -7,18 +7,18 @@
 ###this is wa.jl but renamed to WaSiM
 #using WaSiM
 #test WaSiM
-    using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions,DataFramesMeta
-    using DelimitedFiles, Grep, Printf, PrettyTables, Rasters
-    import NCDatasets
-    import ArchGDAL
-    import GeoInterface
-    import GeoDataFrames
-    import Shapefile
-    import InteractiveUtils
-    using Plots.PlotMeasures
-    using SHA
-    using PyCall
-    import Conda
+# using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions,DataFramesMeta
+# using DelimitedFiles, Grep, Printf, PrettyTables, Rasters
+# import NCDatasets
+# import ArchGDAL
+# import GeoInterface
+# import GeoDataFrames
+# import Shapefile
+# import InteractiveUtils
+# using Plots.PlotMeasures
+# using SHA
+# using PyCall
+# import Conda
 
 module WaSiM
     using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions
@@ -4681,9 +4681,6 @@ module WaSiM
         fl = split(fl,"\"")|>first  #[2]
         return(string(fl))
     end
-
-
-
 
     # function umlauts(input_file::AbstractString, output_file::AbstractString)
     #     # Read input file

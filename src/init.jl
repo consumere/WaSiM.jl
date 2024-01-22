@@ -10,6 +10,11 @@ cd("/mnt/c/Users/chs72fw/.julia/dev/WaSiM/")
 using Pkg
 Pkg.activate(".")
 Pkg.status()
+Pkg.test()
+
+force_recompile(package_name::String) = Base.compilecache(Base.identify_package(package_name))
+force_recompile("NCDatasets")
+Pkg.test()
 
 # ##das müsste dann in dem Modul WaSiM stehen
 # include("win/smallfuncs.jl")
