@@ -4,9 +4,21 @@
 # pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM";cd(pt)
 # using Pkg;Pkg.activate(".") 
 
-###this is wa.jl
+###this is wa.jl but renamed to WaSiM
 #using WaSiM
 #test WaSiM
+    using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions,DataFramesMeta
+    using DelimitedFiles, Grep, Printf, PrettyTables, Rasters
+    import NCDatasets
+    import ArchGDAL
+    import GeoInterface
+    import GeoDataFrames
+    import Shapefile
+    import InteractiveUtils
+    using Plots.PlotMeasures
+    using SHA
+    using PyCall
+    import Conda
 
 module WaSiM
     using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions
@@ -8029,9 +8041,9 @@ module WaSiM
     end
 
     function toMain()
-        fnames = names(Main.wa, all=true)
+        fnames = names(Main.WaSiM, all=true)
         for submodule in fnames
-            @eval import Main.wa.$submodule
+            @eval import Main.WaSiM.$submodule
         end
     end
 

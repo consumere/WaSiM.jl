@@ -1,8 +1,19 @@
 name: CompatHelper
-on: push
+on:
+  push:
+    branches:
+      - main
+#      - dev
+    tags: ['*']
+  pull_request:
 # schedule:
 #   - cron: 0 1 * ? *
 # workflow_dispatch:
+concurrency:
+  # Skip intermediate builds: always.
+  # Cancel intermediate builds: only if it is a pull request build.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 jobs:
   CompatHelper:
     runs-on: ubuntu-latest
