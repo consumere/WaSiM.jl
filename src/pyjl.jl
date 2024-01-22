@@ -1,17 +1,18 @@
-platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
+#would be redefinition of macro pj
+# platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
         
-if platform == "windows"
-    src_path = "C:\\Users\\Public\\Documents\\Python_Scripts\\julia"
-    macro pj() pt=raw"C:\Users\Public\Documents\Python_Scripts\julia\pyjl.jl";include(pt);end
-else
-    src_path = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
-    macro pj() pt="/mnt/c/Users/Public/Documents/Python_Scripts/julia/pyjl.jl";include(pt);end
-end   
+# if platform == "windows"
+#     src_path = "C:\\Users\\Public\\Documents\\Python_Scripts\\julia"
+#     macro pj() pt=raw"C:\Users\Public\Documents\Python_Scripts\julia\pyjl.jl";include(pt);end
+# else
+#     src_path = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
+#     macro pj() pt="/mnt/c/Users/Public/Documents/Python_Scripts/julia/pyjl.jl";include(pt);end
+# end   
 
 module pyjl
     using PyCall
     using PyPlot
-#    include("win/smallfuncs.jl") only in locdir not here
+    include("win/smallfuncs.jl")
     #@info "dont forget using PyCall; pygui(true) in vscode!"
 
     function looks_like_number(str::AbstractString)
@@ -125,7 +126,6 @@ module pyjl
         return jdf
     end
 
-
     function pyread_meteo(s::AbstractString;hdr=0)
         pd = pyimport("pandas")
         ddf = pd.read_csv(s, delim_whitespace=true, 
@@ -167,7 +167,7 @@ module pyjl
             low_memory=false,
             verbose=true)
         #ddf.filename=basename(s)
-        ddf = wa.pydf(ddf)
+        ddf = pydf(ddf)
         
         dt = Date.(map(x -> join(x, "-"), eachrow(ddf[:, 1:3])))
         
@@ -252,10 +252,28 @@ module pyjl
 
     #ENV["LD_PRELOAD"] = .so to the missing c++ library...
 
-    function xrp(x::AbstractString; maskval=0, lyr=0)
+    
+    #filter(z -> endswith(z,".nc"),readdir()[map(x->occursin(rx,x),readdir())])
+
+
+    """
+    pyjl.xrp(r"sb.+06") 
+    xrp(x::Union{String,Regex}; maskval=0, lyr=0)
+            if isa(x,Regex)
+                x = nconly(x)|>last
+            end
+    """
+    function xrp(x::Union{String,Regex}; maskval=0, lyr=0)
+        if isa(x,Regex)
+            #x = nconly(x)|>last
+            v = readdir();
+            z = v[map(k->occursin(x,k),v)]
+            println(z)
+            z = z[map(k->endswith(k,"nc"),z)][end]
+            x = z
+        end
         xr = pyimport("xarray")
         plt = pyimport("matplotlib.pyplot")
-        x = nconly(x)|>last
         dx = xr.open_dataset(x,mask_and_scale=true)
         m = dx.keys()|>collect|>last    
         dx[m].where(dx[m]>maskval).isel(t=lyr).transpose().plot(cmap="turbo")
@@ -295,15 +313,312 @@ module pyjl
         return(df)
     end
 
+    function pybar(pt::Union{String,Regex,DataFrame};
+        fun=mean, box=false,
+        log=false)
 
+        if pt isa String
+            df = waread(pt)
+        elseif pt isa Regex
+            df = waread(pt)
+        else
+            df = pt
+        end
 
+        #x = df.date
+        #ln = (filter(x -> !occursin(r"date|month|year", x), names(df)))
+        # Add a Year column
+        df.Year = year.(df.date)
+        select!(df,Not(:date))
+        
+        ln = (filter(x -> !occursin(r"date|month|year"i, 
+            x), names(df)))
+        # Aggregate data by year and column
+        # df_agg = DataFrames.combine(
+        #     groupby(df, :Year), 
+        #     ln .=> fun .=> ln);
+    
+        df_agg = combine(groupby(df, :Year), 
+            (ln .=> fun .=> ln)...)
 
+        if box
+            # Get unique years
+            years = unique(df_agg.Year)
 
-end
+            # Create a new figure
+            figure()
+
+            # Iterate over columns
+            for (i, col) in enumerate(ln)
+                # Create a new subplot for each column
+                subplot(length(ln), 1, i)
+                title(col)
+
+                # Create a boxplot for each year
+                boxplot([df_agg[df_agg.Year .== year, 
+                    col] for year in years], 
+                    labels=years)
+            end
+            # for (i, col) in enumerate(ln)
+            #     PyPlot.boxplot(
+            #         df_agg[:,col]
+            #     )
+            # end
+            #PyPlot.xlabel("Year")
+        else           
+            # Create grouped bar plot
+            for (i, col) in enumerate(ln)
+                PyPlot.bar(
+                    df_agg.Year .+ (i-1)*0.2, 
+                df_agg[:, col], 
+                width=0.2, 
+                label=col, 
+                align="center")
+            end
+            # for col in ln
+            #     y = df_agg[!, Symbol(col)]
+            #     #PyPlot.plot(x, y, label=col)
+            #     PyPlot.bar(
+            #         df_agg.Year, # .- 0.2, 
+            #         y, 
+            #         width=0.4, 
+            #         label=col, 
+            #         align="center")
+            # end
+        end
+
+        if log
+            PyPlot.yscale("log")
+        end
+        
+        PyPlot.ylabel("")
+        PyPlot.legend()
+        ti = only(values(DataFrames.metadata(df)))
+        PyPlot.title(ti)
+        PyPlot.grid(true)
+    end
+
+    
+    """
+    monthly hydrgraph plot using PyPlot
+    selection of first column by default
+    x::Union{Regex,String,DataFrame}; col = 1,
+        leg = "best", logy = false)
+    """
+    function pyhydro(x::Union{Regex,String,DataFrame}; 
+        col = 1,
+        leg::String = "best", logy = false)
+        if isa(x,DataFrame)
+        df = (x)
+        else
+        #df = waread(x)
+        df = pyread(x)
+        end
+
+        ti = try
+        DataFrames.metadata(df)|>values|>only
+        catch
+        @warn "No basename in metadata!"
+        raw""
+        end
+
+        df = select(df,Cols(col,:date))
+        @info "selected column:",names(df)
+
+        colname = names(df[!,Not(:date)])|>only
+
+        s = filter(x -> !occursin(r"date|year|month"i, string(x)), names(df))
+        years = unique(year.(df.date))
+        years_str = string.(years)
+
+        ylog = logy ? :log : :identity
+
+        mn = [ monthabbr(x) for x in unique(month.(df.date)) ]
+        #PyPlot.rc("font",**{"family":"serif","serif":["cmr10"]}) #thats the one
+        PyPlot.rc("font", family="serif", serif=["cmr10"])
+        PyPlot.figure()
+        PyPlot.set_cmap("cividis")
+        for yr in years
+            su = filter(row -> year(row.date) == yr, df)
+            PyPlot.plot(vec(Matrix(select(su, Not(:date)))), label = yr)
+        end
+        #PyPlot.xlabel("Time")
+        PyPlot.ylabel(colname)
+        PyPlot.title(ti)
+        # locs = ["best", "upper right", "upper left", "lower left", 
+        # "lower right", "right", "center left", "center right", 
+        # "lower center", "upper center", "center"]
+        PyPlot.legend(loc=leg)
+        if logy
+            PyPlot.yscale("log")
+        end
+        PyPlot.xticks(rotation=45)
+        PyPlot.grid(true)
+        # Add x-axis labels with month abbreviations
+        # x_values = 1:length(mn)
+        # x_labels = mn
+        # PyPlot.xticks(x_values, x_labels)
+        # Add x-axis labels with month abbreviations
+        #x_values = 1:366/12:366
+        x_values = range(1, stop=360, length=12)
+        #x_labels = repeat(mn, inner=round(Int, 366/12))
+        #x_labels = repeat(mn, inner=31)
+        x_labels = mn
+        PyPlot.xticks(x_values, x_labels)
+        PyPlot.show()
+    end
+
+    """
+    monthly boxplot plot using PyPlot
+    selection of first column by default
+    x::Union{Regex,String,DataFrame}; col = 1,
+        leg = "best", logy = false, fun=mean)
+    with annotations of mean values.
+    """
+    function pybox(x::Union{Regex,String,DataFrame}; 
+        col = 1,
+        leg::String = "best", logy = false, fun=mean)
+        if isa(x,DataFrame)
+        df = (x)
+        else
+        #df = waread(x)
+        df = pyread(x)
+        end
+
+        ti = try
+        DataFrames.metadata(df)|>values|>only|>basename
+        catch
+        @warn "No basename in metadata!"
+        raw""
+        end
+
+        df = select(df,Cols(col,:date))
+        @info "selected column:",names(df)
+
+        colname = names(df[!,Not(:date)])|>only
+
+        df.Month = month.(df.date)
+        str = [ @sprintf("%02i", x) for x in (df.Month) ]
+        month_abbr = ["Jan", "Feb", "Mar", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"]
+
+        ln = Symbol.(filter(x->!occursin(r"date|year|month"i,x),names(df)))
+
+        grouped_df = groupby(df, :Month)
+        
+        PyPlot.figure()
+        for (i, group) in enumerate(grouped_df)
+            PyPlot.boxplot(group[!, ln[1]], positions=[i], 
+            autorange=true,
+            #fliers = false,
+            notch = true,
+            widths=0.7)
+        end
+        PyPlot.xticks(1:12, month_abbr)
+        colname = replace(colname,r"_" => " ")
+        ti = replace(ti,r"_" => " ")
+        PyPlot.ylabel(colname)
+        PyPlot.title(ti)
+
+        if fun != mean
+            #funval = DataFrames.combine(grouped_df, ln[1] => fun)[!,end]
+            #means = DataFrames.combine(grouped_df, ln[1] => mean)
+            #means.val .= funval
+            funval = DataFrames.combine(grouped_df, ln[1] => fun)
+            #years = unique(year.(df.date))
+            #funval[!,end] = funval[!,end] ./ length(years)
+            for i in eachrow(funval)
+                m = 0 #i[2] #yposition, could also be meansval
+                val = i[2]  #i[3]
+                PyPlot.annotate(round(val; digits=2), (i.Month, m), 
+                    textcoords="offset points", 
+                    #xytext=(0,25), 
+                    xytext=(0,-10), 
+                    ha="center")
+            end
+
+        else
+            means = DataFrames.combine(grouped_df, ln[1] => mean)
+            for i in eachrow(means)
+                m = 0 #i[2] #yposition, could also be meansval
+                val = i[2]
+                PyPlot.annotate(round(val; digits=2), (i.Month, m), 
+                    textcoords="offset points", 
+                    #xytext=(0,10), 
+                    xytext=(0,-10), 
+                    ha="center")
+            end
+        end
+        
+        return gcf()
+    end
+
+    """
+    doyplot(simh, simp, obsh)
+    xr  = pyimport("xarray")
+    sh="d:/remo/qm/tas/simh.nc"
+    simh=xr.open_dataset(sh)
+    simp=xr.open_dataset("tas_cor_raw.nc")
+    tl="D:/remo/cordex/eobs/v28/tas/tas_obs.nc"
+    obsh=xr.open_dataset(tl)
+    pyjl.doyplot(simh,simp,obsh)
+    keys have to be the same!
+
+    ad = xr.open_dataset(a)
+    m = ad.keys()|>collect|>last    
+    """
+    function doyplot(simh, simp, obsh;tosum::Bool=false)
+        plt = pyimport("matplotlib.pyplot")
+        k = simh.keys()|>collect|>last
+
+        if tosum
+            grouped_simh = simh[k].mean("longitude").mean("latitude").groupby("time.dayofyear").sum()
+            grouped_simp = simp[k].mean("longitude").mean("latitude").groupby("time.dayofyear").sum()
+            grouped_obsh = obsh[k].mean("longitude").mean("latitude").groupby("time.dayofyear").sum()
+        else
+            # Group by dayofyear and calculate mean for each DataFrame
+            grouped_simh = simh[k].mean("longitude").mean("latitude").groupby("time.dayofyear").mean()
+            grouped_simp = simp[k].mean("longitude").mean("latitude").groupby("time.dayofyear").mean()
+            grouped_obsh = obsh[k].mean("longitude").mean("latitude").groupby("time.dayofyear").mean()
+        end        
+        # Create the figure
+        #plt.figure(figsize=(10, 5), dpi=216)
+        PyPlot.rc("font", family="serif", serif=["cmr10"])
+        plt.figure()
+        # plt.plot(grouped_simh, label=join("\$"*k*"_{sim,h}\$"))
+        # plt.plot(grouped_simp, label=join("\$"*k*_"{sim,p}\$"))
+        # plt.plot(grouped_obsh, label=join("\$"*k*"_{obs,h}\$"))
+        # Set plot title and limits
+        # Plot the mean temperature for simh
+        plt.plot(grouped_simh, label="\$T_{sim,h}\$")
+
+        # Plot the mean temperature for simp
+        plt.plot(grouped_simp, label="\$T_{sim,p}\$")
+
+        # Plot the mean temperature for obsh
+        plt.plot(grouped_obsh, label="\$T_{obs,h}\$")
+        plt.title("Historical modeled and observed and predicted $k")
+        plt.xlim(0, 365)
+        # Add grid
+        plt.gca().grid(alpha=0.3)
+        # Add legend
+        plt.legend()
+        # Show the plot
+        plt.show()
+    end
+
+end #end of module
 
 @info "running using PyCall; pygui(true) now..."
 using PyCall; pygui(true) 
 
+#@doc PyPlot.boxplot
+#pyjl.pybar(r"sb05")
+#pyjl.pybar(r"sb05";fun=sum)
+#import Statistics
+#pyjl.pybar(r"wind";fun=Statistics.median,box=true)
+#pyjl.pybar(r"wind";box=true)
+#pyjl.pybar(r"qges";fun=Statistics.median)
+#pyjl.pybar(r"qges";fun=z->Statistics.quantile(z,0.9))
 # ap = pyjl.pyplot_df
 # r = pyjl.pyread
 # ap(r"Sch"|>r;log=true)

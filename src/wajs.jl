@@ -1029,6 +1029,13 @@ module wajs
         return fig
     end
 
+    function toMain()
+        fnames = names(Main.wajs, all=true)
+        for submodule in fnames
+            @eval import Main.wajs.$submodule
+        end
+    end
+
       
 
 
