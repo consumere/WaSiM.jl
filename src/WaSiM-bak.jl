@@ -6250,16 +6250,6 @@ module WaSiM
             return line[1:end-length(flag)]
         end
 
-        # function findindf(df::DataFrame,col,x)
-        #     #filter(row -> contains(col,x), df)
-        #     filter(row -> occursin(Regex(x,"i"),col), df)
-        # end
-        # #filter(row -> contains(row.name,"_qout"), ds)
-        # findindf(df,"name","E")
-        # x="Et"
-        # col="name"
-        # filter(row -> occursin(Regex(x,"i"),df[!,col]), df)
-
         function findindf(df::DataFrame, x)
             """
             like Grep.grep("x",df)
