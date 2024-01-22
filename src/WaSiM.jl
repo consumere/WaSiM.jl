@@ -8,7 +8,7 @@
 #using WaSiM
 #test WaSiM
 
-module wa
+module WaSiM
     using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions
     using DataFramesMeta
     using DelimitedFiles, Grep , Printf
