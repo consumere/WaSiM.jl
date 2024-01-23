@@ -57,13 +57,14 @@ module WaSiM
         macro wasim() pt="C:\\Users\\chs72fw\\.julia\\dev\\WaSiM\\src\\wa.jl";include(pt);end
     else
         platform = "unix"
-        winpt = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
-        pcld = "~/pCloud Drive/Stuff/Python_Scripts/julia"
-        src_path = isdir(winpt) ? winpt : pcld
-        println("sourcepath is $src_path")
-        if isdir(winpt)
-            macro wasim() pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM/src/wa.jl";include(pt);end
-        end
+	src_path = "."
+        # winpt = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
+        # pcld = "~/pCloud Drive/Stuff/Python_Scripts/julia"
+        # src_path = isdir(winpt) ? winpt : pcld
+        # println("sourcepath is $src_path")
+        # if isdir(winpt)
+            # macro wasim() pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM/src/wa.jl";include(pt);end
+        # end
     end
 
     function qgk(;rootdir=".", prefix="qgk")
