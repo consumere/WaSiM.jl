@@ -20,7 +20,9 @@
 # using PyCall
 # import Conda
 
+
 module WaSiM
+
     using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions
     using DataFramesMeta
     using DelimitedFiles, Grep , Printf
@@ -33,13 +35,15 @@ module WaSiM
     import Shapefile #for jlzonal
     import InteractiveUtils
     using Plots.PlotMeasures
+    using KernelDensity
     using SHA
     using PyCall
     import Conda #for python deps
     #using RCall
     #    default(show = true)
     # using PlotlyJS
-    using KernelDensity
+        ##import rasterstuff
+    include("rasterfuncs.jl")
     
 
     if Sys.isapple()
