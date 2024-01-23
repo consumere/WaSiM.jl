@@ -4,6 +4,13 @@
 # pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM";cd(pt)
 # using Pkg;Pkg.activate(".") 
 
+ #   function toMain()
+ #       fnames = names(Main.WaSiM, all=true)
+ #       for submodule in fnames
+ #           @eval import Main.WaSiM.$submodule
+ #       end
+ #   end
+
 ###this is wa.jl but renamed to WaSiM
 #using WaSiM
 #test WaSiM
@@ -8040,14 +8047,6 @@ module WaSiM
         printstyled("$sf\n--> ",color=:green)
         return lat
     end
-
-    function toMain()
-        fnames = names(Main.WaSiM, all=true)
-        for submodule in fnames
-            @eval import Main.WaSiM.$submodule
-        end
-    end
-
 
 
     """
