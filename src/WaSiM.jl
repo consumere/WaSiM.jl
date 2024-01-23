@@ -22,7 +22,7 @@
 
 
 module WaSiM
-
+    import Main #for toMain
     using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions
     using DataFramesMeta
     using DelimitedFiles, Grep , Printf
