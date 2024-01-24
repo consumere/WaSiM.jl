@@ -27,9 +27,15 @@
 # using PyCall
 # import Conda
 
+#import Main #for toMain
 
+# function toMain()
+#     fnames = names(Main.WaSiM, all=true)
+#     for submodule in fnames
+#         @eval import Main.WaSiM.$submodule
+#     end
+# end
 module WaSiM
-
     using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions
     using DataFramesMeta
     using DelimitedFiles, Grep , Printf
@@ -44,34 +50,34 @@ module WaSiM
     using Plots.PlotMeasures
     using KernelDensity
     using SHA
-    using PyCall
+    #using PyCall
     import Conda #for python deps
     #using RCall
     #    default(show = true)
     # using PlotlyJS
         ##import rasterstuff
     include("rasterfuncs.jl")
+    src_path = "./src"
     
-
-    if Sys.isapple()
-        platform = "osx"
-        const homejl = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
-        const mybash = "/Users/apfel/.bash_aliases"
-        src_path = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
-    elseif Sys.iswindows()
-        platform = "windows"
-        src_path = "C:\\Users\\Public\\Documents\\Python_Scripts\\julia"
-        macro wasim() pt="C:\\Users\\chs72fw\\.julia\\dev\\WaSiM\\src\\wa.jl";include(pt);end
-    else
-        platform = "unix"
-        winpt = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
-        pcld = "~/pCloud Drive/Stuff/Python_Scripts/julia"
-        src_path = isdir(winpt) ? winpt : pcld
-        println("sourcepath is $src_path")
-        if isdir(winpt)
-            macro wasim() pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM/src/wa.jl";include(pt);end
-        end
-    end
+    # if Sys.isapple()
+    #     platform = "osx"
+    #     const homejl = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
+    #     const mybash = "/Users/apfel/.bash_aliases"
+    #     src_path = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
+    # elseif Sys.iswindows()
+    #     platform = "windows"
+    #     src_path = "C:\\Users\\Public\\Documents\\Python_Scripts\\julia"
+    #     macro wasim() pt="C:\\Users\\chs72fw\\.julia\\dev\\WaSiM\\src\\wa.jl";include(pt);end
+    # else
+    #     platform = "unix"
+    #     # winpt = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
+    #     # pcld = "~/pCloud Drive/Stuff/Python_Scripts/julia"
+    #     # src_path = isdir(winpt) ? winpt : pcld
+    #     # println("sourcepath is $src_path")
+    #     # if isdir(winpt)
+    #         # macro wasim() pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM/src/wa.jl";include(pt);end
+    #     # end
+    # end
 
     function qgk(;rootdir=".", prefix="qgk")
         """
@@ -604,7 +610,7 @@ module WaSiM
         return(dfs)
     end
 
-    function loadalldfs(path::Vector{Any})
+    function readalldfs(path::Vector{Any})
         files = path
         dfs = DataFrame[]
         for file in files
@@ -1679,14 +1685,6 @@ module WaSiM
         
         cd(owd)
     end
-    
-
-
-
-    # for (root, dirs, files) in walkdir(owd)
-    #     z = filter(file -> (endswith(file, ".jl")) && isfile(file), files)
-    #     println(z)   
-    # end
 
     """
     recursive grep
@@ -1766,15 +1764,7 @@ module WaSiM
     
     function vgpyo(snippet::AbstractString)
         owd = abspath(pwd())
-        # platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-        
-        # if platform == "windows"
-        #     script_dir = "src_path/Public/Documents/Python_Scripts"
-        # else
-        #     # Assuming you want to use a different path for Linux/WSL, adjust as needed
-        #     script_dir = "/mnt/c/Users/Public/Documents/Python_Scripts"
-        # end
-        
+
         cd(src_path) #from global x 
     
     
@@ -1796,15 +1786,6 @@ module WaSiM
     end
     
     function vgpy(snippet::AbstractString)
-        #owd = abspath(pwd())
-        # platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-        
-        # if platform == "windows"
-        #     script_dir = "src_path/Public/Documents/Python_Scripts"
-        # else
-        #     # Assuming you want to use a different path for Linux/WSL, adjust as needed
-        #     script_dir = "/mnt/c/Users/Public/Documents/Python_Scripts"
-        # end
 
         script_dir = dirname(src_path)
         
@@ -5171,30 +5152,30 @@ module WaSiM
         return p1
     end
 
-    # ##very nice meta programming... move to smallfuncs.jl
-    # macro vv(s) vgjl(s);end
-    # #@vv "unter"
-    # macro vpy(s) vgpy(s);end
-    # #@vpy "climate"
-    # macro vr(s) vgr(s);end
-    # #@vr "climate"
-    # macro vct(s) vgctl(s);end
-    # #@vct "das ist"
-    # macro rg(s) rglob(s);end
-    # macro glb(s) glob(s);end
-    # macro gl(s) glob(s)|>first;end
-    # #fastplot
-    # macro fp(s) dfp(Regex(s));end
-    # macro flog(s) dfl(Regex(s));end
-    # macro ncrm() ncrem=src_path*"/ncremover.jl";include(ncrem);end
-    # macro rasrm() remer=src_path*"/raster_remover.jl";include(remer);end
-    # macro nco(s) first(nconly(s));end
-    # macro dfo(s) first(dfonly(s));end
-    # macro wajs() pt=src_path*"/wajs.jl";include(pt);end
-    # macro cmk() pt=src_path*"/cairomakie.jl";include(pt);end
-    # macro rcall() pt=src_path*"/rcall.jl";include(pt);end
-    # macro hd(df) df[1:4,:];end
-    # macro pyjl() pt=src_path*"/pyjl.jl";include(pt);end
+    ##very nice meta programming... move to smallfuncs.jl
+    macro vv(s) vgjl(s);end
+    #@vv "unter"
+    macro vpy(s) vgpy(s);end
+    #@vpy "climate"
+    macro vr(s) vgr(s);end
+    #@vr "climate"
+    macro vct(s) vgctl(s);end
+    #@vct "das ist"
+    macro rg(s) rglob(s);end
+    macro glb(s) glob(s);end
+    macro gl(s) glob(s)|>first;end
+    #fastplot
+    macro fp(s) dfp(Regex(s));end
+    macro flog(s) dfl(Regex(s));end
+    macro ncrm() ncrem=src_path*"/ncremover.jl";include(ncrem);end
+    macro rasrm() remer=src_path*"/raster_remover.jl";include(remer);end
+    macro nco(s) first(nconly(s));end
+    macro dfo(s) first(dfonly(s));end
+    macro wajs() pt=src_path*"/wajs.jl";include(pt);end
+    macro cmk() pt=src_path*"/cairomakie.jl";include(pt);end
+    macro rcall() pt=src_path*"/rcall.jl";include(pt);end
+    macro hd(df) df[1:4,:];end
+    macro pyjl() pt=src_path*"/pyjl.jl";include(pt);end
 
     function readbetween(io::IO, start::String, stop::String)
         output = Vector{String}()
@@ -6820,55 +6801,55 @@ module WaSiM
         return file_columns
     end
 
-    """
-    no transposing
-    """
-    function pydf_to_julia(py_df::PyObject)
-        # Convert each column of the Python DataFrame to a Julia array
-        py_df = py_df.reset_index(inplace=false)
-        col_names = py_df.columns  # Get the column names from the Python DataFrame
-        col_arrays = try 
-            [convert(Array, py_df[col]) for col in col_names]
-        catch
-            @error "error in converting!"
-            return 
-        end
-        cas = [convert(Vector{Float64}, z) for z in col_arrays]
-        # Create a Julia DataFrame using the converted arrays and column names
-        julia_df = DataFrame(Symbol(col) => arr for (col, arr) in zip(col_names, cas))
-        #julia_df = DataFrame(Symbol(col) => arr for (col, arr) in zip(col_names, col_arrays))    
-        return julia_df
-    end 
+    # """
+    # no transposing
+    # """
+    # function pydf_to_julia(py_df::PyObject)
+    #     # Convert each column of the Python DataFrame to a Julia array
+    #     py_df = py_df.reset_index(inplace=false)
+    #     col_names = py_df.columns  # Get the column names from the Python DataFrame
+    #     col_arrays = try 
+    #         [convert(Array, py_df[col]) for col in col_names]
+    #     catch
+    #         @error "error in converting!"
+    #         return 
+    #     end
+    #     cas = [convert(Vector{Float64}, z) for z in col_arrays]
+    #     # Create a Julia DataFrame using the converted arrays and column names
+    #     julia_df = DataFrame(Symbol(col) => arr for (col, arr) in zip(col_names, cas))
+    #     #julia_df = DataFrame(Symbol(col) => arr for (col, arr) in zip(col_names, col_arrays))    
+    #     return julia_df
+    # end 
     
-    """
-    Convert each column of the Python DataFrame to a Julia array
-    """
-    function pydf(py_df::PyObject)
-        #py_df.reset_index(inplace=true)
-        py_df = py_df.reset_index(inplace=false)
-        col_names = py_df.columns  # Get the column names from the Python DataFrame
-        col_names = convert(Array, col_names)
-        col_arrays = try 
-                    [convert(Array, py_df[col]) for col in col_names]
-                catch
-                    @error "error in converting!"
-                    return 
-                end
-        #col_arrays = [convert(Array, df[col]) for col in col_names]
-        cas = [convert(Vector{Float64}, z) for z in col_arrays]
-        #julia_df = DataFrame(Symbol(col) => arr for (col, arr) in zip(col_names, cas))
-        jdf = DataFrame(cas, :auto)
-        #size(jdf)
-        fn = try
-            py_df.filename
-        catch
-            @info "no filename present"
-        end
+    # """
+    # Convert each column of the Python DataFrame to a Julia array
+    # """
+    # function pydf(py_df::PyObject)
+    #     #py_df.reset_index(inplace=true)
+    #     py_df = py_df.reset_index(inplace=false)
+    #     col_names = py_df.columns  # Get the column names from the Python DataFrame
+    #     col_names = convert(Array, col_names)
+    #     col_arrays = try 
+    #                 [convert(Array, py_df[col]) for col in col_names]
+    #             catch
+    #                 @error "error in converting!"
+    #                 return 
+    #             end
+    #     #col_arrays = [convert(Array, df[col]) for col in col_names]
+    #     cas = [convert(Vector{Float64}, z) for z in col_arrays]
+    #     #julia_df = DataFrame(Symbol(col) => arr for (col, arr) in zip(col_names, cas))
+    #     jdf = DataFrame(cas, :auto)
+    #     #size(jdf)
+    #     fn = try
+    #         py_df.filename
+    #     catch
+    #         @info "no filename present"
+    #     end
 
-        metadata!(jdf, "filename", fn, style=:note);
-        rename!(jdf, col_names);
-        return jdf
-    end
+    #     metadata!(jdf, "filename", fn, style=:note);
+    #     rename!(jdf, col_names);
+    #     return jdf
+    # end
 
     """
     Convert DataFrame Column to a Vector
@@ -9994,48 +9975,6 @@ module WaSiM
 
 
     """
-    pycall function to polygonize a raster
-    polygonize_raster(input_raster_path::String, output_shapefile_path::String;epsg=25832)
-    """
-    function polygonize_raster(input_raster_path::String, output_shapefile_path::String;epsg=25832)
-        gdal = pyimport("osgeo.gdal")
-        ogr = pyimport("osgeo.ogr")
-        osr = pyimport("osgeo.osr")
-
-        # Open the raster dataset
-        dataset = gdal.Open(input_raster_path)
-
-        # Get the first band
-        band = dataset.GetRasterBand(1)
-
-        # Get the "ESRI Shapefile" driver
-        driver = gdal.GetDriverByName("ESRI Shapefile")
-
-        # Create a new shapefile dataset
-        out_ds = driver.Create(output_shapefile_path, 0, 0, 0, gdal.GDT_Unknown)
-
-        # Create a spatial reference object
-        srs = osr.SpatialReference()
-        srs.ImportFromEPSG(epsg)
-
-        # Create a new layer
-        layer = out_ds.CreateLayer("polygonized", srs, ogr.wkbPolygon)
-
-        # Polygonize the raster
-        try
-            gdal.Polygonize(band, py"None", layer, -1, [], callback=py"None")
-            @info "new shapefile created at: $output_shapefile_path ..."
-        catch
-            @error "gdal.Polygonize failed ..."
-        end
-        
-        # Close the dataset to write it to the disk
-        out_ds = py"None"
-    end
-
-
-
-    """
     reads controlfile
     uses Grep.grep to select lines
     returns a DataFrame
@@ -10550,6 +10489,21 @@ module WaSiM
         end
     end
 
- 
+    function hd(x::DataFrame)
+        if nrow(x)>20
+            @info "headtail of df:"
+            vcat(first(x,5),last(x,5))
+        else
+            first(x,5)
+        end
+    end
+
+    """
+    headtail of df using mapcols
+    """
+    function ht(df::DataFrame)
+        mapcols(x -> x[Not(2:end-1)], df)
+    end
     
-end #end of module
+end ##end of module endof
+

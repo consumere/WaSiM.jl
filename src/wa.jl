@@ -11777,6 +11777,136 @@ module wa
         end
         return outd
     end
-   
+
+    """
+    dfroute(;ofl="route.txt")
+    reads from wa.routeg(infile, ofl) and returns a DataFrame with the following columns:
+        - sim: simulated flow
+        - obs: observed flow
+        - name: name of the station
+    """
+    function dfroute(;ofl="route.txt")
+        df = CSV.read(ofl,DataFrame,header=false,skipto=8,delim="\t",footerskip=1,lazystrings=false)
+        rename!(df,1=>"sim",2=>"obs",3=>"name")
+        df.name=map(x->replace(x,r"#" => "",r" " => "",r"_>.*" => "",r"-" => "_"),df[:,3])
+        sort!(df, :sim)
+        return df    
+    end
+
+    """
+    The F1 Score ranges from 0 to 1, where a higher value indicates a better balance between precision and recall
+    F1= 2⋅(Precision⋅Recall) / Precision+Recall 
+    """
+    function f1_score(data::DataFrame, 
+        sim_col::Union{Symbol,Int64} = 1, 
+        obs_col::Union{Symbol,Int64} = 2; threshold = 0.5, minobs=true)
+        # Extracting simulation and observation columns
+        #sim_values = data[:, sim_col]
+        #obs_values = data[:, obs_col]
+        sim_nm=only(names(select(data, sim_col)))
+        obs_nm=only(names(select(data, obs_col)))
+        @info "simcol is $sim_nm, obscol is $obs_nm"
+        sim_values = select(data, sim_col)|>Matrix|>vec
+        obs_values = select(data, obs_col)|>Matrix|>vec
+
+        if minobs
+            threshold = minimum(obs_values)
+            @info "threshold is set to minimum of observations: $threshold"
+        else
+            # Threshold for classification (you may need to adjust this based on your problem)
+            threshold = threshold
+        end
+
+        # Convert to binary classification (1 if greater than threshold, 0 otherwise)
+        sim_binary = sim_values .> threshold
+        obs_binary = obs_values .> threshold
+
+        # True Positives, False Positives, True Negatives, False Negatives
+        tp = sum(sim_binary .& obs_binary)
+        fp = sum(sim_binary .& .!obs_binary)
+        tn = sum(.!sim_binary .& .!obs_binary)
+        fn = sum(.!sim_binary .& obs_binary)
+
+        # Precision, Recall, and F1 Score
+        precision = tp / (tp + fp)
+        recall = tp / (tp + fn)
+        
+        # F1 Score is the harmonic mean of precision and recall
+        f1_score = 2 * (precision * recall) / (precision + recall)
+
+        return f1_score
+    end
+
+    """
+    recursive rmeq; keeps otherdata
+    """
+    function rmopt()
+        # Get the list of files
+        files = wa.rglob("")
+
+        #!occursin(r"pl|sh|csv|html|xml|fzt|ftz|log|ini|^wq|yrly|nc|tif|jpeg|png|svg|txt", file)
+        # py|R|ftz_0|tex
+        # Define the file extensions to keep
+        keep_exts = [".ipynb", ".py", ".R", ".Rmd", ".log",
+            ".tif", ".jpeg", ".png", ".svg",
+            ".cpg", ".shx", ".dbf", ".prj", ".shp", ".tex", 
+            ".csv", 
+            ".html", ".ftz", ".ftz_0", ".txt", 
+            ".list", ".nc", ".xml", ".sh", ".grd", ".yrly"]
+            
+        files = filter(file -> 
+            !occursin(r"(wq_|pl$|sh$|fzt|ftz|log$|ini|otherdata|intern)", file)
+            , files)
+        
+            # Process each file
+        for file in files
+            # Check if the file extension is in the list of extensions to keep
+            if !(splitext(file)[2] in keep_exts)
+                try
+                # Read the file as a DataFrame
+                println("Processing $file ...")
+                ms = ["-9999", "lin", "log", "--"]
+                #df = CSV.read(file, DataFrame)
+                df = CSV.File(file; 
+                    delim="\t", 
+                    header=1,
+                    silencewarnings=true, 
+                    normalizenames=false, 
+                    missingstring=ms, 
+                    types=Float64) |> DataFrame
+                dropmissing!(df,ncol(df))
+                # dropmissing!(df,4)
+                # Calculate the sums of the 5th column and the last column
+                y = sum(df[:, 5])
+                x = sum(df[:, end])
+
+                # Check the conditions
+                if x <= (nrow(df) - 5) * -9999 && y <= (nrow(df) - 5) * -9999 || x == 0 && y == 0
+                    # Remove the file
+                    rm(file)
+                    printstyled("$file removed ...\n", color=:red)
+                end
+                catch e
+                    println("Error processing $file: $e")
+                end
+            end
+        end
+    end
+
+    function hd(x::DataFrame)
+        if nrow(x)>20
+            @info "headtail of df:"
+            vcat(first(x,5),last(x,5))
+        else
+            first(x,5)
+        end
+    end
+
+    """
+    headtail of df using mapcols
+    """
+    function ht(df::DataFrame)
+        mapcols(x -> x[Not(2:end-1)], df)
+    end 
     
 end ##end of module endof
