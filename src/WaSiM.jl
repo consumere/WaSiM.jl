@@ -1,10 +1,10 @@
 #julia --startup-file=no -q --color=yes --project=. #-e 'using Pkg; Pkg.instantiate(); Pkg.API.precompile()'
-#include("src/wa.jl")
+#include("src/jl")
 # cd(raw"C:\Users\chs72fw\.julia\dev\WaSiM")
 # pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM";cd(pt)
 # using Pkg;Pkg.activate(".") 
 
-###this is wa.jl but renamed to WaSiM
+###this is jl but renamed to WaSiM
 #using WaSiM
 #test WaSiM
 # using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions,DataFramesMeta
@@ -60,7 +60,7 @@ module WaSiM
     # elseif Sys.iswindows()
     #     platform = "windows"
     #     src_path = "C:\\Users\\Public\\Documents\\Python_Scripts\\julia"
-    #     macro wasim() pt="C:\\Users\\chs72fw\\.julia\\dev\\WaSiM\\src\\wa.jl";include(pt);end
+    #     macro wasim() pt="C:\\Users\\chs72fw\\.julia\\dev\\WaSiM\\src\\jl";include(pt);end
     # else
     #     platform = "unix"
     #     # winpt = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
@@ -68,7 +68,7 @@ module WaSiM
     #     # src_path = isdir(winpt) ? winpt : pcld
     #     # println("sourcepath is $src_path")
     #     # if isdir(winpt)
-    #         # macro wasim() pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM/src/wa.jl";include(pt);end
+    #         # macro wasim() pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM/src/jl";include(pt);end
     #     # end
     # end
 
@@ -1650,17 +1650,6 @@ module WaSiM
         fwin = filter(file -> endswith(file, ".jl"), 
             readdir(script_dir*"/win", join=true))
         files = vcat(files,fwin)
-        #files = wa.rglob(r"[.]jl$")
-        # rootdir=script_dir
-        # suffix = r"[.]jl$"
-        # files = []
-        # for (looproot, dirs, filenames) in walkdir(rootdir)
-        #     for filename in filenames
-        #         if (occursin(suffix,filename))
-        #             push!(files, joinpath(looproot, filename)) 
-        #         end
-        #     end
-        # end
         
         for file in files
             open(file) do f
@@ -2075,7 +2064,7 @@ module WaSiM
 
     """
     reads, reduces + merges by date and plots
-    wa.pall(glob(r"qges|qbas|qd"))
+    pall(glob(r"qges|qbas|qd"))
     """
     function dfpall(files::Vector{String})
         dfs = DataFrame[]
@@ -2122,7 +2111,7 @@ module WaSiM
     reads, reduces + merges by date
     ds = innerjoin(unique.(dfs, xcol)..., on = xcol, makeunique=true)
     example:
-    df = wa.mall(glob(r"qges|qbas|qd"))
+    df = mall(glob(r"qges|qbas|qd"))
     """
     function mall(files::Vector{String};xcol=:date)
         #files
@@ -2671,7 +2660,7 @@ module WaSiM
     running monthly mean...
     rmm(x::DataFrame;fun=mean)
     can also be sum. 
-    dfr(r"qbas")|>i->wa.rmm(i;fun=sum)|>cmk.dfp
+    dfr(r"qbas")|>i->rmm(i;fun=sum)|>cmk.dfp
     """
     function rmm(x::DataFrame;fun=mean)
         # Ensure the date column is of type Date
@@ -4922,34 +4911,6 @@ module WaSiM
         return p1
     end
 
-    # """
-    # kge barplot 
-    # takes Vector{Any} as input from wa.pout
-    # """
-    # function kgdf(ds::Vector{Any})
-        
-    #     ds.name=map(x->replace(x,r"-qoutjl.*" =>"","_" => " "),ds.name)
-    #     ann = map(x->string.(round(x;sigdigits=2)),ds.KGE)
-    #     p1 = Plots.bar(ds.name, ds.KGE, xlabel = "Name", ylabel = "KGE", legend = false, 
-    #     title = splitpath(pwd())|>last, 
-    #     xrotation = 45, 
-    #     fmt = :png, 
-    #     size = (800, 600), 
-    #     fillcolor = ifelse.(ds.KGE .> 0, "cornflowerblue", "coral2"),
-    #     #annotations = (ds.name,ds.KGE, ann, :top),
-    #     xaxis = "",
-    #     left_margin = 10mm,
-    #     bottom_margin = 15mm, 
-    #     bar_width = 0.6);
-
-    #     for i in 1:length(ds.name)
-    #         Plots.annotate!(ds.name[i],ds.KGE[i],(ann[i],11,
-    #             :center,:top,:black))
-    #         #println(ann[i]*" added")
-    #     end
-    #     return p1
-    # end
-
 
     function nseval()
         """
@@ -6601,7 +6562,7 @@ module WaSiM
     """
     climateplot(r"^tem",r"^pre")
     col = subbasin of interest
-    wa.climateplot(r"^temp",r"pre";col="tot_average")
+    climateplot(r"^temp",r"pre";col="tot_average")
     ws. prc and temp tauschen un opacity einstellen....
     """
     function climateplot(temp::Regex,prec::Regex;col="tot_average")
@@ -6794,56 +6755,6 @@ module WaSiM
         return file_columns
     end
 
-    # """
-    # no transposing
-    # """
-    # function pydf_to_julia(py_df::PyObject)
-    #     # Convert each column of the Python DataFrame to a Julia array
-    #     py_df = py_df.reset_index(inplace=false)
-    #     col_names = py_df.columns  # Get the column names from the Python DataFrame
-    #     col_arrays = try 
-    #         [convert(Array, py_df[col]) for col in col_names]
-    #     catch
-    #         @error "error in converting!"
-    #         return 
-    #     end
-    #     cas = [convert(Vector{Float64}, z) for z in col_arrays]
-    #     # Create a Julia DataFrame using the converted arrays and column names
-    #     julia_df = DataFrame(Symbol(col) => arr for (col, arr) in zip(col_names, cas))
-    #     #julia_df = DataFrame(Symbol(col) => arr for (col, arr) in zip(col_names, col_arrays))    
-    #     return julia_df
-    # end 
-    
-    # """
-    # Convert each column of the Python DataFrame to a Julia array
-    # """
-    # function pydf(py_df::PyObject)
-    #     #py_df.reset_index(inplace=true)
-    #     py_df = py_df.reset_index(inplace=false)
-    #     col_names = py_df.columns  # Get the column names from the Python DataFrame
-    #     col_names = convert(Array, col_names)
-    #     col_arrays = try 
-    #                 [convert(Array, py_df[col]) for col in col_names]
-    #             catch
-    #                 @error "error in converting!"
-    #                 return 
-    #             end
-    #     #col_arrays = [convert(Array, df[col]) for col in col_names]
-    #     cas = [convert(Vector{Float64}, z) for z in col_arrays]
-    #     #julia_df = DataFrame(Symbol(col) => arr for (col, arr) in zip(col_names, cas))
-    #     jdf = DataFrame(cas, :auto)
-    #     #size(jdf)
-    #     fn = try
-    #         py_df.filename
-    #     catch
-    #         @info "no filename present"
-    #     end
-
-    #     metadata!(jdf, "filename", fn, style=:note);
-    #     rename!(jdf, col_names);
-    #     return jdf
-    # end
-
     """
     Convert DataFrame Column to a Vector
     vec(Matrix(select(df,col)))
@@ -6854,20 +6765,6 @@ module WaSiM
         return vec(Matrix(df))
     end
 
-    # """
-    # prints out the function definition
-    # """
-    # function zp(func::Any)
-    #     #pt = joinpath(@__DIR__,"func-win.jl")
-    #     pt = src_path*"/func-win.jl"
-    #     _str = "$(func)"
-    #     #_str = r"^\s*"*"$(func)"
-    #     #_str = r"(?:^\s*)"*"$(func)"
-    #     #r"\n\s*\n" ##empty line regex.
-    #     #readbetween(open(pt),string(_str), "end")
-    #     #readbetween(open(pt),Regex(_str),r"end$")
-    #     readbetween(open(pt),Regex(_str),r"^\s*function")
-    # end
 
     function print_lines_between_patterns(filename::AbstractString, start_pattern::AbstractString, end_pattern::AbstractString)
         in_range = false
@@ -7880,11 +7777,11 @@ module WaSiM
         mode can be :bar, :scatter, :line, :steppre, :steppost,
         :hist, :box
 
-        wa.dfm(s;fun=yrsum,mode=:scatter,leg=false)
-        wa.dfm(s;fun=monmean,mode=:box,leg=false)
+        dfm(s;fun=yrsum,mode=:scatter,leg=false)
+        dfm(s;fun=monmean,mode=:box,leg=false)
 
     """
-    function dfmo(x::Union{Regex,String,DataFrame};leg = :topright, fun=wa.monmean,mode=:line)
+    function dfmo(x::Union{Regex,String,DataFrame};leg = :topright, fun=monmean,mode=:line)
         if isa(x,DataFrame)
             df = (x)
         else
@@ -7933,7 +7830,7 @@ module WaSiM
     takes first two cols of df and plots r2 QQ
     """
     function qplot(x::Regex, y::Regex)
-        df1,df2 = map(z->wa.waread(z),[x,y])
+        df1,df2 = map(z->waread(z),[x,y])
         # df1 = waread(x)
         # df2 = waread(y)
         
@@ -8170,20 +8067,20 @@ module WaSiM
     Parameters:
     - x: Union{Regex, String, DataFrame} - Input data, can be a DataFrame or file path.
     - leg: Symbol - Legend position, default is :topright.
-    - fun: Function - The function to apply to the DataFrame, default is wa.monmean.
+    - fun: Function - The function to apply to the DataFrame, default is monmean.
     - mode: Symbol - Plot mode, can be :bar, :scatter, :line, :steppre, :steppost, :hist, :box; default is :line.
     - log: Bool - Logarithmic y-axis, default is false.
     - title: Bool - Title of the plot, default is true.
     Example Usage:
     dfm(s; fun=yrsum, mode=:scatter, leg=false)
-    wa.dfm(r"qbas";mode=:steppre,leg=:outertopright,ann=false)
+    dfm(r"qbas";mode=:steppre,leg=:outertopright,ann=false)
     """
     function dfm(x::Union{Regex, String, DataFrame}; 
         ann = true, 
         log = false, 
         title = true,
         leg = false,  
-        fun = wa.monmean, 
+        fun = monmean, 
         mode=:line)
         if isa(x, DataFrame)
             df = x
@@ -8552,8 +8449,8 @@ module WaSiM
             df.name=map(x->replace(x,r"_>.*" => ""),df.name)
         end
     
-        #dsu = wa.qbb()|>last #recursive
-        dsu = wa.qba()
+        #dsu = qbb()|>last #recursive
+        dsu = qba()
         M = parse.(Float64,dsu[!,Cols(2,4)])|>y->subset(y,1=> ByRow(>(0.)))|>Matrix
         mns = names(dsu[!,Cols(2,4)])
         B = kde(M)
@@ -8619,11 +8516,11 @@ module WaSiM
     """
     selects first dfcol (for so)
     dt annotations
-    wa.cmplot(;temp=r"^so_temper",prec=r"^so_prec")
+    cmplot(;temp=r"^so_temper",prec=r"^so_prec")
     see also:
     climateplot(r"^tem",r"^pre")
     col = subbasin of interest
-    wa.climateplot(r"^temp",r"pre";col="tot_average")
+    climateplot(r"^temp",r"pre";col="tot_average")
     ws. prc and temp tauschen un opacity einstellen....
     #function cmplot(;temp::Regex,prec::Regex,col=1)
     @doc CSV.read
@@ -8754,7 +8651,7 @@ module WaSiM
             @warn "No basename in metadata!"
             raw""
         end
-        #df = wa.selt(df,4)
+        #df = selt(df,4)
         s = Symbol.(filter(x -> !occursin(r"date|year|month"i, x), names(df)))
         years = unique(Dates.year.(df[!,:date]))
         #Scale of the axis. 
@@ -8978,7 +8875,7 @@ module WaSiM
     """
     tst of grouped barplot
     """
-    function bargroup(x::Union{Regex,String,DataFrame};leg = :topright,fun=wa.monsum, lcols=1)
+    function bargroup(x::Union{Regex,String,DataFrame};leg = :topright,fun=monsum, lcols=1)
         if isa(x,DataFrame)
             df = (x)
         else
@@ -9012,7 +8909,7 @@ module WaSiM
             @warn "No basename in metadata!"
             raw""
         end
-        xt = wa.tovec(df,dt)
+        xt = tovec(df,dt)
         mx = round(findmax(df[!,Not(Cols(dt))]|>Matrix|>collect)[1];digits=0)
         minx = round(findmin(df[!,Not(Cols(dt))]|>Matrix|>collect)[1];digits=0)
         
@@ -9292,9 +9189,9 @@ module WaSiM
     qrtr(pt::Union{String,DataFrame},
         fun=sum;agg=quarterofyear)
     example 
-     wa.qrtr(df;agg=year)|>dfp
-     wa.qrtr(df;fun=mean)|>dfp
-     wa.qrtr(wa.skipyr(df);fun=mean)|>dfp
+     qrtr(df;agg=year)|>dfp
+     qrtr(df;fun=mean)|>dfp
+     qrtr(skipyr(df);fun=mean)|>dfp
     """
     function qrtr(pt::Union{String,DataFrame};fun=sum,agg=quarterofyear)
 
@@ -9393,7 +9290,9 @@ module WaSiM
         
 
         ti = try 
-            first(split(basename(x),"_"))
+            #first(split(basename(x),"_"))
+            DataFrames.metadata(ndf)|>values|>first|>basename|>y->split(y,"-")|>first
+            #-qoutjl"
         catch
             @warn "No basename in metadata!"
             raw""
@@ -9497,7 +9396,7 @@ module WaSiM
     ks = map(byear,outd)
 
     for z in dfonly(r"qoutjl\$")
-        wa.byear(z)|>println
+        byear(z)|>println
     end    
     """
     function byear(x::Union{String,Regex,DataFrame};)
@@ -9526,9 +9425,9 @@ module WaSiM
         grouped_df = groupby(df, :year)
         DataFrames.combine(grouped_df) do group
             simulated, observed = vec(Matrix(group[!,Cols(1)])),vec(Matrix(group[!,Cols(2)]))
-            kge = wa.kge2(simulated, observed)
-            ve = wa.vef(simulated, observed)
-            nse = wa.nse(simulated, observed)
+            kge = kge2(simulated, observed)
+            ve = vef(simulated, observed)
+            nse = nse(simulated, observed)
             
             #grouping key :year is returned as first column
             dout = DataFrame(kge=kge,nse=nse,ve=ve,nm=nm)
@@ -9690,7 +9589,7 @@ module WaSiM
                 color=:black
             )
     
-            dx = wa.monsum(df)
+            dx = monsum(df)
             y_offset = dx[!,2]
             anns = map(x->string.(round(x,digits=2)), y_offset)
             xans = map(x->Plots.text(x, fnt), anns)
@@ -9699,7 +9598,7 @@ module WaSiM
             col_annotations = (Vector(dx[!, 1]) .+ 0.5, y_offset, xans) # x y val
     
             # Create a colormap from the `monmean` values
-            #k=wa.colorfunction(dx[!,2])
+            #k=colorfunction(dx[!,2])
             #k = cf2(dx[!,2])
             #mat = reshape(k, (1,nrow(dx)))
             #colors = colormap.(dx[!,2])
@@ -9908,7 +9807,7 @@ module WaSiM
         #     dmean[!, string(col)*"_upper"] .= [first(only(x)) + last(only(x)) for x in eachrow(dmean[!, col])]
         # end
 
-        dmean = wa.monc(df) #s.o. confidence_interval 95%
+        dmean = monc(df) #s.o. confidence_interval 95%
     
         plt = @df dmean plot(:month, Matrix(dmean[!,Cols(r"mean")]), 
             #ribbon=(dmean.Lai_lower, dmean.Lai_upper), 
@@ -9928,7 +9827,7 @@ module WaSiM
     
     """
     usage like: kernelplot("route.txt") but with linlog option
-    reads with  wa.qba() and names of df or (route.txt)
+    reads with  qba() and names of df or (route.txt)
     lin: cols=Cols(2,4)
     log: cols=Cols(3,5)
     """
@@ -9946,8 +9845,8 @@ module WaSiM
             df.name=map(x->replace(x,r"#" => "",r" " => "",r"-" => "_"),df[:,3])
             df.name=map(x->replace(x,r"_>.*" => ""),df.name)
         end
-        #dsu = wa.qbb()|>last #recursive
-        dsu = wa.qba()
+        #dsu = qbb()|>last #recursive
+        dsu = qba()
         M = parse.(Float64,dsu[!,cols])|>y->subset(y,1=> ByRow(>(0.)))|>Matrix
         mns = names(dsu[!,cols])
         B = kde(M)
@@ -10173,7 +10072,7 @@ module WaSiM
     plot_grouped_metrics(dataframes::Vector{DataFrame};col=:ve,all=false,kw...)
     """
     function plot_grouped_metrics(dataframes::Vector{DataFrame};col=:ve,usethresold=true,threshold = -0.41,all=false,kw...)
-        #nam = wa.getnames(dataframes)
+        #nam = getnames(dataframes)
         # Create a new plot
         plot()
 
@@ -10360,7 +10259,7 @@ module WaSiM
                 continue
             end
         end
-        vz = filter(xx->xx[2]==5,wa.cntcolv("outjl"))
+        vz = filter(xx->xx[2]==5,cntcolv("outjl"))
         if length(vz)>0
             @warn "some files are not properly merged..."
         end
@@ -10369,7 +10268,7 @@ module WaSiM
 
     """
     dfroute(;ofl="route.txt")
-    reads from wa.routeg(infile, ofl) and returns a DataFrame with the following columns:
+    reads from routeg(infile, ofl) and returns a DataFrame with the following columns:
         - sim: simulated flow
         - obs: observed flow
         - name: name of the station
@@ -10431,7 +10330,7 @@ module WaSiM
     """
     function rmopt()
         # Get the list of files
-        files = wa.rglob("")
+        files = rglob("")
 
         #!occursin(r"pl|sh|csv|html|xml|fzt|ftz|log|ini|^wq|yrly|nc|tif|jpeg|png|svg|txt", file)
         # py|R|ftz_0|tex
