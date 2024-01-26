@@ -38,12 +38,21 @@
 #         @eval import Main.WaSiM.$submodule
 #     end
 # end
-import StatsPlots.@df
+
+#import StatsPlots.@df
+
+# module kat
+#     function xz()
+#         println("hi from kat")
+#     end
+# end
+#using StatsPlots
 
 module WaSiM
     using Reexport
-    @reexport using DataFrames, DataFramesMeta, CSV, Statistics, Dates, StatsPlots, Distributions    
-    
+    @reexport using DataFrames
+    #import DataFrames
+    @reexport using DataFramesMeta, CSV, Statistics, Dates, StatsPlots, Distributions    
     import Conda
     # import ArchGDAL
     # import GeoDataFrames
@@ -51,9 +60,8 @@ module WaSiM
     # import InteractiveUtils
     # import NCDatasets
     # import Shapefile
-    import StatsPlots.@df
-
-    using DelimitedFiles
+    # import StatsPlots:@df
+    import DelimitedFiles:readdlm
     using Grep
     using KernelDensity
     using Plots.PlotMeasures
@@ -61,29 +69,11 @@ module WaSiM
     using Printf
     using Rasters
     using SHA #for python deps & condasize
-        ##import rasterstuff
+    
+    ##import rasterstuff
     include("rasterfuncs.jl")
     src_path = "./src"
-    
-    # if Sys.isapple()
-    #     platform = "osx"
-    #     const homejl = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
-    #     const mybash = "/Users/apfel/.bash_aliases"
-    #     src_path = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
-    # elseif Sys.iswindows()
-    #     platform = "windows"
-    #     src_path = "C:\\Users\\Public\\Documents\\Python_Scripts\\julia"
-    #     macro wasim() pt="C:\\Users\\chs72fw\\.julia\\dev\\WaSiM\\src\\jl";include(pt);end
-    # else
-    #     platform = "unix"
-    #     # winpt = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
-    #     # pcld = "~/pCloud Drive/Stuff/Python_Scripts/julia"
-    #     # src_path = isdir(winpt) ? winpt : pcld
-    #     # println("sourcepath is $src_path")
-    #     # if isdir(winpt)
-    #         # macro wasim() pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM/src/jl";include(pt);end
-    #     # end
-    # end
+    include("win/smallfuncs.jl")
 
     function qgk(;rootdir=".", prefix="qgk")
         """
@@ -172,157 +162,6 @@ module WaSiM
 
         return PET
     end
-
-    function jdd(;return_string=true)
-        """
-        """
-        cwd = pwd()
-        dirs = readdir(".")
-        vst = []
-        for dir in dirs
-            if isdir(dir)
-                size = 0
-                for (root, dirs, files) in walkdir(dir)
-                    for file in files
-                        size += stat(joinpath(root, file)).size
-                    end
-                end
-                @printf("%-40s %15.2f MB\n","$(cwd)\\$dir:",size/1024^2)
-                if return_string
-                    #v = string.(cwd,"\\",dir,": ",size/1024^2," MB\n")
-                    v = hcat(string.(cwd,"\\",dir,),size/1024^2)
-                    push!(vst,v)
-                end   
-            end
-        end
-      return(vst)
-    end
-
-    function dd(;cwd=pwd(),msg=true)
-        #cwd = pwd()
-        osize = 0
-        lfs = 0
-        for (root, dirs, files) in walkdir(cwd)
-            for file in files
-                lfs += 1 
-                osize += stat(joinpath(root, file)).size
-            end
-        end 
-        if (msg)
-            lfs = string(lfs)
-            log = string("# $lfs files\n# $cwd: ",round(osize/1024^2;digits=2)," MB")
-            @printf("%-40s %15.3f GB\n","$cwd:",osize/1024^3)
-            return clipboard(log)      
-        end 
-        @printf("%-40s %15.3f GB\n","$(cwd):",osize/1024^3)
-    end 
-
-    function ct(ext::AbstractString)
-        cwd = pwd() 
-        osize = 0
-        fz = 0
-        m = []
-        for (root, dirs, files) in walkdir(cwd)
-        for file in files
-        if isfile(file) && occursin(Regex(ext),file)
-        nm=joinpath(root, file)
-        osize = stat(nm).size
-        @printf("%-40s %15.2f MB\n","$(nm):",osize/1024^2);
-        fz += stat(nm).size
-        push!(m,(nm))
-        end
-        end 
-        end 
-        n=repeat(" - -",10)
-        println(n*" sum of ",ext*n)
-        @printf("%-40s %15.2f MB\n","$(cwd):",fz/1024^2);
-        println(n,length(m)," matches "*n,"\n")
-        return(m)
-    end 
-
-    function ct()
-        cwd = pwd() 
-        osize = 0
-        fz = 0
-        m = []
-
-        for (root, dirs, files) in walkdir(cwd)
-        for file in files
-        if isfile(file)
-            nm=joinpath(root, file)
-            osize = stat(nm).size
-            #sizes[file] = stat(nm).size/1024^2
-            @printf("%-40s %15.2f MB\n","$(nm):",osize/1024^2);
-            fz += stat(nm).size
-            push!(m,(nm))
-        end     
-        end 
-        end 
-        # sort(df, [order(:a), order(:b, rev = true)]) 
-        # sorted_files = sort(collect(keys(sizes)), by=x->sizes[x], rev=false)
-        # println(sorted_files)
-        n=repeat(" - -",10)
-        println(n*" total sum ")
-        @printf("%-40s %15.2f MB\n","$(cwd):",fz/1024^2);
-        println(n,length(m)," files present "*n,"\n")
-        return(m)
-    end
-
-    function print_sorted_sizes(dir)
-        """
-        print_sorted_sizes("../")
-        """
-        folders = [joinpath(dir, f) for f in readdir(dir)]
-        sizes = Dict()
-        for f in folders
-            if isdir(f)
-                sizes[f] = get_folder_size(f)
-            end
-        end
-        sorted_folders = sort(collect(keys(sizes)), by=x->sizes[x], rev=false)
-        for f in sorted_folders
-            if sizes[f] >= 1000000
-            printstyled(rpad(f,60, ' '), rpad(sizes[f] ÷ 10^6, 6, ' '), "MB\n",color=:green)
-            end
-        end
-    end
-
-    function get_folder_size(folder)
-        files = readdir(folder)
-        size = 0
-        for file in files
-            path = joinpath(folder, file)
-            if isfile(path)
-                size += stat(path).size
-            elseif isdir(path)
-                size += get_folder_size(path)
-            end
-        end
-        return size
-    end
-
-    function fz()
-        """
-        gets sorted DF by size recursivley
-        """
-        cwd = pwd() 
-        osize = 0
-        m = []
-        for (root, dirs, files) in walkdir(cwd)
-        for file in files
-            if isfile(file)
-            nm=joinpath(root, file)
-            osize = stat(nm).size/1024^2
-            push!(m,Dict(:name=>file,
-            :size=>osize,
-            :fullnaname=>nm))
-            end
-        end 
-    end
-        df = DataFrame(m)     
-        sort!(df, [order(:size,rev = true), order(:name)])
-        return(df)
-    end 
 
     function lg(path::AbstractString, ext::AbstractString)
         files = readdir(path)
@@ -481,7 +320,7 @@ module WaSiM
         df.date = Date.(string.(df.YY,"-",df.MM,"-",df.DD),"yyyy-mm-dd");
         df=df[:,Not(1:3)]
         DataFrames.metadata!(df, "filename", x, style=:note);
-            #s = (filter(x->!occursin(r"year|date",x),names(df)))
+
         #renamer - remove char _   
         for x in names(df)
             if startswith(x,"_")
@@ -491,48 +330,6 @@ module WaSiM
             end
         end
         return df 
-    end
-
-    function old_waread(x::AbstractString)
-        """
-        skipping 6 lines - no dropmissing
-            for Meteo Time Series
-        """
-        ms=["-9999","lin","log","-9999.0"]
-        df = CSV.read(x,
-        DataFrame,
-        missingstring=ms,
-        ntasks=8,
-        skipto=6,
-        limit=typemax(Int),
-        delim="\t",
-        silencewarnings=false,
-        normalizenames=true,drop=(i, nm) -> i == 4) #|> dropmissing
-        df.date = Date.(string.(df.YY,"-",df.MM,"-",df.DD),"yyyy-mm-dd")
-        df=df[:,Not(1:3)]
-        metadata!(df, "filename", x, style=:note);
-    end
-
-    function old_waread2(x::String)
-        """
-        Read the text file, preserve line 1 as header column
-        """
-        ms=["-9999","lin","log","--"]
-        df = CSV.read(x, DataFrame, 
-            delim="\t",
-            header=1,
-            missingstring=ms,
-            normalizenames=true,
-            types=Float64)
-        dropmissing!(df,1)
-        dt2::Vector{Date} = []
-        for i in eachrow(df)
-            z=i[1:3]|>collect|>transpose
-            push!(dt2,Date(z[1],z[2],z[3]))
-        end
-        df.date = dt2
-        df=df[:,Not(1:4)]
-        metadata!(df, "filename", x, style=:note);
     end
 
     """
@@ -895,69 +692,71 @@ module WaSiM
             #(r, α, β) as per `Gupta et al., 2009
             println("returning r, α, β, kge")
             return DataFrame(r=r, α=α, β=β, kge=kge)
-        end
-            return kge
-        end
-        
+        else
+            return kge 
+        end       
     end
 
+    # """
+    # selects first match and plots in log y-axis...
+    # """
+    # function dfl(regex::Union{Regex,String};leg=:topright)
+    #     df = readdf(regex)
 
-    """selects first match and plots in log y-axis..."""
-    function dfl(regex::Union{Regex,String};leg=:topright)
-        df = readdf(regex)
-
-        ti = try
-            DataFrames.metadata(df)|>only|>last|>basename
-            dfinfo = readdlm(ti, '\t',String, '\n')[2]
-            sz = size(df)
-            @info "$dfinfo $ti $sz"
-        catch
-            @warn "No df info!"
-            raw"" 
-        end
+    #     ti = try
+    #         DataFrames.metadata(df)|>only|>last|>basename
+    #         dfinfo = readdlm(ti, '\t',String, '\n')[2]
+    #         sz = size(df)
+    #         @info "$dfinfo $ti $sz"
+    #     catch
+    #         @warn "No df info!"
+    #         raw"" 
+    #     end
                 
 
-        if (any(x->occursin("year",x),names(df)))
-            s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
-            plt = try 
-                @df df Plots.plot(:year,cols(s),yaxis=:log,legend = leg, title=ti);
-            catch
-                @warn "log on yaxis not possible !"
-                @df df Plots.plot(:year,cols(s),yaxis=:lin,legend = leg, title=ti);
-            end
-        else   
-            s = Symbol.(filter(x->!occursin("date",x),names(df)))
-            plt =  try
-                @df df Plots.plot(:date,cols(s),yaxis=:log, legend = leg, title=ti);
-            catch
-                @warn "log on yaxis not possible !"
-                @df df Plots.plot(:date,cols(s),yaxis=:lin, legend = leg, title=ti);
-            end
+    #     if (any(x->occursin("year",x),names(df)))
+    #         s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
+    #         plt = try 
+    #             @df df Plots.plot(:year,cols(s),yaxis=:log,legend = leg, title=ti);
+    #         catch
+    #             @warn "log on yaxis not possible !"
+    #             @df df Plots.plot(:year,cols(s),yaxis=:lin,legend = leg, title=ti);
+    #         end
+    #     else   
+    #         s = Symbol.(filter(x->!occursin("date",x),names(df)))
+    #         plt =  try
+    #             @df df Plots.plot(:date,cols(s),yaxis=:log, legend = leg, title=ti);
+    #         catch
+    #             @warn "log on yaxis not possible !"
+    #             @df df Plots.plot(:date,cols(s),yaxis=:lin, legend = leg, title=ti);
+    #         end
             
-            end
-        return plt
-    end
+    #         end
+    #     return plt
+    # end
 
-    """adds first match and plots in log y-axis..."""
-    function dfl!(regex::Union{Regex,String})
-        df=readf(regex)
-        ti = try
-            DataFrames.metadata(df)|>only|>last|>basename
-        catch
-            @warn "No basename in metadata!"
-        ti = raw"" 
-        end
-        println("adding $ti")
-        if (any(x->occursin("year",x),names(df)))
-            s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
-            @df df Plots.plot!(:year,cols(s),yaxis=:log,legend = :topright)
-            Plots.annotate!([(20,5,text(ti, 12, :left, :top, :green))])
-        else   
-            s = Symbol.(filter(x->!occursin("date",x),names(df)))
-            @df df Plots.plot!(:date,cols(s),yaxis=:log, legend = :topright)
-            Plots.annotate!([(20,5,text(ti, 12, :left, :top, :green))])
-            end
-    end
+    # """
+    # adds first match and plots in log y-axis...
+    # """
+    # function dfl!(regex::Union{Regex,String})
+    #     df=readf(regex)
+    #     ti = try
+    #         DataFrames.metadata(df)|>only|>last|>basename
+    #     catch
+    #         @warn "No basename in metadata!"
+    #     ti = raw"" 
+    #     end
+    #     println("adding $ti")
+    #     if (any(x->occursin("year",x),names(df)))
+    #         s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
+    #         @df df Plots.plot!(:year,cols(s),yaxis=:log,legend = :topright)
+    #         Plots.annotate!([(20,5,text(ti, 12, :left, :top, :green))])
+    #     else   
+    #         s = Symbol.(filter(x->!occursin("date",x),names(df)))
+    #         @df df Plots.plot!(:date,cols(s),yaxis=:log, legend = :topright)
+    #         Plots.annotate!([(20,5,text(ti, 12, :left, :top, :green))])
+    #     end
+    # end
 
     function aplot(df::DataFrame)
         df = copy(df)
@@ -978,31 +777,6 @@ module WaSiM
         @df df andrewsplot(:year, cols(s), legend = :topleft,title=ti)
     end
     
-    function ll()
-        readdir()
-    end
-
-    function ls()
-        p=pwd()
-        f=readdir()
-        dirs=filter(x -> (isdir(x)),f)
-        files=filter(x -> (isfile(x)),f)
-        if length(files)>0 && length(dirs)>0
-            nf=length(files)
-            println("$p\ndirs: $dirs\n $nf files:\n$files")
-        elseif length(dirs)>0
-            println("$p\ndirs: $dirs\n")
-        elseif (length(files)>0 && length(files)<=12)
-            nf=length(files)
-            println("$p\n$nf files:\n $files\n")
-        elseif (length(files)>0 && length(files)>12)
-            nf=length(files)
-            println("$p\n$nf files:\n",first(f,6),"...",last(f,6))
-        else
-            println("$p\n")
-        end
-    end
-
     function lplot(x::Regex)
         df=readdf(x)
         ti = try
@@ -1081,7 +855,6 @@ module WaSiM
         #return(nms)
     end
 
-
     function listdfs(path::AbstractString)
         files = readdir(path)
         #dfs = DataFrame[]
@@ -1104,9 +877,11 @@ module WaSiM
     end
 
     function vars(pt::AbstractString)
-        #varinfo(Core,r".*field.*")
-        #varinfo(Main,r".*load*")
-        InteractiveUtils.varinfo(Main,Regex(".*pt*"))
+        InteractiveUtils.varinfo(Main,Regex(".*$pt*"))
+    end
+
+    function vars(pt::Regex)
+        InteractiveUtils.varinfo(Main,pt;sortby=:size,minsize=1)
     end
 
 
@@ -1133,9 +908,6 @@ module WaSiM
         return df
     end
 
-
-
-    #if (occursin(Regex(prefix,"i"),filename))
     """
     join([x1,y1],"+.*")
     r"this+.*that"
@@ -1143,26 +915,26 @@ module WaSiM
     function regand(v::Vector{String},x1::AbstractString,y1::AbstractString)
         needle=join([x1,y1],"+.*");
         z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))] 
-    return(z)
+        return(z)
     end
     
     function regand(v::Vector{String},xv::Tuple{String, String})
         needle=join([xv[1],xv[2]],"+.*");
         z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
-    return(z)
+        return(z)
     end
 
     #function regand(v::Vector{String},xv::Tuple{Symbol,Symbol})
     function regand(v::Vector{String},xv::Vector{Symbol})
         needle=join(xv,"+.*");
         z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
-    return(z)
+        return(z)
     end
 
     function regand(v::Vector{String},xv::Vector{String})
         needle=join(xv,"+.*");
         z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
-    return(z)
+        return(z)
     end
 
     """
@@ -1195,7 +967,7 @@ module WaSiM
     """
     function regand(v::Vector{Any},xv::Regex)
         z = v[(broadcast(x->occursin(xv,x),v))] 
-    return(z)
+        return(z)
     end
 
     function dfonly(x1::AbstractString;recursive=false)
@@ -1221,18 +993,6 @@ module WaSiM
         readdir()[broadcast(x->!endswith(x,"nc"),readdir())]);
         return(z)
     end
-
-   
-    # function nconly(x1::Union{AbstractString,Regex})
-    #     v::Vector{String} = readdir();
-    #     v = v[broadcast(x->endswith(x,"nc"),v)];
-    #     if x1 isa Regex
-    #         z = v[(broadcast(x->occursin(x1,x),v))] 
-    #     else
-    #         z = v[(broadcast(x->occursin(Regex(x1,"i"),x),v))] 
-    #     end
-    #     return(z)
-    # end
     
 
     function denseplot(df::String)
@@ -1240,7 +1000,6 @@ module WaSiM
         s = propertynames(df)[Not(end)]
         @df df density(cols(s), legend = :topright)
     end
-
 
     function dfp(mm::Union{Regex,String};leg = :outertopright)
         """
@@ -1258,10 +1017,6 @@ module WaSiM
         
         o = DataFrames.metadata(df)|>collect
         ti = basename(o[1][2]) 
-
-        # ti = CSV.read(mm,DataFrame,limit=2,
-        #     select=[1],ntasks=1) |> z->z[1,1]
-
         dfinfo = readdlm(ti, '\t',String, '\n')[2]
         sz = size(df)
         @info "$dfinfo $ti $sz"
@@ -1858,102 +1613,11 @@ module WaSiM
         return results
     end
 
-    #go dir up
-    function cdb()
-        dirname(pwd())|>cd
-        pwd()|>println
-    end
-
-    cdu = cdb
-
-    #like jdd to vector of strings.
-    function fdd(;cwd=pwd())
-        dirs = readdir(cwd)
-        
-        if length(dirs) == 0 
-            println("$cwd is empty!")
-            return
-        end
-        
-        if filter(x -> (isdir(x)),dirs) == []
-            bn = basename(cwd)
-            @info "no dirs in $bn !"
-            dd()
-            return
-        end
-        
-        s = []
-        for dir in dirs
-            if isdir(dir)
-                push!(s,joinpath(cwd, dir))
-                size = 0
-                for (root, dirs, files) in walkdir(dir)
-                    for file in files
-                        size += stat(joinpath(root, file)).size
-                    end
-                end
-            @printf("%-40s %15.2f MB\n","$(cwd)\\$dir:",size/1024^2);
-        end
-        end
-        return(s)
-    end
-
-    function vgr(regex, file_ending)
-        rootdir=pwd()
-        println("starting on: $rootdir...\n searching for >> $regex << with file ending >> $file_ending <<\n")
-        files = []
-        for (looproot, dirs, filenames) in walkdir(rootdir)
-            for filename in filenames
-                #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
-                #if (occursin(Regex(prefix,"i"),filename))
-                if (endswith(filename, file_ending))
-                    push!(files, joinpath(looproot, filename)) 
-                end
-            end
-        end
-        #files = filter(file -> endswith(file, file_ending), readdir())
-        for file in files
-            open(file) do f
-                counter = 0 # Zähler initialisieren
-                for line in eachline(f)
-                    counter += 1 # Zähler erhöhen
-                    if occursin(Regex(regex,"i"), line)
-                        println("$file: $counter:\t $line")
-                    end
-                end
-            end
-        end
-    end
-
-    function vjl(regex)
-        # greps jl from julia folder
-        pt=src_path;
-        file_ending=".jl"
-        files = filter(file -> endswith(file, file_ending), readdir(pt,join=true))
-        for file in files
-            open(file) do f
-                counter = 0
-                for line in eachline(f)
-                    counter += 1
-                    if occursin(Regex(regex,"i"), line)
-                        println("$file: $counter:\t $line")
-                    end
-                end
-            end
-        end
-    end
-
-
     function dfilter(regex::AbstractString,dfs::Vector{DataFrame})
         filter(n->occursin(Regex(regex,"i"),n),
         map(x->basename(only(DataFrames.metadata(x))[2]),dfs)
         )
     end
-
-    #dfilter("cl",dfs)
-    #typeof(dfs)
-    #dfs
-    #regex="qout"
 
     function filterplot(regex::AbstractString,dfs::Vector{Any})
         "selects first match and plots..."
@@ -2840,43 +2504,6 @@ module WaSiM
         df = hcat(df[!,Not(Cols(r"date"))],df[:,Cols(r"date")])
         return(df)
     end
-
-    # function treeo(cwd::AbstractString, prefix=" ")
-    #     paths::Vector{String} = []
-    #     #cwd = abspath(cwd)
-    #     cwd = relpath(cwd)
-    #     for (looproot, dir, filenames) in walkdir(cwd)
-    #         for relpath in dir
-    #             push!(paths, joinpath(looproot,relpath))
-    #         end
-    #     end
-    #     if length(paths)==0
-    #         printstyled("no subfolders present in \n"*pwd(),color=:red)
-    #         return
-    #     end
-    #     ap=abspath(cwd)
-    #     printstyled("$ap\n",color=:red)
-    #     for relpath in paths
-    #         prefix = " "
-    #                 relpath = replace(relpath, r"[^\\]"=> ":",count=1)
-    #                 ###helper to fast cdinto....
-    #                 relpath = replace(relpath, r"[^\\]*."=>"-- ",count=1)
-    #                 relpath = replace(relpath, "\\"=> "/")
-    #         println(relpath)
-    #     end
-    # end
-
-    # function tree(dir::AbstractString = pwd(); indent::String = "    ")
-    #     println(dir)
-    #     for (root, dirs, files) in walkdir(dir)
-    #         # for file in files
-    #         #     println(indent, "├── ", file)
-    #         # end
-    #         for d in dirs
-    #             println(indent, "├── ", d)
-    #         end
-    #     end
-    # end
 
     function wintree()
         #run(`cmd /c tree /f`)
@@ -3767,7 +3394,6 @@ module WaSiM
     readmeteo = waread
     loaddf = readdf
 
-
     function rename_duplicates(df::DataFrame)
         # loop over the column names
         for (i, name) in enumerate(names(df))
@@ -3782,61 +3408,6 @@ module WaSiM
         # return the modified dataframe
         return df
     end
-    #name1="Brend_Brend_24431002_Unterweissenbrunn_"
-    #replace(name1, r"(\w+)[ _]\1" => s"\1")
-    #replace(name1, r"(\w+)[ _]\1" => s"\1" , "_"=>"-")
-
-    # function tff2(x::Union{Vector{Any},Vector{String}})
-    #     for filename in x
-    #         b = Dict{String, Float64}()
-    #         m = Dict{String, Float64}()
-    #         h = Dict{String, Float64}()
-    #         cnte = Dict{String, Int64}()
-    #         ncols = 0
-
-    #         open(filename) do file
-    #             first_line = true
-                
-
-    #             for (i, line) in enumerate(eachline(file))
-    #                 fields = split(line)
-    #                 if first_line
-    #                     println("filename: $filename")
-    #                     ncols = length(fields)
-    #                     println("no of fields: $ncols")
-    #                     println("year\t$(join(fields[5:end], "\t"))")
-    #                     first_line = false
-    #                     continue
-    #                 end
-
-    #                 if match(r"^\d{4}$", fields[1]) != nothing
-    #                     cnte[match(r"^\d+", fields[1]).match] = get(cnte, match(r"^\d+", fields[1]).match, 0) + 1
-    #                     b[fields[1]] = get(b, fields[1], 0.0) + parse(Float64, replace(fields[5], r"-9999" => "0"))
-    #                     m[fields[1]] = get(m, fields[1], 0.0) + parse(Float64, replace(fields[end-1], r"-9999" => "0"))
-    #                     h[fields[1]] = get(h, fields[1], 0.0) + parse(Float64, replace(fields[end], r"-9999" => "0"))
-    #                 end
-    #             end
-    #         end
-
-    #         if ncols <= 5
-    #             for key in sort(collect(keys(b)))
-    #                 println("$key\t$(@sprintf("%.2f", h[key]))\t| means: $(@sprintf("%.2f", h[key] / cnte[key]))\t| counts: $(cnte[key])")
-    #             end
-    #         elseif ncols == 6
-    #             for key in sort(collect(keys(b)))
-    #                 println("$key\t$(@sprintf("%.2f", b[key]))\t$(@sprintf("%.2f", h[key]))\t| means: $(@sprintf("%.2f", b[key] / cnte[key]))\t$(@sprintf("%.2f", h[key] / cnte[key]))\t| counts: $(cnte[key])")
-    #             end
-    #         elseif ncols >= 7
-    #             for key in sort(collect(keys(b)))
-    #                 println("$key\t$(@sprintf("%.2f", b[key]))\t$(@sprintf("%.2f", m[key]))\t$(@sprintf("%.2f", h[key]))\t| means: $(@sprintf("%.2f", b[key] / cnte[key]))\t$(@sprintf("%.2f", m[key] / cnte[key]))\t$(@sprintf("%.2f", h[key] / cnte[key]))\t| counts: $(cnte[key])")
-    #             end
-    #         end
-    #     end
-    # end
-
-    #  # f = glob("so")
-    # tff2(f[1:3])
-    # tff2(f[5:10])
 
     function ssup()
         include(src_path*"/win/smallfuncs.jl")
@@ -4486,18 +4057,6 @@ module WaSiM
         return result
     end
 
-    #dfs = jldfnm(globdf(r"so"))
-    #dfs = jldf(globdf(r"so"))
-
-    function malldf(files::Vector{DataFrame},on::Symbol)
-        "reduces + merges by date"
-        df = reduce((left, right) -> 
-        innerjoin(left, right, on = on,makeunique=true), 
-        files)
-        df = hcat(df[!,Not(Cols(r"date"))],df[:,Cols(r"date")])
-        return(df)
-    end
-
     function jldfnm(x::Vector{String})
         """
         with names
@@ -4635,40 +4194,10 @@ module WaSiM
         fl = split(fl,"\"")|>first  #[2]
         return(string(fl))
     end
-
-    # function umlauts(input_file::AbstractString, output_file::AbstractString)
-    #     # Read input file
-    #     data = readdlm(input_file, String)
-
-    #     # Apply string replacements
-    #     for i in 1:size(data, 1)
-    #         # data[i] = replace(data[i], r"ß" => "ss")
-    #         # data[i] = replace(data[i], r"\/" => "_")
-    #         # data[i] = replace(data[i], r"_" => "-")
-    #         # data[i] = replace(data[i], r",," => "")
-    #         # data[i] = replace(data[i], r"\xc4" => "Ae")
-    #         # data[i] = replace(data[i], r"\xd6" => "Oe")
-    #         # data[i] = replace(data[i], r"\xdc" => "Ue")
-    #         # data[i] = replace(data[i], r"\xe4" => "ae")
-    #         # data[i] = replace(data[i], r"\xf6" => "oe")
-    #         # data[i] = replace(data[i], r"\xfc" => "ue")
-    #         # data[i] = replace(data[i], r"\xdf" => "ss")
-    #     end
-
-    #     # Write modified data back to the file
-    #     output_file = open(output_file, "w")
-    #     for i in 1:size(data, 1)
-    #         println(output_file, data[i])
-    #     end
-    #     close(output_file)
-    # end
-    
-    #umlauts(input_file, output_file)
-
     macro bash_str(s) open(`bash`,"w",stdout) do io; print(io, s); end;end
     #bash""" which python """
 
-    macro pwrs_str(s) open(`powershell -noprofile`,"w",stdout) do io; print(io, s); end;end
+    #macro pwrs_str(s) open(`powershell -noprofile`,"w",stdout) do io; print(io, s); end;end
     #pwrs""" which python """
     #pwrs""" pwd """
     function op()
@@ -4683,7 +4212,7 @@ module WaSiM
     #pwp""" fdm """
     #cdb()
 
-    macro cmd_str(s) open(`cmd \c`,"w",stdout) do io; print(io, s); end;end
+    #macro cmd_str(s) open(`cmd \c`,"w",stdout) do io; print(io, s); end;end
     #cmd""" pwd """
     ##nope, bad idea
     # run(`cmd \c pwd";" exit`)
@@ -4729,48 +4258,6 @@ module WaSiM
             end
         end
     end
-
-    # function nsegrep()
-    #     """
-    #     ...sort try... but... hmm
-    #     When j=1, the modified NSeff is not inflated by the squared values 
-    #     of the differences, because the squares are replaced 
-    #     by absolute values.
-    #     """
-    #     path = pwd()
-    #     #match = Dict(SubString{String}, Vector{String})
-    #     match = []
-    #     files = glob(r"_output.txt|_outputjl") #non-recurse
-    #     #@printf("Searching for values > 0.3 in files matching pattern %s\n", path)
-    #     for file in filter(file -> endswith(file, "_output.txt"), files)
-    #         output = DelimitedFiles.readdlm(file, '\t', String)
-    #         DataFrame(output[4:end,:],:auto)
-
-
-    #         fn = first(split(file, "_qout"))
-    #         #append!(match,fn)
-    #         m = [fn,Grep.grep(r"mNSE", output)]
-    #         append!(match,m)
-    #     end
-    #         if !isempty(match)
-    #             split_elements = [split(string(item[1])) for item in match]
-    #             sort!(split_elements, by = x -> parse(Float64, x[end]);rev=true)
-    #             # Combine the sorted elements into a string
-    #             #combined_string = join([join(item, "     ") for item in split_elements], "\n")
-    #             combined_string = [join(item, "     ") for item in split_elements]
-    #             for line in combined_string
-    #                 line = strip(line)  # remove leading and trailing whitespace
-    #                 line = join(split(line), " ")  ##remove inner whitespaces
-    #                 printstyled(rpad("$fn:", 55), lpad("$line\n", 10), color = :green)
-    #             end
-    #         end
-    #     #end
-    # end
-
-    # z=glob(r"_output.txt|_outputjl")|>first
-    # m=Grep.grep(r"mNSE", DelimitedFiles.readdlm(z, '\t', String))
-    # m=only(m)
-    # parse(Float64, split(m)[end])
 
 
     function baryrsum(df::Regex)
@@ -5129,14 +4616,7 @@ module WaSiM
             end
         end
         return output
-    end
-
-    
-    # function read_between_flags(file::IOStream, flag1::String, flag2::String)
-    #     line1 = readuntil(file, flag1)
-    #     line2 = readuntil(file, flag2)
-    #     return line1[1:end - length(flag1)], line2[1:end - length(flag2)]
-    # end
+    end  
 
     """
     skips first line after [soil_table] i.e. no of soil types
@@ -5343,17 +4823,6 @@ module WaSiM
         return df
     end  
 
-    function fsize(m::String)
-        """
-        names and size in MB via readdir
-        """
-        files = filter(x -> occursin(Regex(m,"i"), x), readdir())
-        fzs = [(file, filesize(file) / 2^20) for file in files]
-        tot = round(sum(map(x->x[2],fzs));digits=3)
-        #println("Total Size: $tot MB")
-        printstyled("Total Size: $tot MB\n",color=:green)
-        return(fzs)
-    end
 
     function cntcols(x::String)
         # Get a list of all files in the directory
@@ -5519,16 +4988,6 @@ module WaSiM
         line = readuntil(file, flag)
         return line[1:end-length(flag)]
     end
-
-    # function findindf(df::DataFrame,col,x)
-    #     #filter(row -> contains(col,x), df)
-    #     filter(row -> occursin(Regex(x,"i"),col), df)
-    # end
-    # #filter(row -> contains(row.name,"_qout"), ds)
-    # findindf(df,"name","E")
-    # x="Et"
-    # col="name"
-    # filter(row -> occursin(Regex(x,"i"),df[!,col]), df)
 
     function findindf(df::DataFrame, x)
         """
@@ -7339,52 +6798,6 @@ module WaSiM
     end
 
     """
-    use of Rasters.lookup
-    """
-    function nctodf(str::String)
-        #x = @gl "tsoil"
-        rr = Raster(str)
-        # dims(rr)|>collect
-        # rr.dims|>collect
-        # rr[Dim{:t}(Rasters.Between(2,end))] |>contourf
-        
-        mt = split(string.(rr[:,:,1].refdims)[1],",")|>first
-        #occursin("Dim{:t}",)
-    
-        #if last(dims(rr))=="Dim{:t}"
-        if mt=="Dim{:t"
-            ti = Rasters.lookup(rr, Dim{:t})
-        else
-            ti = try
-                Rasters.lookup(rr, Ti)
-            catch
-                @error "no time dimension found!"
-                return
-            end 
-        end
-        
-        #map(x->mean(x),rr.dims)
-        #dims(rr, (Dim{:t})) isa Vector{Float64}
-        
-        
-        #ag = Rasters.aggregate(Rasters.Center(), rr, (Y(20), X(20));)
-        #plot(ag)
-        #x,y,z = map(x->round(x ./2;digits=0),size(rr))
-        x,y = map(x->round(x ./2;digits=0),size(rr)[1:2])
-        #x,y,z = map(x->parse.(Int,x ./2),size(rr))
-        #length(rr[1,:,:])
-        
-        df = DataFrame(rr[X=Int(x),Y=Int(y)]',:auto)|>permutedims
-        df = hcat(df, parent(ti),makeunique=true)
-        #rename!(df,1=>Rasters._maybename(rr),2=>"date")
-        rename!(df,1=>Rasters._maybename(rr),2=>"layer")
-    
-        DataFrames.metadata!(df, "filename", str, style=:note);        
-        return df
-    
-    end
-
-    """
     simulated, observed=df[:,5],df[:,6]
     """
     function vef2(df::DataFrame)
@@ -7566,7 +6979,6 @@ module WaSiM
         delim="\t",
         silencewarnings=true,
         normalizenames=true) |> dropmissing
-        #drop=(i, nm) -> i == 4) |> dropmissing
         
         obs, sim = df[:,6],df[:,5]
         
@@ -7937,58 +7349,6 @@ module WaSiM
     end
 
     """
-    Returns the total size of all files in the current directory non recursively.
-    """
-    function fsz(;rec=false)
-        total_size = 0
-        files = readdir()  # Get a list of files in the current directory
-        
-        for file in files
-            filepath = joinpath(pwd(), file)  # Get the full path of the file
-            if isfile(filepath)
-                size = stat(filepath).size  # Get the file size
-                total_size += size
-            end
-        end
-        
-        nr=length(files)
-    
-        total_size_mb = total_size / (1024 * 1024)  # Convert size to megabytes
-        total_size_mb = round(total_size_mb, digits=2)  # Round to 2 decimal places
-        printstyled("Total size of $nr files in $(pwd()): $total_size_mb MB\n", color=:green)
-        
-        if rec
-            dirs = readdir()
-            for dir in dirs
-                if isdir(dir)
-                    cd(dir)
-                    fsz()
-                    cd("..")
-                end
-            end
-        end
-        #return total_size_mb
-    end
-
-    """
-    ALL names and size in MB via readdir
-    """
-    function fsize()
-        files = filter(x -> isfile(x), readdir())
-        fzs = [(file, filesize(file) / 2^20) for file in files]
-        tot = round(sum(map(x->x[2],fzs));digits=3)
-        #printstyled("Total Size: $tot MB\n",color=:green)
-        #return(DataFrame(Dict(fzs)))
-        fzs = sort(fzs, by = x -> x[2], rev = true)
-        #fzs = Dict(fzs)
-        odf = rename(DataFrame(fzs),["file","size"])
-        DataFrames.metadata!(odf, "Total Size", tot, style=:note)
-        #DataFrames.metadata(odf)
-        printstyled("Total Size: $tot MB\n",color=:green)
-        return(odf)
-    end
-
-    """
     Plots a DataFrame and applies a function.
     
     Parameters:
@@ -8159,22 +7519,6 @@ module WaSiM
         abspath(y)|>cb
     end
 
-    # function pyplot_df(df::DataFrame)
-    #     x = df.date
-    #     ln = (filter(x -> !occursin(r"date|month|year", x), names(df)))
-    #     #for col in names(df)[1:end-1]  # Exclude the last column, assuming it's the "date" column
-    #     for col in ln
-    #         y = df[!, Symbol(col)]
-    #         PyPlot.plot(x, y, label=col)
-    #     end
-    
-    #     PyPlot.xlabel("Date")
-    #     PyPlot.ylabel("")
-    #     PyPlot.legend()
-    #     ti = only(values(DataFrames.metadata(df)))
-    #     PyPlot.title(ti)
-    #     PyPlot.grid(true)
-    # end
 
     """
     reads from wasim routing table 
@@ -8326,23 +7670,6 @@ module WaSiM
         collect(start:step:stop)
     end
 
-    """
-    cd into dir of file
-    """
-    function cdof(x::Union{String,DataFrame})
-        if x isa DataFrame
-            try
-                d = collect(DataFrames.metadata(x))[1][2]
-                cd(dirname(d))
-            catch
-                @error "no basename in $x !"
-            end
-        else
-            cd(dirname(x))
-        end
-        d=pwd()
-        println("current dir: $d")
-    end
 
     """
     reads a DataFrame from a file w dlm and tryparse subsetting
@@ -8924,33 +8251,6 @@ module WaSiM
         Plots.plot!()
     end
 
-    function pe()
-        try
-            inp = clipboard()
-            wpath = replace(inp, "\\" => "/", "\"" => "")
-            cmd = `wslpath -ua $wpath`
-            ot = readchomp(pipeline(cmd))
-            clipboard("$ot")
-            println("$ot in clipboard!")
-        return string(ot)
-        catch e
-            println("Error: $e")
-            println("Failed to translate to wslpath.")
-        end
-    end
-
-    function pew()
-        try
-            in = clipboard()
-            wpath = replace(in, "\\" => "/")
-            println("$wpath in clipboard!")
-            clipboard("pt=$wpath")
-            return wpath
-        catch e
-            @error "smth errored $e"
-        end
-    end
-
     """
     checks state of wasim routing table
     """
@@ -9156,10 +8456,10 @@ module WaSiM
     """
     sim obs plot rglob regex
     x::Union{Regex,DataFrame}; 
-        yscale::Symbol = :log,
-        fun::Function = sum, 
-        freq::String="monthly",simcol=1,obscol=2
-        freq can also shortened, like D,M,Q,Y
+    yscale::Symbol = :log,
+    fun::Function = sum, 
+    freq::String="monthly",simcol=1,obscol=2
+    freq can also shortened, like D,M,Q,Y
     """
     function hyeval(
         x::Union{Regex,DataFrame}; 
@@ -9307,7 +8607,6 @@ module WaSiM
 
     """
     sums up Conda.ROOTENV
-    win.julia_conda:            3.06 GB
     """
     function condasize()
         cwd=Conda.ROOTENV
@@ -9335,6 +8634,7 @@ module WaSiM
         byear(z)|>println
     end    
     """
+
     function byear(x::Union{String,Regex,DataFrame};)
         if x isa String
             printstyled("reading $x\n",color=:light_red)
@@ -10118,9 +9418,6 @@ module WaSiM
         end
         return p1
     end
-    
-    
-
 
     """
     merges and saves to qoutjl
@@ -10327,7 +9624,8 @@ module WaSiM
             col .= coalesce.(col, fillval)
         end
         return df
-    end
-    
-end ##end of module endof
+    end   
 
+end #endof module
+
+println("used Threads: ", Threads.nthreads())
