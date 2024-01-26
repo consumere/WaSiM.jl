@@ -43,11 +43,8 @@ module WaSiM
     using Plots.PlotMeasures
     using KernelDensity
     using SHA
-    #using PyCall
-    import Conda #for python deps
-    #using RCall
-    #    default(show = true)
-    # using PlotlyJS
+    # using PyCall
+    import Conda #for python deps & condasize
         ##import rasterstuff
     include("rasterfuncs.jl")
     src_path = "./src"
@@ -894,7 +891,11 @@ module WaSiM
         return (1 - (sum((simulated .- observed).^2) / sum((observed .- mean(observed)).^2)))
     end
 
-    function kge(df::DataFrame)
+    """
+    kge as in Gupta et al., 2009
+    https://doi.org/10.1016/j.jhydrol.2009.08.003
+    """
+    function kge(df::DataFrame;verbose=false)
         if (any(x->occursin("year|date|month",x),names(df)))
             ln = Symbol.(filter(x->!occursin(r"date|year|month"i,x),names(df)))
             df = select(df, ln)
@@ -903,7 +904,17 @@ module WaSiM
         r = cor(observed, simulated)
         α = std(simulated) / std(observed)
         β = mean(simulated) / mean(observed)
-        return 1 - sqrt((r - 1)^2 + (α - 1)^2 + (β - 1)^2)
+        kge = 1 - sqrt((r - 1)^2 + (α - 1)^2 + (β - 1)^2)
+        if verbose
+            println("simulated: ",names(df)[1])
+            println("observed: ",names(df)[2])
+            #(r, α, β) as per `Gupta et al., 2009
+            println("returning r, α, β, kge")
+            return DataFrame(r=r, α=α, β=β, kge=kge)
+        end
+            return kge
+        end
+        
     end
 
     function lplot(x::Regex)
@@ -922,21 +933,6 @@ module WaSiM
     """selects first match and plots in log y-axis..."""
     function dfl(regex::Union{Regex,String};leg=:topright)
         df = readdf(regex)
-
-        # ti = try
-        #     DataFrames.metadata(df)|>only|>last|>basename
-        # catch
-        #     @warn "No basename in metadata!"
-        #     raw"" 
-        # end
-        
-        # try
-        #     dfinfo = readdlm(ti, '\t',String, '\n')[2]
-        #     sz = size(df)
-        #     @info "$dfinfo $ti $sz"
-        # catch
-        #     @warn "No df info!"
-        # end
 
         ti = try
             DataFrames.metadata(df)|>only|>last|>basename
@@ -5569,60 +5565,12 @@ module WaSiM
                 eachrow(df))
     end
 
-    # findindf(df,"Et")
-    # findindf(df,"15")
-    # findindf(df,"-")
-    # Grep.grep(r"Et",df.name)
-    # Grep.grep(r"Et",df)
-    # Grep.grep("Et",df)
-
-
-    function agjson(jsonfile::AbstractString)
-        """
-        reads json and transforms points...
-        but AG transformation is wrong :(
-
-
-        ERROR: type UnionAll has no field read
-        works only in WSL
-        """
-        #const AG = ArchGDAL
-
-        geojson_file=jsonfile
-        jsonbytes = read(geojson_file) # read the geojson file as bytes
-        fc = GeoJSON.read(jsonbytes)
-        pts=[]
-        for geom in fc.geometry
-            xc = [(x) for x in geom]|>first|>first
-            yc = [(x) for x in geom]|>first|>last
-            pt = ArchGDAL.createpoint(xc,yc)
-            pt = ArchGDAL.reproject(pt,EPSG(25832),ProjString("+proj=longlat +datum=WGS84 +no_defs"))
-            push!(pts,pt)
-        end
-        # df = [] ##geht auch
-        # for x in pts
-        #     x1 = AG.getpoint(x,0)
-        #     tmp = DataFrame(x=[x1[1]], y=[x1[2]])
-        #     push!(df,tmp)
-        # end
-        # df = reduce(vcat, df) 
-        #Plots.plot(df.x, df.y, seriestype=:scatter)
-        df = DataFrame( 
-            "x" => [AG.getpoint(x,0)[1] for x in pts],
-            "y" => [AG.getpoint(x,0)[2] for x in pts] )
-        return(df)
-    end
-
-    # works only in current REPL -> see pwc()
-    # import InteractiveUtils.clipboard as cb
-    # wslpath()|>cb
-
+    """
+    import InteractiveUtils.clipboard
+    wslpath()|>clipboard
+    cb(wslpath())
+    """
     function wslpath()
-        """
-        import InteractiveUtils.clipboard
-        wslpath()|>clipboard
-        cb(wslpath())
-        """
         # Run the `wslpath` command to convert the current directory to a WSL path
         #wsl_cmd = `wsl wslpath -a $(pwd)`
         wsl_cmd = `wsl wslpath -a .`
@@ -5631,10 +5579,10 @@ module WaSiM
         return wsl_path
     end
 
+    """
+    cb(pwd())
+    """
     function pw()
-        """
-        cb(pwd())
-        """
         pt = replace(pwd(),"\\"=> "/")
         println("$pt in clipoard...")
         pt |> clipboard
@@ -5648,12 +5596,7 @@ module WaSiM
     end
    
     function wslp(winpt::AbstractString)
-        """
-        """
-        #printstyled("needRAW like raw",color=:red)
-        #return(raw$winpt)
-        #quote($winpt);end
-        #winpt=raw"D:\Wasim\regio\out\lowres\c5\loc5"
+
         winpt = replace(winpt, "\\"=> "/")
         #winpt = join(winpt,"'")
         #print("\"",winpt,"\"")
@@ -5665,10 +5608,10 @@ module WaSiM
         return wsl_path
     end
 
+    """
+    takes first line as header and drops r"[A-z]"
+    """
     function xread(filename::String)
-        """
-        takes first line as header and drops r"[A-z]"
-        """
         ms=["-9999","lin","log","--"]
         df = CSV.read(filename,DataFrame, 
             delim="\t",
@@ -5691,13 +5634,13 @@ module WaSiM
         end
     end  
 
+    """
+    grabs methods
+    asin|>getm  
+    ?asin
+    @code_llvm readf|>getm|>first 
+    """
     function getm(s::Any)
-        """
-        grabs methods
-        asin|>getm  
-        ?asin
-        @code_llvm readf|>getm|>first 
-        """
         methods(s);
     end
 
@@ -5754,11 +5697,11 @@ module WaSiM
     end
 
 
+    """
+    names and size in MB via readdir
+    sorts and stores in df -> biggest files
+    """
     function pfix(m::String)
-        """
-        names and size in MB via readdir
-        sorts and stores in df -> biggest files
-        """
         files = filter(x -> occursin(Regex(m,"i"), x), readdir())
         fzs = [(file, filesize(file) / 2^20) for file in files]
         tot = round(sum(map(x->x[2],fzs));digits=3)
@@ -5768,11 +5711,11 @@ module WaSiM
         return(df)
     end
     
+    """
+    names and size in MB via readdir
+    sorts and stores in df -> biggest files
+    """
     function pfix()
-        """
-        names and size in MB via readdir
-        sorts and stores in df -> biggest files
-        """
         files = readdir()
         fzs = [(file, filesize(file) / 2^20) for file in files]
         tot = round(sum(map(x->x[2],fzs));digits=3)
@@ -8349,8 +8292,9 @@ module WaSiM
 
     """
     adds trendlines to existing plot
+    (df::DataFrame; date_col=:date, lab=false)
     """
-    function tline!(df::DataFrame; date_col=:date)
+    function tline!(df::DataFrame; date_col=:date, lab=false)
         # Get the date column and column names for trendlines
         date_data = df[!, date_col]
         trendline_cols = setdiff(names(df), [string.(date_col)])
@@ -8371,17 +8315,25 @@ module WaSiM
     
             # Generate the trendline function using the linear equation
             trendline(x) = intercept + slope * x
+            if lab
+                trendline_equations = "$y_col\ny = $(round(slope; sigdigits=2))x + $(round(intercept, sigdigits=1))"
+            else
+                trendline_equations = false
+            end
+
     
             # Add the trendline to the plot
             p = Plots.plot!(date_data, 
                 trendline.(1:length(date_data)), 
-                #label="$y_col Trendline", 
-                label=false,
-                linewidth=2, linestyle=:dash)
+                label = trendline_equations, 
+                legend = :outertopright,
+                linewidth=2,
+                linestyle=:dash)
         end
     
         return p
     end
+
 
     """
     dtrange(Date(2004),Date(2005),Month(4))
@@ -10074,7 +10026,7 @@ module WaSiM
     function plot_grouped_metrics(dataframes::Vector{DataFrame};col=:ve,usethresold=true,threshold = -0.41,all=false,kw...)
         #nam = getnames(dataframes)
         # Create a new plot
-        plot()
+        Plots.plot(xrotation = 35)
 
         # Iterate through each DataFrame in the input
         for df in dataframes
@@ -10134,8 +10086,6 @@ module WaSiM
         
         xx = uppercase(string(col))
         ylabel!("Score $xx")
-        # Add annotation from DataFrames.metadata filename
-        #annotate!(Plots.text(size=(10, 10), metadata_filename, 2012, 1.5, :center, :center))
     end
 
     """
@@ -10145,7 +10095,7 @@ module WaSiM
     pxm(dataframes::Vector{DataFrame}; col=:ve, usethresold=true, threshold=-0.410, all=false, kw...)
     """
     function pxm(dataframes::Vector{DataFrame}; col=:ve, usethresold=true, threshold=-0.410, all=false, kw...)
-        p1=Plots.plot()
+        p1=Plots.plot(xrotation = 35)
         # Iterate through each DataFrame in the input
         for df in dataframes
             # Extract year and metrics from the DataFrame
@@ -10215,11 +10165,12 @@ module WaSiM
                 
                 Plots.xticks!(df[:, :year])
             end
-            xx = uppercase(string(col))
-            ylabel!("Score $xx")
+            # xx = uppercase(string(col))
+            # ylabel!("Score $xx")
         end
         return p1
     end
+    
     
 
 
@@ -10395,6 +10346,39 @@ module WaSiM
     """
     function ht(df::DataFrame)
         mapcols(x -> x[Not(2:end-1)], df)
+    end
+
+    """
+    Plots a histogram of the values in the DataFrame
+    """
+    function correlogram(df)
+        rows = cols = size(df,2)
+        plots = []
+        for row = 1:rows, col = 1:cols
+            if row == col
+                push!(
+                    plots,
+                    histogram(df[:,row],bins=10, xtickfont = font(5), ytickfont = font(5), legend = false))
+            else
+                push!(
+                    plots,
+                    scatter(df[:,row], df[:,col], xtickfont = font(5), ytickfont = font(5), legend = false, markersize=1, alpha = 0.3, smooth = true,
+                    linewidth=3, linecolor=:red),
+                )
+            end
+        end
+        Plots.plot(plots..., #size=(1200, 1000), 
+            layout = (rows, cols))
+    end
+
+    """
+    fillmissing(df,fillval=-9999)
+    """
+    function fillmissing(df,fillval=-9999)
+        for col in eachcol(df)
+            col .= coalesce.(col, fillval)
+        end
+        return df
     end
     
 end ##end of module endof

@@ -31,7 +31,7 @@ begin
         """
         @error "
         depricated!
-        use wa.rpr , wa.surf or wa.agsurf instead!"
+        use rpr , surf or agsurf instead!"
         # ga = GeoArrays.read(x)
         # values = ga.A # a 3D array of raster values
         # #GeoArrays.coords(ga) # a tuple of x, y and band coordinates
@@ -97,7 +97,7 @@ begin
 
     """
     function readalloutput(;cwd = ".")    
-        dfs=wa.loadalldfs(cwd)
+        dfs=loadalldfs(cwd)
         ncs=readallras(cwd)
         return(dfs,ncs)
     end
