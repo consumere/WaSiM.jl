@@ -1,11 +1,3 @@
-#@profile
-cd("/mnt/c/Users/chs72fw/.julia/dev/WaSiM/")
-# using Pkg
-# Pkg.activate("WaSiM.jl")
-# Pkg.status()
-# Pkg.add(PackageSpec(path = "."))
-Pkg.status()
-
 cd("/mnt/c/Users/chs72fw/.julia/dev/WaSiM/")
 using Pkg
 Pkg.activate(".")
@@ -56,3 +48,22 @@ function copy_files_with_warnings(src::AbstractString, dst::AbstractString, file
     end
 end
 copy_files_with_warnings(src, dst, files)
+
+
+#julia --threads auto -q --startup-file=no --project="." 
+using Pkg; Pkg.add("JET")
+__precompile__(false)
+report_package("WaSiM")
+
+cd("/mnt/c/Users/chs72fw/.julia/dev/WaSiM/")
+using Pkg
+Pkg.activate(".")
+Pkg.status()
+__precompile__(false)
+
+#julia --threads auto -q --startup-file=no --project="."
+using JET
+report_package("WaSiM")
+
+import WaSiM as wa
+wa.lat()

@@ -1,2 +1,10 @@
 # WaSiM
- Helper Functions for WaterBalanceSimulationModel
+ - *currently under development*
+ - Helper Functions for WaterBalanceSimulationModel (http://wasim.ch/en/products/model_r10-07-02.htm)
+ - provides control file generation, aggregation, model output statistics, plot functions and many more 
+
+# Installation 
+```
+using Pkg
+Pkg.add(path="https://github.com/consumere/WaSiM.jl")
+```

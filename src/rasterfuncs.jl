@@ -3,12 +3,68 @@ using Rasters
 
 module rst
 
-using DataFrames, CSV, Statistics, Dates, Distributions,StatsPlots, Plots.PlotMeasures
+using Reexport
+#@reexport using WaSiM
+@reexport using DataFrames, CSV, Statistics, Dates, Distributions,StatsPlots, Plots.PlotMeasures
 using DelimitedFiles, Grep, Printf, PrettyTables
 using Rasters, ArchGDAL 
+
+import ArchGDAL
+import GeoDataFrames
+import GeoInterface
+import InteractiveUtils
 import NCDatasets
+import Shapefile
+
 
 begin
+
+    """
+    use of Rasters.lookup
+    """
+    function nctodf(str::String)
+        #x = @gl "tsoil"
+        rr = Raster(str)
+        # dims(rr)|>collect
+        # rr.dims|>collect
+        # rr[Dim{:t}(Rasters.Between(2,end))] |>contourf
+        
+        mt = split(string.(rr[:,:,1].refdims)[1],",")|>first
+        #occursin("Dim{:t}",)
+    
+        #if last(dims(rr))=="Dim{:t}"
+        if mt=="Dim{:t"
+            ti = Rasters.lookup(rr, Dim{:t})
+        else
+            ti = try
+                Rasters.lookup(rr, Ti)
+            catch
+                @error "no time dimension found!"
+                return
+            end 
+        end
+        
+        #map(x->mean(x),rr.dims)
+        #dims(rr, (Dim{:t})) isa Vector{Float64}
+        
+        
+        #ag = Rasters.aggregate(Rasters.Center(), rr, (Y(20), X(20));)
+        #plot(ag)
+        #x,y,z = map(x->round(x ./2;digits=0),size(rr))
+        x,y = map(x->round(x ./2;digits=0),size(rr)[1:2])
+        #x,y,z = map(x->parse.(Int,x ./2),size(rr))
+        #length(rr[1,:,:])
+        
+        df = DataFrame(rr[X=Int(x),Y=Int(y)]',:auto)|>permutedims
+        df = hcat(df, parent(ti),makeunique=true)
+        #rename!(df,1=>Rasters._maybename(rr),2=>"date")
+        rename!(df,1=>Rasters._maybename(rr),2=>"layer")
+    
+        DataFrames.metadata!(df, "filename", str, style=:note);        
+        return df
+    
+    end
+
 
     """
     greps from current dir iRegex
@@ -31,7 +87,7 @@ begin
         """
         @error "
         depricated!
-        use wa.rpr , wa.surf or wa.agsurf instead!"
+        use rpr , surf or agsurf instead!"
         # ga = GeoArrays.read(x)
         # values = ga.A # a 3D array of raster values
         # #GeoArrays.coords(ga) # a tuple of x, y and band coordinates
@@ -97,7 +153,7 @@ begin
 
     """
     function readalloutput(;cwd = ".")    
-        dfs=wa.loadalldfs(cwd)
+        dfs=loadalldfs(cwd)
         ncs=readallras(cwd)
         return(dfs,ncs)
     end
