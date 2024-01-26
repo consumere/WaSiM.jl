@@ -1,12 +1,22 @@
-#julia --startup-file=no -q --color=yes --project=. #-e 'using Pkg; Pkg.instantiate(); Pkg.API.precompile()'
+
+#julia --startup-file=no -q --color=yes --project="/mnt/c/Users/chs72fw/.julia/dev/WaSiM"
+
+#cd "/mnt/c/Users/chs72fw/.julia/dev/WaSiM"
+#julia --startup-file=no -q --color=yes --project=.
+
+#-e 'using Pkg; Pkg.instantiate(); Pkg.API.precompile()'
 #include("src/jl")
 # cd(raw"C:\Users\chs72fw\.julia\dev\WaSiM")
 # pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM";cd(pt)
-# using Pkg;Pkg.activate(".") 
 
-###this is jl but renamed to WaSiM
+#in vsc
+# using Pkg;Pkg.activate("/mnt/c/Users/chs72fw/.julia/dev/WaSiM") 
+# Pkg.test()
+
+###this is wa but renamed to WaSiM
 #using WaSiM
 #test WaSiM
+
 # using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions,DataFramesMeta
 # using DelimitedFiles, Grep, Printf, PrettyTables, Rasters
 # import NCDatasets
@@ -28,23 +38,29 @@
 #         @eval import Main.WaSiM.$submodule
 #     end
 # end
+import StatsPlots.@df
+
 module WaSiM
-    using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions
-    using DataFramesMeta
-    using DelimitedFiles, Grep , Printf
-    using PrettyTables
-    using Rasters
-    import NCDatasets
-    import ArchGDAL
-    import GeoInterface #for reverse_coords
-    import GeoDataFrames
-    import Shapefile #for jlzonal
-    import InteractiveUtils
-    using Plots.PlotMeasures
+    using Reexport
+    @reexport using DataFrames, DataFramesMeta, CSV, Statistics, Dates, StatsPlots, Distributions    
+    
+    import Conda
+    # import ArchGDAL
+    # import GeoDataFrames
+    # import GeoInterface
+    # import InteractiveUtils
+    # import NCDatasets
+    # import Shapefile
+    import StatsPlots.@df
+
+    using DelimitedFiles
+    using Grep
     using KernelDensity
-    using SHA
-    # using PyCall
-    import Conda #for python deps & condasize
+    using Plots.PlotMeasures
+    using PrettyTables
+    using Printf
+    using Rasters
+    using SHA #for python deps & condasize
         ##import rasterstuff
     include("rasterfuncs.jl")
     src_path = "./src"
@@ -584,22 +600,6 @@ module WaSiM
         return df 
     end
 
-    function loadalldfs(path::AbstractString)
-        files = readdir(path)
-        dfs = DataFrame[]
-            for file in files
-                if isfile(file) && (!occursin(
-                    r"^wq|ftz_0|tex|year|xml|qgk|fzt|ftz|log|ini|txt|yrly|nc|png|svg",file))
-                    file_path = joinpath(path, file)
-                    println("reading ",file_path,"...")
-                    p1 = waread(file_path)
-                    push!(dfs, p1)
-                end
-            end
-        dfs = filter(x->size(x,1)>0,dfs)
-        return(dfs)
-    end
-
     function readalldfs(path::Vector{Any})
         files = path
         dfs = DataFrame[]
@@ -645,35 +645,19 @@ module WaSiM
         return(dfs)
     end
 
-    function loadso(path::AbstractString, prefix::AbstractString)
-        files = readdir(path)
-        dfs = DataFrame[]
-        for file in files
-            if isfile(file) && occursin(Regex(prefix),file)&& (!occursin(r"fzt|fzs|log|ini|wq|txt|yrly|nc|png|svg",file))
-            file_path = joinpath(path, file)
-        println("reading ",file_path,"...")
-        p1 = readdf(file_path)
-        push!(dfs, p1)
-            end
-        end
-        return(dfs)
-    end
-
     function loadalldfs(path::AbstractString)
         files = readdir(path)
         dfs = DataFrame[]
         #nms = []
         for file in files #&& occursin(Regex(prefix),file)
             if isfile(file) && (!occursin(r"xml|qgk|fzt|ftz|log|ini|wq|txt|yrly|nc|png|svg",file))
-            file_path = joinpath(path, file)
-        println("reading ",file_path,"...")
-        p1 = readdf(file_path)
-        push!(dfs, p1)
-        #push!(nms, file)
+                file_path = joinpath(path, file)
+                println("reading ",file_path,"...")
+                p1 = readdf(file_path)
+                push!(dfs, p1)    
             end
         end
         return(dfs)
-        #return(nms)
     end
 
 
@@ -917,18 +901,6 @@ module WaSiM
         
     end
 
-    function lplot(x::Regex)
-        df=readdf(x)
-        ti = try
-            DataFrames.metadata(df)|>only|>last|>basename
-        catch
-            @warn "No basename in metadata!"
-        ti = raw"" 
-        end
-        #o = collect(DataFrames.metadata(df))[1][2] |>basename
-        ln = Symbol.(filter(x->!occursin("date",x),names(df)))
-        @df df Plots.plot(:date,cols(ln),yaxis=:log,title=ti)
-    end
 
     """selects first match and plots in log y-axis..."""
     function dfl(regex::Union{Regex,String};leg=:topright)
@@ -1029,6 +1001,18 @@ module WaSiM
         else
             println("$p\n")
         end
+    end
+
+    function lplot(x::Regex)
+        df=readdf(x)
+        ti = try
+            DataFrames.metadata(df)|>only|>last|>basename
+        catch
+            @warn "No basename in metadata!"
+        ti = raw"" 
+        end
+        ln = Symbol.(filter(x->!occursin("date",x),names(df)))
+        @df df Plots.plot(:date,cols(ln),yaxis=:log,title=ti)
     end
 
     function lplot(df::DataFrame)
@@ -3778,7 +3762,7 @@ module WaSiM
         first(filter(file -> occursin(Regex(x,"i"),file), readdir()))
     end
     
-    #readall = loadalldfs
+    
     dfread = readf
     readmeteo = waread
     loaddf = readdf
@@ -9549,12 +9533,6 @@ module WaSiM
             #col_annotations = (Vector(dx[!, 1]) .- 0.5, y_offset, xans) # x y val
             col_annotations = (Vector(dx[!, 1]) .+ 0.5, y_offset, xans) # x y val
     
-            # Create a colormap from the `monmean` values
-            #k=colorfunction(dx[!,2])
-            #k = cf2(dx[!,2])
-            #mat = reshape(k, (1,nrow(dx)))
-            #colors = colormap.(dx[!,2])
-    
             @df df StatsPlots.boxplot(
                 str,
                 cols(s),
@@ -9729,36 +9707,6 @@ module WaSiM
 
         df = select(df,Cols(col,:date))
         @info "aggregation monthly mean of col: $col"
-        # if startswith(colname,"_")
-        #     colname = "basin"*colname
-        # end
-
-        # #dmean = copy(df)
-        # dmean = df
-        # s = map(Symbol, filter(x -> !occursin("date", x), names(dmean)))
-        # dmean[!, :month] = month.(dmean[!,:date])
-        # select!(dmean, Not(:date))
-        
-        # # # Calculate monthly mean and confidence interval using combine and groupby
-        # # dmean = DataFrames.combine(DataFrames.groupby(dmean, :month),
-        # #     s .=> (dmean -> (mean(dmean), 1.96 * std(dmean) / sqrt(length(dmean)))) 
-        # #     .=> s)
-
-        # # Calculate monthly mean and narrower confidence interval using combine and groupby
-        # dmean = DataFrames.combine(DataFrames.groupby(dmean, :month),
-        #     s .=> (
-        #         dmean -> 
-        #         (mean(dmean), 1.1 * std(dmean) / sqrt(length(dmean)))) 
-        #     .=> s)
-    
-    
-        # # Create separate columns for mean, lower bound, and upper bound
-        # for col in s
-        #     dmean[!, string(col)*"_mean"]  .= [first(only(x)) for x in eachrow(dmean[!, col])]
-        #     dmean[!, string(col)*"_lower"] .= [first(only(x)) - last(only(x)) for x in eachrow(dmean[!, col])]
-        #     dmean[!, string(col)*"_upper"] .= [first(only(x)) + last(only(x)) for x in eachrow(dmean[!, col])]
-        # end
-
         dmean = monc(df) #s.o. confidence_interval 95%
     
         plt = @df dmean plot(:month, Matrix(dmean[!,Cols(r"mean")]), 

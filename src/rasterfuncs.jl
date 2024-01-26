@@ -3,10 +3,19 @@ using Rasters
 
 module rst
 
-using DataFrames, CSV, Statistics, Dates, Distributions,StatsPlots, Plots.PlotMeasures
+using Reexport
+@reexport using WaSiM
+@reexport using DataFrames, CSV, Statistics, Dates, Distributions,StatsPlots, Plots.PlotMeasures
 using DelimitedFiles, Grep, Printf, PrettyTables
 using Rasters, ArchGDAL 
+
+import ArchGDAL
+import GeoDataFrames
+import GeoInterface
+import InteractiveUtils
 import NCDatasets
+import Shapefile
+
 
 begin
 
