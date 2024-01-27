@@ -8,6 +8,27 @@ force_recompile(package_name::String) = Base.compilecache(Base.identify_package(
 force_recompile("NCDatasets")
 Pkg.test()
 
+#using Pkg
+#Pkg.add(path="https://github.com/consumere/WaSiM.jl")
+
+using WaSiM
+using Pkg
+Pkg.add.(["DataFrames", "CSV", "Statistics", "Dates", "StatsPlots", "Distributions", "DataFramesMeta", "DelimitedFiles", "Grep", "Printf", "PrettyTables", "Rasters", "NCDatasets", "ArchGDAL", "GeoInterface", "GeoDataFrames", "Shapefile", "InteractiveUtils", "Plots", "SHA"]);
+v = Symbol.(["DataFrames", "CSV", "Statistics", "Dates", "StatsPlots", "Distributions", "DataFramesMeta", "DelimitedFiles", "Grep", "Printf", "PrettyTables", "Rasters", "NCDatasets", "ArchGDAL", "GeoInterface", "GeoDataFrames", "Shapefile", "InteractiveUtils", "Plots", "SHA"]);
+for i in v
+    @eval using $i
+end
+import WaSiM
+function toMain()
+    fnames = names(Main.WaSiM, all=true)
+    for submodule in fnames
+        @eval import Main.WaSiM.$submodule
+    end
+end
+toMain()
+
+
+
 # ##das müsste dann in dem Modul WaSiM stehen
 # include("win/smallfuncs.jl")
 # @cmk
@@ -67,3 +88,11 @@ report_package("WaSiM")
 
 import WaSiM as wa
 wa.lat()
+
+
+
+using Pkg
+Pkg.activate("/mnt/c/Users/chs72fw/.julia/dev/WaSiM")
+Pkg.status()
+import WaSiM as wa
+ds=wa.findlog()

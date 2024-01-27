@@ -9624,7 +9624,125 @@ module WaSiM
             col .= coalesce.(col, fillval)
         end
         return df
-    end   
+    end
+
+    """
+    build_soil_dictionary from soiltable
+    see fsoil
+    soiltable = open(fn) do io
+        a = readbetween(io, "soil_table", "substance_transport")
+        return(join(a[3:end-1]," ")) #rem first 2 and last lines
+    end
+    """
+    function build_soil_dictionary(soiltable::String)     
+        entries = split(soiltable, "}")
+        filter!(s -> !isempty(s), entries)
+        dictionary = Dict{Int, DataFrame}()
+        
+        for entry in entries
+            # Extract key and value
+            key = parse(Int, match(r"(\d+)\s*\{", entry).captures[1]|>strip)
+            println("check: $key")
+            value = match(r"\{\s*(.*)", entry).captures[1]|>strip
+            
+            # Process value string and convert to DataFrame
+            value = replace(value, "method = MultipleHorizons;  EvapMaxDepth = 0.15;" => "")
+            value = replace(value, r";" => ",")
+            value = replace(value, r";" => "")
+            value = replace(value, r"\$" => "")
+            value = replace(value, r"#" => "")
+            value = replace(value, r"\s+" => " ")
+            value = replace(value, r"^\s+|\s+$" => "")
+            value = replace(value, r",$" => "")
+            pairs = split(value, ",")
+            # Create an empty dictionary to store the column names and values
+            #col_dict = Dict{String, Vector{String}}()
+    
+            # Iterate over the key-value pairs and extract the column names and values
+            filter!(s -> !isempty(s), pairs)
+            z=[]
+            for pair in pairs
+                key2, value = split(strip(pair), " = ")
+                push!(z,DataFrame(key2 => value))
+            end
+            # Create the DataFrame using the extracted column names and values
+            df = hcat(z...)
+            # Store key-value pair in the dictionary
+            dictionary[key] = df
+        end
+        
+        return dictionary
+    end
+
+    """
+    soiltable reader wrapper func.
+    """
+    function fsoil(fn::String)
+        soiltable = open(fn) do io
+            a = readbetween(io, "soil_table", "substance_transport")
+            return(join(a[3:end-1]," "))
+        end
+        mysoildict = build_soil_dictionary(soiltable)
+        xdf = DataFrame()
+        # Iterate over the key-value pairs in the dictionary
+        for (key, df) in mysoildict
+            # Add a column named "key" with the current key value to the DataFrame
+            df.key = fill(key, size(df, 1))    
+            # Append the current DataFrame to the combined DataFrame
+            append!(xdf, df)
+        end
+        #propertynames(xdf)|>cb
+        nms=[:horizon, :ksat, :theta_res, :theta_sat, :alpha, :Par_n, :thickness, :maxratio]
+        for col in nms
+            xdf[!, col] .= [parse.(Float64, split(string(x))) for x in xdf[!,col]]
+        end
+        xdf.sums = [sum(x) for x in xdf.thickness]
+        return xdf
+    end
+
+    """
+    [parse.(Float64, split(string(x))) for x in nm]
+    """
+    function fparse(nm)
+        [parse.(Float64, split(string(x))) for x in nm]
+    end
+
+    """
+    Convert DataFrame Column to a Vector
+    returns only first match, see tovec for multiple matches
+    or:
+    m=Symbol.(filter(x->occursin(r"k",x),names(df)))
+    map(x->getproperty(df, x),m)
+    DataFrame(map(x->getproperty(df, x),m),:auto)
+    """
+    function vecdf(x::DataFrame, col::Any)
+        m = try
+                propertynames(df)[findfirst(x->occursin(col,x),names(df))]
+            catch
+                @error "no match found"
+                return
+            end
+            @info "$m found!"
+        return getproperty(x, m)
+    end
+
+    """
+    extract_layers(df::DataFrame, colkey::String="ksat")
+    form fsoil(infile)
+    or build_soil_dictionary(infile) -> df
+    """
+    function extract_layers(df::DataFrame, colkey::String="ksat")
+        num_layers = size(select(df,Cols(colkey))[1,1],1)
+        layer_columns = [Symbol("layer$i") for i in 1:num_layers]
+        layer_values = Vector{Vector{Float64}}(undef, num_layers)   
+        for i in 1:num_layers
+            layer_values[i] = [ r[1][i] for r in eachrow(select(df, colkey)) ]
+        end    
+        df1 = DataFrame(layer_columns .=> layer_values)
+        dout = rename(hcat(df.key,df1), 1 => :key)
+        return dout    
+    end
+
 
 end #endof module
 
