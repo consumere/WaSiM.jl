@@ -1,10 +1,12 @@
 #rasterfuncs
+
 using Rasters
 
-module rst
+#module rst
 
-using Reexport
+#using Reexport
 #@reexport using WaSiM
+
 @reexport using DataFrames, CSV, Statistics, Dates, Distributions,StatsPlots, Plots.PlotMeasures
 using DelimitedFiles, Grep, Printf, PrettyTables
 using Rasters, ArchGDAL 
@@ -1762,7 +1764,7 @@ begin
 
 end
 
-end #end module rst
+#end #end of endof module rst
 
 
 # fnames = names(rst, all=true)

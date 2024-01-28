@@ -1,9 +1,13 @@
 #functions
-#using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions, Printf
-#using DataFrames, CSV, Statistics, Dates, Rasters, StatsPlots, Distributions
-@time using DelimitedFiles, Grep, Printf, Statistics, Dates, DataFrames, CSV, PrettyTables
+
+#module smfc
+
+using DelimitedFiles, Grep, Printf, Statistics, Dates, DataFrames, CSV, PrettyTables
+#@time using DelimitedFiles, Grep, Printf, Statistics, Dates, DataFrames, CSV, PrettyTables
 import InteractiveUtils.clipboard
-printstyled("DelimitedFiles, Grep, Printf, Statistics, Dates, DataFrames, CSV, PrettyTables loaded\n",color=:green)
+#printstyled("DelimitedFiles, Grep, Printf, Statistics, 
+#	Dates, DataFrames, CSV, PrettyTables loaded\n",color=:green)
+
 #w csv 2sec
 # begin
 #     if Sys.isapple()
@@ -37,13 +41,19 @@ printstyled("DelimitedFiles, Grep, Printf, Statistics, Dates, DataFrames, CSV, P
 #     end   
 # end
 
-here = pwd()
+#here = pwd()
 #@showtime here = pwd()
-println("\nto edit this script: 
-    @less (ssup()) or @edit (ssup())\n\t",
-    "fdi() for dirinfo, ls() for fileinfo")
 
-printstyled("loc $here\n now initializing...\n",color=:green)
+
+
+# println("\nto edit this script: 
+    # @less (ssup()) or @edit (ssup())\n\t",
+    # "fdi() for dirinfo, ls() for fileinfo")
+
+#printstyled("loc $here\n now initializing...\n",color=:green)
+
+src_path = "../"
+
 function ssup()
     thisfile=src_path*"/win/smallfuncs.jl"
     include(thisfile)
@@ -2180,24 +2190,18 @@ function cdof(x::Union{String,DataFrame})
     println("current dir: $d")
 end
 
+cdinto = cdof
 
 #k=raw"C:/Users/Public/Documents/Python_Scripts/julia/win/smallfuncs.jl"
-k=src_path*"/win/smallfuncs.jl"
-println("script loc is $k")
-#homedir()|>cd
-#home() ##necessary for ssup to work
 
-# @vv "surface"
-# x=raw"C:/Users/chs72fw/Documents/Promotionsstudium/Dropbox/brendfab/m3/Soil_Temperature_Stack.nc"
-# r = Raster(x)
-# r = readras(x)
-# plot(r[t=4:5])
-# surface(r[t=5],camera = (0,-75),legend=false)
+# k=src_path*"/win/smallfuncs.jl"
+# println("script loc is $k")
+
+#homedir()|>cd
 
 function pyplot_df(df::DataFrame;log=false)
     x = df.date
     ln = (filter(x -> !occursin(r"date|month|year", x), names(df)))
-
        
     for col in ln
         y = df[!, Symbol(col)]
@@ -2643,13 +2647,9 @@ function jlcnt(path=pwd(), level=0)
     printstyled("Total size: $(round(s / (1024 * 1024), digits=2)) MB\n",color=:yellow)
 end
 
-println("you are here: ")
-printstyled(pwd()*"\n",color=:green)
+#end #end of smfc module
+
+# println("you are here: ")
+# printstyled(pwd()*"\n",color=:green)
 
 #Pkg.gc(; collect_delay=Second(0))
-
-# #pwd is home
-# pcmd = `perl -E '$z=$ENV{PWD}=~ s#mnt\S##r =~s/(\w)/\U$1:/mr =~s[/][]r;say $z'`
-# run(pcmd)
-# #readchomp(pipeline(pcmd))
-# pwd()
