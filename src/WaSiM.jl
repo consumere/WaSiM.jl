@@ -48,14 +48,7 @@
 # end
 #using StatsPlots
 
-
-    function toMain()
-    fnames = names(WaSiM, all=true)
-	for submodule in fnames
-		@eval import WaSiM.$submodule
-	end
-    end
-    
+   
     # function toexp()
     # fnames = names(WaSiM, all=true)
 	# for submodule in fnames
@@ -63,11 +56,12 @@
 	# end
     # end
 
-__precompile__(false)
+#__precompile__(false)
 
 module WaSiM
-    using Reexport
-    @reexport using DataFrames, StatsPlots, Dates
+    #using Reexport
+    #@reexport 
+    using DataFrames, StatsPlots, Dates
     #import DataFrames
     #@reexport using DataFramesMeta, CSV, Statistics, Dates, StatsPlots, Distributions    
     using DataFramesMeta, CSV, Statistics, Distributions    
@@ -95,6 +89,14 @@ module WaSiM
     include("timeseries.jl")
     #@reexport using smfc #no Pkg!   
 
+    function toMain()
+    fnames = names(WaSiM, all=true)
+        for submodule in fnames
+            @eval import WaSiM.$submodule
+        end
+    end
+    
+    export toMain
 
 end #endof module
 
