@@ -2,7 +2,7 @@ name: CompatHelper
 on:
   push:
     branches:
-#     - main
+     - main
      - dev
    tags: ['*']
 # pull_request:

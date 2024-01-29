@@ -4962,7 +4962,6 @@ function qgk(;rootdir=".", prefix="qgk")
     end
    
     function wslp(winpt::AbstractString)
-
         winpt = replace(winpt, "\\"=> "/")
         #winpt = join(winpt,"'")
         #print("\"",winpt,"\"")
@@ -9697,4 +9696,61 @@ function qgk(;rootdir=".", prefix="qgk")
             end
         end
         return df 
+    end
+
+    # """
+    # winpath to wsl
+    # """
+    # function towsl(winpt::AbstractString)
+    #     winpt = replace(winpt, "\\"=> "/")
+    #     if Sys.iswindows()
+    #         # Convert the Windows path to a WSL path
+    #         wsl_cmd = `wsl wslpath -m $winpt`
+    #         wsl_path = readchomp(pipeline(wsl_cmd))
+    #         # Return the WSL path
+    #         return wsl_path
+    #     else
+    #         try
+    #             wsl_cmd = `wslpath $winpt`
+    #             wsl_path = readchomp(pipeline(wsl_cmd))
+    #             # Return the WSL path
+    #             return wsl_path
+    #         catch
+    #             @error "cmd wslpath not found!"
+    #             return
+    #         end
+    #     end
+    # end
+
+    """
+    wslpath to windows
+    """    
+    function towin(file_path::Union{String, Nothing})
+        if isnothing(file_path)
+            lw = split(pwd(), '/')[3]
+            rst = join(split(pwd(), '/')[4:end], '/')
+            win_path = string(uppercase(lw), ":/", rst)
+        else
+            lw = split(file_path, '/')[3]
+            rst = join(split(file_path, '/')[4:end], '/')
+            win_path = string(uppercase(lw), ":/", rst)
+        end
+        return win_path
+    end
+    
+    """
+    windows path to wsl
+    """
+    function towsl(file_path::Union{String, Nothing})
+        if isnothing(file_path)
+            #return error("File path cannot be nothing")
+            drive = lowercase(pwd()[1])
+            rst = replace(pwd()[3:end], "\\" => "/")
+            wsl_path = string("/mnt/", drive, rst)
+        else
+            drive = lowercase(file_path[1])
+            rst = replace(file_path[3:end], "\\" => "/")
+            wsl_path = string("/mnt/", drive, rst)
+        end
+        return wsl_path
     end
