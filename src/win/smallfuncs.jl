@@ -8,44 +8,6 @@ import InteractiveUtils.clipboard
 #printstyled("DelimitedFiles, Grep, Printf, Statistics, 
 #	Dates, DataFrames, CSV, PrettyTables loaded\n",color=:green)
 
-#w csv 2sec
-# begin
-#     if Sys.isapple()
-#         platform = "osx"
-#         const homejl = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
-#         const mybash = "/Users/apfel/.bash_aliases"
-#         src_path = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
-#     elseif Sys.iswindows()
-#         platform = "windows"
-#         src_path = "C:\\Users\\Public\\Documents\\Python_Scripts\\julia"
-#         macro wasim() pt="C:\\Users\\chs72fw\\.julia\\dev\\WaSiM\\src\\wa.jl";include(pt);end
-#         try
-#             #Base.@showtime using RCall #errors in local scope
-#             using RCall
-#             printstyled("\nRCall loaded!\n",color=:green,bold=true,underline=true)    
-#         catch e
-#             printstyled("RCall errors at:\n $e",color=:red)
-#         end    
-#     else
-#         platform = "unix"
-#         winpt = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
-#         pcld = "/home/cris/pCloud Drive/Stuff/Python_Scripts/julia"
-#         src_path = isdir(winpt) ? winpt : pcld
-#         if !isdir(src_path) #for docker images
-#             src_path = "/app/pyscripts/julia"
-#         end
-#         println("sourcepath is $src_path")
-#         if isdir(winpt)
-#             macro wasim() pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM/src/wa.jl";include(pt);end
-#         end
-#     end   
-# end
-
-#here = pwd()
-#@showtime here = pwd()
-
-
-
 # println("\nto edit this script: 
     # @less (ssup()) or @edit (ssup())\n\t",
     # "fdi() for dirinfo, ls() for fileinfo")
