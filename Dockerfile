@@ -6,11 +6,13 @@ FROM julia:latest
 WORKDIR /app
 
 # Copy the Julia Project.toml and Manifest.toml files to the container
-COPY Project.toml Manifest.toml /app/
+# COPY Project.toml Manifest.toml /app/ #<-The Manifest.toml is a snapshot of the exact state of a Julia environment. I
+
+COPY Project.toml /app/
 
 #RUN julia -e 'using Pkg; Pkg.add.(["CSV", "DataFrames", "Dash","Plots", "PlotlyJS","Base64","Dates","Statistics"])'
 #RUN julia -e 'using Pkg; Pkg.add.(["CSV", "DataFrames", "Dash", "PlotlyJS","Base64","Dates","Statistics"])'
-RUN julia -e 'using Pkg; Pkg.add.(["WaSiM"])'
+#RUN julia -e 'using Pkg; Pkg.add.(["WaSiM"])' #its dev, so... nope.
 
 # Install the Julia packages
 RUN julia -e 'using Pkg; Pkg.activate("."); Pkg.instantiate();'
