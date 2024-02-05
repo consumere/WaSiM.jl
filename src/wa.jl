@@ -885,11 +885,19 @@ module wa
         return (1 - (sum((predictions .- targets).^2) / sum((targets .- mean(targets)).^2)))
     end
 
+    """
+    used in byear
+    """
+    function nse2(simulated::Vector{Float64}, observed::Vector{Float64})
+        return (1 - (sum((simulated .- observed).^2) / sum((observed .- mean(observed)).^2)))
+    end
+
     function nse(df::DataFrame)
         simulated, observed = vec(Matrix(df[!,Cols(1)])),vec(Matrix(df[!,Cols(2)]))
         #observed, simulated = df[:,6],df[:,5]
         return (1 - (sum((simulated .- observed).^2) / sum((observed .- mean(observed)).^2)))
     end
+
 
     function kge(df::DataFrame)
         if (any(x->occursin("year|date|month",x),names(df)))
@@ -4511,7 +4519,7 @@ module wa
     # tff2(f[5:10])
 
     function ssup()
-        include(src_path*"/win/smallfuncs.jl")
+        include(src_path*"/smallfuncs.jl")
     end
 
 

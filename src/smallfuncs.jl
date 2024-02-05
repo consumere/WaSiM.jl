@@ -17,7 +17,7 @@ import InteractiveUtils.clipboard
 src_path = "../"
 
 function ssup()
-    thisfile=src_path*"/win/smallfuncs.jl"
+    thisfile=src_path*"/smallfuncs.jl"
     include(thisfile)
 end
 
@@ -2154,9 +2154,9 @@ end
 
 cdinto = cdof
 
-#k=raw"C:/Users/Public/Documents/Python_Scripts/julia/win/smallfuncs.jl"
+#k=raw"C:/Users/Public/Documents/Python_Scripts/julia/smallfuncs.jl"
 
-# k=src_path*"/win/smallfuncs.jl"
+# k=src_path*"/smallfuncs.jl"
 # println("script loc is $k")
 
 #homedir()|>cd
@@ -2607,6 +2607,13 @@ function jlcnt(path=pwd(), level=0)
     printstyled("Directory: $path\n",color=:yellow)
     printstyled("Number of files: $n\n",color=:yellow)
     printstyled("Total size: $(round(s / (1024 * 1024), digits=2)) MB\n",color=:yellow)
+end
+
+"""
+see also tovec in wa.
+"""
+function dfvec(df::DataFrame,col::Int64)
+    getproperty(df,propertynames(df)[col])
 end
 
 #end #end of smfc module

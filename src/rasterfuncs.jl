@@ -1756,10 +1756,38 @@ begin
         
         
     end
+
+    """
+    facetsplot of RasterSeries by timekey= :t
+    """
+    function serplot(ser::Union{RasterSeries,Regex,AbstractString}; 
+        skipfirst::Bool=false,
+        misval::Number=0.0,
+        timekey::Symbol=:t,
+        c=:matter, title="", xlabel="", ylabel="")
+        if !(ser isa RasterSeries) 
+            matches = try 
+                    nconly(ser)
+                catch
+                    @error "no matches of $ser found!"
+                    return
+                end
+            if skipfirst
+                matches = matches[2:end]
+            end
+            ser = RasterSeries(matches,
+                timekey;
+                missingval=misval)
+        end
+        @info "missingval is $misval ..."
+        Plots.plot(ser; 
+        c=cgrad(c), title=title, xlabel=xlabel, ylabel=ylabel)
+    end
+    
     
 
 
-end
+end #endof fns
 
 #end #end of endof module rst
 
