@@ -14,11 +14,11 @@ COPY Project.toml /app/
 #RUN julia -e 'using Pkg; Pkg.add.(["CSV", "DataFrames", "Dash", "PlotlyJS","Base64","Dates","Statistics"])'
 #RUN julia -e 'using Pkg; Pkg.add.(["WaSiM"])' #its dev, so... nope.
 
-# Install the Julia packages
-RUN julia -e 'using Pkg; Pkg.activate("."); Pkg.instantiate();'
-# RUN julia -e 'using Pkg; Pkg.activate("."); Pkg.update(); Pkg.instantiate();'
 # Copy the rest of the application files to the container
 COPY . /app
+# Install the Julia packages
+#RUN julia -e 'using Pkg; Pkg.activate("."); Pkg.instantiate();'
+RUN julia -e 'using Pkg; Pkg.activate("."); Pkg.update(); Pkg.instantiate();'
 
 #EXPOSE 8080
 
