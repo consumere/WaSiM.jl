@@ -85,7 +85,7 @@ module WaSiM
     ##import rasterstuff
     include("rasterfuncs.jl")
     src_path = "./src"
-    include("win/smallfuncs.jl")
+    include("smallfuncs.jl")
     include("timeseries.jl")
     #@reexport using smfc #no Pkg!   
 

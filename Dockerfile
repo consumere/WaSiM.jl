@@ -22,6 +22,13 @@ RUN julia -e 'using Pkg; Pkg.activate("."); Pkg.update(); Pkg.instantiate();'
 
 #EXPOSE 8080
 
+#in gcloud:
+#(base) christian_schaefer_1985@cloudshell:~$ 
+#docker pull ghcr.io/consumere/wasim.jl:dev
+#docker tag ghcr.io/consumere/wasim.jl:dev consumere/kernels:jlwasim
+#docker push consumere/kernels:jlwasim
+
+
 #/usr/local/bin/docker-entrypoint.sh: 11: exec: julia --optimize=3 --math-mode=fast: not found 
 #CMD ["julia", "--math-mode=fast","dpr_dash.jl"] #das funkt nicht wg dem script.
 # CMD ["julia", "appts.jl"]
