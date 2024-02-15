@@ -9362,123 +9362,6 @@ module wa
     end
 
     """
-    sim obs plot rglob regex
-    x::Union{Regex,DataFrame}; 
-        yscale::Symbol = :log,
-        fun::Function = sum, 
-        freq::String="monthly",simcol=1,obscol=2
-        freq can also shortened, like D,M,Q,Y
-    """
-    function hyeval(
-        x::Union{Regex,DataFrame}; 
-        yscale::Symbol = :log,
-        fun::Function = sum, 
-        freq::String="monthly",
-        ylab::String="[mm/$freq]",
-        simcol=1,obscol=2)
-        if x isa Regex
-            x = first(dfonly(x))
-            ndf = waread2(x;silencewarnings=true)
-        else
-            ndf = reorder_df(x)
-        end
-                
-        ndf = select(ndf,Cols(simcol,obscol,r"date|month|year"))
-        dropmissing!(ndf)
-
-        @info "aggregation (sum) freq: $freq"
-        try 
-        # Resample the DataFrame based on the specified freq
-            if freq == "daily" || freq == "D" || freq == "day"
-                #ndf = ndf[hour.(ndf.date) .== 0, :]
-                ndf = ndf
-            elseif freq == "monthly" || freq == "M" || freq == "mon" || freq == "month"
-                #df[day.(df.date) .== 1, :]
-                ndf = qrtr(ndf;fun=fun,agg=month) #monsum(ndf)
-            elseif freq == "quarterly" || freq == "Q" 
-                #df[day.(df.date) .== 1 && month.(df.date) % 3 == 1, :]
-                ndf = qrtr(ndf;fun=fun)
-            elseif freq == "seasonal"
-                #df[day.(df.date) .== 1 && month.(df.date) % 3 == 1, :]
-                ndf = qrtr(ndf;fun=fun)
-            elseif freq == "yearly" || freq == "Y" || freq == "yr" || freq == "year"
-                #df[day.(df.date) .== 1 && month.(df.date) == 1, :]
-                ndf = qrtr(ndf;fun=fun,agg=year)  #yrsum(ndf)
-                #DataFrames.combine(groupby(df, year.(df.date)), y .=> mean .=> y);
-                #DataFrames.combine(groupby(df, quarterofyear.(df.date)), y .=> mean .=> y);
-            end
-        catch e
-            @error("smth went wrong",e)
-            return
-        end
-
-        ndf = hcat(ndf[!,Not(Cols(r"date|month|year"))],
-            ndf[:,Cols(r"date|month|year")])
-    
-        #printstyled(names(ndf)...,bold=true,color=:red)
-        #split(names(ndf)...,' '),bold=true,color=:red)
-        printstyled(names(ndf),bold=true,color=:red)
-        
-        rename!(ndf, [:Simulated,:Observed,:Date]) #wie in gof3.r
-        
-        printstyled(" changed to :Simulated,:Observed,:Date ! \n",bold=true,color=:red)
-        
-        overall_pearson_r = cor(ndf[!, :Observed], 
-            ndf[!, :Simulated])
-        r2 = overall_pearson_r^2
-        #nse(simulations, evaluation)
-        nse_score = nse(ndf[!, :Simulated],ndf[!, :Observed])
-        kge_score = kge1(ndf[!, :Simulated],ndf[!, :Observed])
-        ve = round(vef(ndf[!, :Simulated],ndf[!, :Observed]), digits=2)
-        subs = "RSQ: $(round(r2, digits=2))\nNSE: $(round(nse_score, digits=2))\nKGE: $(round(kge_score, digits=2))\nVE: $ve"
-        
-
-        ti = try 
-            first(split(basename(x),"_"))
-        catch
-            @warn "No basename in metadata!"
-            raw""
-        end
-        
-        fr = replace(freq,"ly"=>"")
-        p = Plots.plot(title=ti, ylabel=ylab, 
-            xlabel="", 
-            yaxis = yscale, 
-            legend=:topleft)
-
-        Plots.plot!(p, ndf[!, :Date], ndf[!, :Simulated], 
-                color=:red, label="Modeled")
-        Plots.plot!(p, ndf[!, :Date], ndf[!, :Observed], 
-        line=:dash, color=:blue,label="Observed")
-            
-        
-        Plots.annotate!(
-            :topright,
-            text("$subs", 10, :black, :right)
-        )
-
-        if freq == "quarterly" || freq == "Q" 
-            Plots.xticks!(
-                1:4, ["Q1", "Q2", "Q3", "Q4"])
-        end
-                
-        if freq == "monthly" || freq == "M" || freq == "mon" || freq == "month"
-            Plots.xticks!(
-                1:12, monthabbr.(1:12))
-        end
-        
-        if freq == "yearly" || freq == "Y" || freq == "yr" || freq == "year"
-            Plots.xticks!(
-                #1:nrow(ndf), 
-                ndf.Date, 
-                string.(ndf.Date))
-        end
-        
-
-        return p
-    end
-
-    """
     finds all ctl files in a directory -> NO subdirectories by default
     findctl(snippet::Union{String,Regex};recurse=false, dir="D:/Wasim/regio/control",suffix=".ctl")
     """
@@ -10564,6 +10447,328 @@ module wa
             end
         end
     end
+
+    function hd(x::DataFrame)
+        if nrow(x)>20
+            @info "headtail of df:"
+            vcat(first(x,5),last(x,5))
+        else
+            first(x,5)
+        end
+    end
+
+    """
+    headtail of df using mapcols
+    """
+    function ht(df::DataFrame)
+        mapcols(x -> x[Not(2:end-1)], df)
+    end
+
+    """
+    Plots a histogram of the values in the DataFrame
+    """
+    function correlogram(df)
+        rows = cols = size(df,2)
+        plots = []
+        for row = 1:rows, col = 1:cols
+            if row == col
+                push!(
+                    plots,
+                    histogram(df[:,row],bins=10, xtickfont = font(5), ytickfont = font(5), legend = false))
+            else
+                push!(
+                    plots,
+                    scatter(df[:,row], df[:,col], xtickfont = font(5), ytickfont = font(5), legend = false, markersize=1, alpha = 0.3, smooth = true,
+                    linewidth=3, linecolor=:red),
+                )
+            end
+        end
+        Plots.plot(plots..., #size=(1200, 1000), 
+            layout = (rows, cols))
+    end
+
+    """
+    fillmissing(df,fillval=-9999)
+    """
+    function fillmissing(df,fillval=-9999)
+        for col in eachcol(df)
+            col .= coalesce.(col, fillval)
+        end
+        return df
+    end
+
+    """
+    build_soil_dictionary from soiltable
+    see fsoil
+    soiltable = open(fn) do io
+        a = readbetween(io, "soil_table", "substance_transport")
+        return(join(a[3:end-1]," ")) #rem first 2 and last lines
+    end
+    """
+    function build_soil_dictionary(soiltable::String)     
+        entries = split(soiltable, "}")
+        filter!(s -> !isempty(s), entries)
+        dictionary = Dict{Int, DataFrame}()
+        
+        for entry in entries
+            # Extract key and value
+            key = parse(Int, match(r"(\d+)\s*\{", entry).captures[1]|>strip)
+            println("check: $key")
+            value = match(r"\{\s*(.*)", entry).captures[1]|>strip
+            
+            # Process value string and convert to DataFrame
+            value = replace(value, "method = MultipleHorizons;  EvapMaxDepth = 0.15;" => "")
+            value = replace(value, r";" => ",")
+            value = replace(value, r";" => "")
+            value = replace(value, r"\$" => "")
+            value = replace(value, r"#" => "")
+            value = replace(value, r"\s+" => " ")
+            value = replace(value, r"^\s+|\s+$" => "")
+            value = replace(value, r",$" => "")
+            pairs = split(value, ",")
+            # Create an empty dictionary to store the column names and values
+            #col_dict = Dict{String, Vector{String}}()
+    
+            # Iterate over the key-value pairs and extract the column names and values
+            filter!(s -> !isempty(s), pairs)
+            z=[]
+            for pair in pairs
+                key2, value = split(strip(pair), " = ")
+                push!(z,DataFrame(key2 => value))
+            end
+            # Create the DataFrame using the extracted column names and values
+            df = hcat(z...)
+            # Store key-value pair in the dictionary
+            dictionary[key] = df
+        end
+        
+        return dictionary
+    end
+
+    """
+    soiltable reader wrapper func.
+    """
+    function fsoil(fn::String)
+        soiltable = open(fn) do io
+            a = readbetween(io, "soil_table", "substance_transport")
+            return(join(a[3:end-1]," "))
+        end
+        mysoildict = build_soil_dictionary(soiltable)
+        xdf = DataFrame()
+        # Iterate over the key-value pairs in the dictionary
+        for (key, df) in mysoildict
+            # Add a column named "key" with the current key value to the DataFrame
+            df.key = fill(key, size(df, 1))    
+            # Append the current DataFrame to the combined DataFrame
+            append!(xdf, df)
+        end
+        #propertynames(xdf)|>cb
+        nms=[:horizon, :ksat, :theta_res, :theta_sat, :alpha, :Par_n, :thickness, :maxratio]
+        for col in nms
+            xdf[!, col] .= [parse.(Float64, split(string(x))) for x in xdf[!,col]]
+        end
+        xdf.sums = [sum(x) for x in xdf.thickness]
+        return xdf
+    end
+
+    """
+    [parse.(Float64, split(string(x))) for x in nm]
+    """
+    function fparse(nm)
+        [parse.(Float64, split(string(x))) for x in nm]
+    end
+
+    """
+    Convert DataFrame Column to a Vector
+    returns only first match, see tovec for multiple matches
+    or:
+    m=Symbol.(filter(x->occursin(r"k",x),names(df)))
+    map(x->getproperty(df, x),m)
+    DataFrame(map(x->getproperty(df, x),m),:auto)
+    """
+    function vecdf(x::DataFrame, col::Any)
+        m = try
+                propertynames(df)[findfirst(x->occursin(col,x),names(df))]
+            catch
+                @error "no match found"
+                return
+            end
+            @info "$m found!"
+        return getproperty(x, m)
+    end
+    """
+    extract_layers(df::DataFrame, colkey::String="ksat")
+    form fsoil(infile)
+    or build_soil_dictionary(infile) -> df
+    """
+    function extract_layers(df::DataFrame, colkey::String="ksat")
+        num_layers = size(select(df,Cols(colkey))[1,1],1)
+        layer_columns = [Symbol("layer$i") for i in 1:num_layers]
+        layer_values = Vector{Vector{Float64}}(undef, num_layers)   
+        for i in 1:num_layers
+            layer_values[i] = [ r[1][i] for r in eachrow(select(df, colkey)) ]
+        end    
+        df1 = DataFrame(layer_columns .=> layer_values)
+        dout = rename(hcat(df.key,df1), 1 => :key)
+        return dout    
+    end
+
+    """
+    a reader using filtermask and looks_like_number
+    """
+    function nread(x::Union{String,Regex};kw...)
+        if x isa String
+            printstyled("reading $x\n",color=:light_red)
+        else x isa Regex
+            x = first(dfonly(x))
+            printstyled("reading $x\n",color=:light_red)
+        end
+        ms = ["-9999","-9999.0","lin", "log", "--"]
+        df = CSV.read(x,DataFrame;missingstring=ms,kw...)
+        if "YY" ∉ names(df)
+            println("Column 'YY' not found in the CSV file.")
+            @show first(df,5)
+            return nothing
+        end
+        if !all(i -> i isa Int64, df.YY)
+            filtermask = broadcast(x->looks_like_number(x),df[!,1])
+            df = df[filtermask, :]        
+        end
+        date_strings = string.(df.YY, "-", df.MM, "-", df.DD, "-", df.HH)
+        df.date = DateTime.(date_strings, "yyyy-mm-dd-HH")
+        df = select(df, Not(1:4))
+        DataFrames.metadata!(df, "filename", x, style=:note)
+        for x in names(df)
+            if startswith(x,"_")
+                newname=replace(x,"_"=>"C", count=1)
+                rename!(df,Dict(x=>newname))
+            end
+        end
+        return df 
+    end
+
+    """
+    sim obs plot rglob regex
+    x::Union{Regex,DataFrame}; 
+        yscale::Symbol = :log,
+        fun::Function = sum, 
+        freq::String="monthly",simcol=1,obscol=2
+        freq can also shortened, like D,M,Q,Y
+    """
+    function hyeval(
+        x::Union{Regex,DataFrame}; 
+        yscale::Symbol = :log,
+        fun::Function = sum, 
+        freq::String="monthly",
+        ylab::String="[mm/$freq]",
+        simcol=1,obscol=2)
+        if x isa Regex
+            x = first(dfonly(x))
+            ndf = waread2(x;silencewarnings=true)
+        else
+            ndf = reorder_df(x)
+        end
+                
+        ndf = select(ndf,Cols(simcol,obscol,r"date|month|year"))
+        dropmissing!(ndf)
+
+        @info "aggregation (sum) freq: $freq"
+        try 
+        # Resample the DataFrame based on the specified freq
+            if freq == "daily" || freq == "D" || freq == "day"
+                #ndf = ndf[hour.(ndf.date) .== 0, :]
+                ndf = ndf
+            elseif freq == "monthly" || freq == "M" || freq == "mon" || freq == "month"
+                #df[day.(df.date) .== 1, :]
+                ndf = qrtr(ndf;fun=fun,agg=month) #monsum(ndf)
+            elseif freq == "quarterly" || freq == "Q" 
+                #df[day.(df.date) .== 1 && month.(df.date) % 3 == 1, :]
+                ndf = qrtr(ndf;fun=fun)
+            elseif freq == "seasonal"
+                #df[day.(df.date) .== 1 && month.(df.date) % 3 == 1, :]
+                ndf = qrtr(ndf;fun=fun)
+            elseif freq == "yearly" || freq == "Y" || freq == "yr" || freq == "year"
+                #df[day.(df.date) .== 1 && month.(df.date) == 1, :]
+                ndf = qrtr(ndf;fun=fun,agg=year)  #yrsum(ndf)
+                #DataFrames.combine(groupby(df, year.(df.date)), y .=> mean .=> y);
+                #DataFrames.combine(groupby(df, quarterofyear.(df.date)), y .=> mean .=> y);
+            end
+        catch e
+            @error("smth went wrong",e)
+            return
+        end
+
+        #sim,obs names
+        sim,obs = names(ndf[!,Not(Cols(r"date|month|year"))])[1:2]
+        ndf = hcat(ndf[!,Not(Cols(r"date|month|year"))],
+            ndf[:,Cols(r"date|month|year")])
+    
+        #printstyled(names(ndf)...,bold=true,color=:red)
+        #split(names(ndf)...,' '),bold=true,color=:red)
+        printstyled(names(ndf),bold=true,color=:red)
+        
+        rename!(ndf, [:Simulated,:Observed,:Date]) #wie in gof3.r
+        
+        printstyled(" changed to :Simulated,:Observed,:Date ! \n",bold=true,color=:red)
+        
+        overall_pearson_r = cor(ndf[!, :Observed], 
+            ndf[!, :Simulated])
+        r2 = overall_pearson_r^2
+        #nse(simulations, evaluation)
+        nse_score = nse(ndf[!, :Simulated],ndf[!, :Observed])
+        kge_score = kge1(ndf[!, :Simulated],ndf[!, :Observed])
+        ve = round(vef(ndf[!, :Simulated],ndf[!, :Observed]), digits=2)
+        subs = "RSQ: $(round(r2, digits=2))\nNSE: $(round(nse_score, digits=2))\nKGE: $(round(kge_score, digits=2))\nVE: $ve"
+        
+
+        ti = try 
+            first(split(basename(x),"_"))
+        catch
+            @warn "No basename in metadata!"
+            raw""
+        end
+        
+        fr = replace(freq,"ly"=>"")
+        p = Plots.plot(title=ti, ylabel=ylab, 
+            xlabel="", 
+            yaxis = yscale, 
+            legend=:topleft)
+
+            #sim,obs
+        Plots.plot!(p, ndf[!, :Date], ndf[!, :Simulated], 
+                color=:red, label=sim) #label="Modeled")
+        Plots.plot!(p, ndf[!, :Date], ndf[!, :Observed], 
+        line=:dash, color=:blue, label=obs)
+        #label="Observed")
+            
+        
+        Plots.annotate!(
+            :topright,
+            Plots.text("$subs", 10, :black, :right;
+            family="Computer Modern")
+        )
+
+        if freq == "quarterly" || freq == "Q" || freq == "qrtr" 
+            Plots.xticks!(
+                1:4, ["Q1", "Q2", "Q3", "Q4"])
+        end
+                
+        if freq == "monthly" || freq == "M" || freq == "mon" || freq == "month"
+            Plots.xticks!(
+                1:12, monthabbr.(1:12))
+        end
+        
+        if freq == "yearly" || freq == "Y" || freq == "yr" || freq == "year"
+            Plots.xticks!(
+                #1:nrow(ndf), 
+                ndf.Date, 
+                string.(ndf.Date))
+        end
+        
+
+        return p
+    end
+
 
 
 

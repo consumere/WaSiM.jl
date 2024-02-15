@@ -12,7 +12,8 @@
 module pyjl
     using PyCall
     using PyPlot
-    include("win/smallfuncs.jl")
+    PyPlot.rc("font", family="serif", serif=["cmr10"])
+    include("smallfuncs.jl")
     #@info "dont forget using PyCall; pygui(true) in vscode!"
 
     function looks_like_number(str::AbstractString)
@@ -557,7 +558,8 @@ module pyjl
     xr  = pyimport("xarray")
     sh="d:/remo/qm/tas/simh.nc"
     simh=xr.open_dataset(sh)
-    simp=xr.open_dataset("tas_cor_raw.nc")
+    sp="d:/remo/qm/corgrids/tas/tas_cor_raw.nc"
+    simp=xr.open_dataset(sp)
     tl="D:/remo/cordex/eobs/v28/tas/tas_obs.nc"
     obsh=xr.open_dataset(tl)
     pyjl.doyplot(simh,simp,obsh)
@@ -566,9 +568,51 @@ module pyjl
     ad = xr.open_dataset(a)
     m = ad.keys()|>collect|>last    
     """
-    function doyplot(simh, simp, obsh;tosum::Bool=false)
+    function doyplot(simh, simp, obsh; tosum::Bool=false)
         plt = pyimport("matplotlib.pyplot")
         k = simh.keys()|>collect|>last
+        
+        if k != simp.keys()|>collect|>last || k != obsh.keys()|>collect|>last
+            @error "varibale keys have to be the same!"
+            @info "check with ds.variables|>collect "
+            return
+        end
+
+        fns = [simh, simp, obsh] #|>map(x->x.filename|>basename)
+
+        # for z in enumerate(fns)
+        #     println(z)
+        # end
+        
+        for z in fns
+            #idx = obsh.variables|>collect
+            idx = z.variables|>collect
+            #if (!occursin("longitude", idx)) || (!occursin("latitude", idx))
+            #map(x->occursin(x,"time"),z.coords|>collect)
+            if (!any(x->occursin(r"longitude|latitude",x),idx))
+                lng = ([i for i in idx if startswith(i, "lon") || endswith(i, "x")])|>first
+                #lng = join([i for i in idx if startswith(i, "lon") || endswith(i, "x")])
+                ltt = ([i for i in idx if startswith(i, "lat") || endswith(i, "y")])|>first
+                #tim = ([i for i in idx if startswith(i, "tim")])|>first
+                #dimmns = Dict(tim=>"t", lng=>"longitude", ltt=>"latitude")
+                dimmns = Dict(lng=>"longitude", ltt=>"latitude")
+                z = z.swap_dims(dimmns)
+                z = z.rename(dimmns)
+                if !haskey(z.coords, "latitude")
+                    #z = z.set_index(z, Dict("latitude" => "latitude"))
+                    z = z.set_coords("latitude")
+                end
+                if !haskey(z.coords, "longitude")
+                    z = z.set_coords("longitude")
+                end
+
+                #z = z.rename_dims(dimmns) #.set_index(dimmns)
+                #z = z.swap_dims(dimmns).set_index(dimmns).rename(dimmns)
+                #z = z = z.rename(dimmns).set_index(dimmns)
+                @info "renamed $idx !"
+            end
+        end
+        
 
         if tosum
             grouped_simh = simh[k].mean("longitude").mean("latitude").groupby("time.dayofyear").sum()
@@ -582,36 +626,210 @@ module pyjl
         end        
         # Create the figure
         #plt.figure(figsize=(10, 5), dpi=216)
-        PyPlot.rc("font", family="serif", serif=["cmr10"])
+        #PyPlot.rc("font", family="serif", serif=["cmr10"])
+        vr = uppercase(first(k))
+        plt.rc("font", family="serif", serif=["cmr10"])
         plt.figure()
-        # plt.plot(grouped_simh, label=join("\$"*k*"_{sim,h}\$"))
-        # plt.plot(grouped_simp, label=join("\$"*k*_"{sim,p}\$"))
-        # plt.plot(grouped_obsh, label=join("\$"*k*"_{obs,h}\$"))
-        # Set plot title and limits
-        # Plot the mean temperature for simh
-        plt.plot(grouped_simh, label="\$T_{sim,h}\$")
-
-        # Plot the mean temperature for simp
-        plt.plot(grouped_simp, label="\$T_{sim,p}\$")
-
-        # Plot the mean temperature for obsh
-        plt.plot(grouped_obsh, label="\$T_{obs,h}\$")
-        plt.title("Historical modeled and observed and predicted $k")
+        plt.plot(grouped_simh, label="\$$vr _{sim,h}\$")
+        plt.plot(grouped_simp, label="\$$vr _{sim,p}\$")
+        plt.plot(grouped_obsh, label="\$$vr _{obs,h}\$")
+        plt.title("Historical modeled and predicted versus observed $(uppercasefirst(k))")
         plt.xlim(0, 365)
-        # Add grid
         plt.gca().grid(alpha=0.3)
-        # Add legend
         plt.legend()
-        # Show the plot
         plt.show()
     end
 
-end #end of module
+    """
+    pycall function to polygonize a raster
+    uses osgeo.gdal and osgeo.ogr    
+    """
+    function polygonize_raster(input_raster_path::String, output_shapefile_path::String)
+        gdal = pyimport("osgeo.gdal")
+        ogr = pyimport("osgeo.ogr")
+        osr = pyimport("osgeo.osr")
+
+        # Open the raster dataset
+        dataset = gdal.Open(input_raster_path)
+
+        # Get the first band
+        band = dataset.GetRasterBand(1)
+
+        # Get the "ESRI Shapefile" driver
+        driver = gdal.GetDriverByName("ESRI Shapefile")
+
+        # Create a new shapefile dataset
+        out_ds = driver.Create(output_shapefile_path, 0, 0, 0, gdal.GDT_Unknown)
+
+        # Create a spatial reference object
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(25832)
+
+        # Create a new layer
+        layer = out_ds.CreateLayer("polygonized", srs, ogr.wkbPolygon)
+
+        # Polygonize the raster
+        gdal.Polygonize(band, py"None", layer, -1, [], callback=py"None")
+
+        # Close the dataset to write it to the disk
+        out_ds = py"None"
+    end
+
+    """
+    dfvec(df::DataFrame, col::Int64)
+    """
+    function dfvec(df::DataFrame, col::Int64)
+        return vec(df[!,col])
+    end
+
+    """
+    KGE, r, α, β = he.kge(dfvec(ts,1),dfvec(ts,2))
+    hekge(x::Union{String,Regex,DataFrame};c1::Int64=1,c2::Int64=2)
+    c1 = colindex for simulations
+    c2 = colindex for observations\n
+    vst = glob(r"qoutjl")\n
+    dfs = map(pyjl.hekge,vst)
+    hcat(vcat(dfs...),basename.(vst))
+    \nall to one line:\n
+    odf = rename(hcat(vcat(map(pyjl.hekge,filter(
+        x->endswith(x,"qoutjl"),readdir()
+        ))...),basename.(filter(
+            x->endswith(x,"qoutjl"),readdir()
+            )),Dict(5=>"fn"))
+    """
+    function hekge(x::Union{String,Regex,DataFrame};c1::Int64=1,c2::Int64=2)
+        if x isa String
+            printstyled("reading $x\n",color=:light_red)
+            ts = pyread(x)
+            #dropmissing!(ts)    #
+            printstyled("colorder: $(names(ts))\n",color=:light_green)
+        elseif x isa Regex
+            ts = pyread(x)
+            fn = try 
+                collect(DataFrames.metadata(ts))[1][2]|>basename
+                catch
+                @info "no filename"
+                end
+            printstyled("$fn loaded\n",color=:light_red)
+            #dropmissing!(ts)    #
+            printstyled("colorder: $(names(ts))\n",color=:light_green)
+        else
+            ts = x
+            printstyled("colorder: $(names(ts))\n",color=:light_green)
+        end    
+        KGE, r, α, β = he.kge(dfvec(ts,c1),dfvec(ts,c2))
+        kge_matrix = [KGE, r, α, β]
+        # Column names see doc he.kge
+        col_names = ["KGE", "r", "α", "β"]
+        df = DataFrame(Dict(col_names.=>kge_matrix))
+        return df
+    end
+
+    function doy(simh, simp, obsh; tosum::Bool=false)
+        plt = pyimport("matplotlib.pyplot")
+        k = simh.keys()|>collect|>last
+        
+        if k != simp.keys()|>collect|>last || k != obsh.keys()|>collect|>last
+            @error "varibale keys have to be the same!"
+            @info "check with ds.variables|>collect "
+            return
+        end
+    
+        fns = [simh, simp, obsh] #|>map(x->x.filename|>basename)
+        outds = []
+        for z in fns
+            idx = z.variables|>collect
+            if (!any(x->occursin("time",x),z.coords|>collect))
+                #ti = [i for i in idx if startswith(i, "lon")]
+                z = z.rename(Dict("t"=>"time"))
+                #z = z.swap_dims(Dict("t"=>"time"))
+                z = z.set_coords("time")
+                @info "renamed time!"
+            end
+            
+            #if (!any(x->occursin(r"longitude|latitude",x),idx))
+                lng = ([i for i in idx if startswith(i, "lon") || endswith(i, "x")])|>first
+                ltt = ([i for i in idx if startswith(i, "lat") || endswith(i, "y")])|>first
+                if tosum
+                    grouped_ds = z[k].mean(lng).mean(ltt).groupby("time.dayofyear").sum()
+                else
+                    grouped_ds = z[k].mean(lng).mean(ltt).groupby("time.dayofyear").mean()
+                end        
+            push!(outds,grouped_ds)
+        end
+        vr = uppercase(first(k))
+        plt.rc("font", family="serif", serif=["cmr10"])
+        plt.figure()
+        plt.plot(outds[1], label="\$$vr _{sim,h}\$")
+        plt.plot(outds[2], label="\$$vr _{sim,p}\$")
+        plt.plot(outds[3], label="\$$vr _{obs,h}\$")
+        plt.title("Historical modeled and predicted versus observed $(uppercasefirst(k))")
+        plt.xlim(0, 365)
+        plt.gca().grid(alpha=0.3)
+        plt.legend()
+        plt.show()
+    end
+
+    """
+    reads and plots a netcdf file using xarray and matplotlib
+    """
+    function fdoy(ds::Union{String,PyObject}; txy::Bool=false, tosum::Bool=false, ti::String="")
+        plt = pyimport("matplotlib.pyplot")
+        xr = pyimport("xarray")
+        if ds isa String
+            z = xr.open_dataset(ds)
+        else
+            z = ds
+        end
+        
+        k = z.keys()|>collect|>last
+        @info "key is $k"
+
+        idx = z.variables|>collect
+        if (!any(x->occursin("time",x),z.coords|>collect))
+            #ti = [i for i in idx if startswith(i, "lon")]
+            z = z.rename(Dict("t"=>"time"))
+            #z = z.swap_dims(Dict("t"=>"time"))
+            z = z.set_coords("time")
+            @info "set_coords from t to time!"
+        end
+        if txy
+            lng = "x"
+            ltt = "y"
+            z = z.assign_coords(t=z.time)
+        else
+            lng = ([i for i in idx if endswith(i, "x")] || startswith(i, "lon") )|>first
+            ltt = ([i for i in idx if endswith(i, "y")] || startswith(i, "lat") )|>first
+        end
+        
+        if tosum
+            grouped_ds = z[k].mean(lng).mean(ltt).groupby("time.dayofyear").sum()
+        else
+            grouped_ds = z[k].mean(lng).mean(ltt).groupby("time.dayofyear").mean()
+        end        
+        vr = uppercase(first(k))
+        nm = basename(ds)
+        plt.rc("font", family="serif", serif=["cmr10"])
+        plt.figure()
+        plt.plot(grouped_ds, label="\$$nm _{$vr}\$")
+        
+        #filter(x -> occursin(r"name", string(x)), collect(keys(z.attrs)))
+        #filter(x -> occursin(r"on", string(x)), collect(keys(z.attrs)))
+
+        plt.title("$(uppercasefirst(nm))"*ti)
+        plt.xlim(0, 365)
+        plt.gca().grid(alpha=0.3)
+        plt.legend()
+        plt.show()
+    end
+
+end #end of module endof
 
 @info "running using PyCall; pygui(true) now..."
 using PyCall; pygui(true) 
 
 #@doc PyPlot.boxplot
+#cd("/mnt/d/Wasim/sinn/out/b1")
 #pyjl.pybar(r"sb05")
 #pyjl.pybar(r"sb05";fun=sum)
 #import Statistics
@@ -624,3 +842,5 @@ using PyCall; pygui(true)
 # ap(r"Sch"|>r;log=true)
 # r"Sch"|>r|>p->ap(p;log=true)
 # r"Unter"|>r|>p->ap(p;log=true)
+
+#pyjl.pyhydro(r"qbas")

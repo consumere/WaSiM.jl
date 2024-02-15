@@ -303,13 +303,23 @@ function vgctl(snippet::AbstractString)
 end
 
 function rglob(prefix::AbstractString)
-    rootdir="."
+    rootdir=pwd();
     results = []
-    for (looproot, dirs, filenames) in walkdir(rootdir)
-        for filename in filenames
+    if (any(x->isdir(x),readdir()))
+        for (looproot, dirs, filenames) in walkdir(rootdir)
+            for filename in filenames
+                #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
+                if (occursin(Regex(prefix,"i"),filename))
+                    push!(results, joinpath(looproot, filename)) 
+                end
+            end
+        end
+    else
+        printstyled("no dirs in $rootdir !\n",color=:light_red)
+        for filename in (filter(x->isfile(x),readdir(;join=false)))
             #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
             if (occursin(Regex(prefix,"i"),filename))
-                push!(results, joinpath(looproot, filename)) 
+                push!(results, filename) 
             end
         end
     end
@@ -2602,6 +2612,14 @@ function count_files(path::String, level::Int64)
     return n, s
 end
 
+"""
+see also tovec in wa.
+"""
+function dfvec(df::DataFrame,col::Int64)
+    getproperty(df,propertynames(df)[col])
+end
+
+
 function jlcnt(path=pwd(), level=0)
     n, s = count_files(path, 0)    
     printstyled("Directory: $path\n",color=:yellow)
@@ -2610,15 +2628,174 @@ function jlcnt(path=pwd(), level=0)
 end
 
 """
-see also tovec in wa.
+basic tsv reader, takes arguments from CSV.File
+CSV.File(x;kw...)|>DataFrame|>z->dropmissing(z,1)
 """
-function dfvec(df::DataFrame,col::Int64)
-    getproperty(df,propertynames(df)[col])
+function tsread(x::Union{String,Regex};kw...)
+    if x isa String
+        printstyled("reading $x\n",color=:light_red)
+    else x isa Regex
+        x = first(dfonly(x))
+        printstyled("reading $x\n",color=:light_red)
+    end
+    #ms = ["-9999","-9999.0","lin", "log", "--"]
+    #missingstring=ms,
+    #df = CSV.read(x,DataFrame;kw...)
+    df = CSV.File(x;kw...)|>DataFrame|>z->dropmissing(z,1)
+    DataFrames.metadata!(df, "filename", x, style=:note)
+    for x in names(df)
+        if startswith(x,"_")
+            newname=replace(x,"_"=>"C", count=1)
+            rename!(df,Dict(x=>newname))
+        end
+    end
+    return df 
 end
 
-#end #end of smfc module
+"""
+dfroute(;ofl="route.txt")
+reads from routeg(infile, ofl) and returns a DataFrame with the following columns:
+    - sim: simulated flow
+    - obs: observed flow
+    - name: name of the station
+"""
+function dfroute(;ofl="route.txt")
+    df = CSV.read(ofl,DataFrame,header=false,skipto=8,delim="\t",footerskip=1,lazystrings=false)
+    rename!(df,1=>"sim",2=>"obs",3=>"name")
+    df.name=map(x->replace(x,r"#" => "",r" " => "",r"_>.*" => "",r"-" => "_"),df[:,3])
+    sort!(df, :sim)
+    return df    
+end
+
+"""
+non-recursively search for control file in current directory
+"""
+function ctlx()
+    matches::Vector{Any} = []
+    for file in readdir(".")
+        if endswith(file, ".xml")
+            path = joinpath(pwd(), file)
+            open(path) do f
+                for line in eachline(f)
+                    if occursin("compiling symbols in control file ", line)
+                        fields = split(line)[8:end]
+                        println(join(fields, " "))
+                        out = join(fields, " ")
+                        push!(matches, out)
+                    end
+                    if occursin("looking for starting date in ", line)
+                        fields = split(line)[9:end]
+                        str = replace(join(fields, " "),r"\"/>.*" => " -> ")
+                        printstyled("discharge file is: $str\n",color=:light_green)
+                    end
+                end
+            end
+        end
+    end
+    if !isempty(matches)
+        fl = first(matches)
+        fl = split(fl) |> last
+        fl = split(fl, "\"") |> first
+        if (!occursin("regio",fl) && occursin("regio",pwd()))
+            fl = replace(fl,"control"=>"D:/Wasim/regio/control")
+        elseif (!occursin("brend",fl) && occursin("brend",pwd()))
+            fl = replace(fl,"control"=>"D:/Wasim/Tanalys/DEM/brend_fab/control")            
+        elseif (!occursin("temp",fl) && occursin("saale",pwd()))
+            fl = replace(fl,"control"=>"D:/temp/saale/control")
+        end
+        return string(fl)
+    else
+        @warn "no control file or xml found!..."
+        return ""
+    end
+end
+
+function qtab(;todf=true)
+    dfs = getq();
+    # z = ctlx()
+    # if isempty(z)
+    #     printstyled("no control file found!\n",color=:light_red)
+    #     pretty_table(dfs,header=uppercasefirst.(names(dfs));)
+    #     return
+    # end
+    ofl = "route.txt"
+    if isempty(ofl)
+        printstyled("no $ofl found!\n",color=:light_red)
+        pretty_table(dfs,header=uppercasefirst.(names(dfs));)
+        return
+    end   
+    dx = dfroute(;ofl=ofl);
+    rename!(dx,"sim"=>"Basin");
+    dfs.Basin = parse.(Int64,dfs.Basin)
+    kd  = innerjoin(dfs, dx, on=:Basin)
+    if todf
+        return kd
+    else
+        pretty_table(kd,header=uppercasefirst.(names(kd));)
+    end
+end
+
+
+function getq(;prefix::AbstractString="qgko")
+    rootdir = pwd()
+    results = []
+    if any(x -> isdir(x), readdir())
+        for (looproot, dirs, filenames) in walkdir(rootdir)
+            for filename in filenames
+                if occursin(Regex(prefix, "i"), filename) && !occursin(r"txt|yrly|nc|png|svg", filename)
+                    push!(results, joinpath(looproot, filename))
+                end
+            end
+        end
+    else
+        printstyled("eval on: $rootdir !\n", color=:light_red)
+        for filename in filter(x -> isfile(x), readdir(; join=false))
+            if occursin(Regex(prefix, "i"), filename) && !occursin(r"txt|yrly|nc|png|svg", filename)
+                printstyled("collecting $filename...\n", color=:light_yellow)
+                push!(results, filename)
+            end
+        end
+    end
+
+    if isempty(results)
+        printstyled("no qgk files found!\n", color=:light_red)
+        return 
+    end
+
+    for file in results
+        x = file
+        try
+            df = CSV.read(x, DataFrame, delim="\t"; header=true, types=String, silencewarnings=true, skipto=364)
+            pattern = r"^[LIN. R]|^[LOG. R]|^CO"
+            mask = occursin.(pattern, df[!, 1])
+            ddd = df[mask, :]
+            new = names(ddd)[5:end]
+            insert!(new, 1, "basin")
+            insert!(new, 2, "timestep")
+            ddd = permutedims(ddd)
+            dropmissing!(ddd)
+            ddd.basin = new
+            select!(ddd, :basin, :)
+            df = permutedims(ddd)
+            columns = uppercasefirst.(getproperty(df, propertynames(df)[1]))
+            rename!(ddd, Symbol.(columns))
+            kd = ddd[3:end, :]
+            return kd
+        catch e
+            println(e)
+            @warn "skipping $x"
+        end
+    end
+
+    return 
+end
+
+
+
+#end #endof of smfc module
 
 # println("you are here: ")
 # printstyled(pwd()*"\n",color=:green)
 
+#import Pkg
 #Pkg.gc(; collect_delay=Second(0))
