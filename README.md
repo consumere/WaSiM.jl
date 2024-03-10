@@ -8,4 +8,5 @@
 ```
 using Pkg
 Pkg.add(path="https://github.com/consumere/WaSiM.jl")
+Pkg.add(PackageSpec(url="https://github.com/consumere/WaSiM.jl", rev="dev"))
 ```
