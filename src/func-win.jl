@@ -1,34 +1,38 @@
 #no conda.python deps.
 begin
-    if Sys.isapple()
-        platform = "osx"
-        const homejl = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
-        const mybash = "/Users/apfel/.bash_aliases"
-        src_path = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
-    elseif Sys.iswindows()
-        platform = "windows"
-        src_path = "C:\\Users\\Public\\Documents\\Python_Scripts\\julia"
-        macro wasim() pt="C:\\Users\\chs72fw\\.julia\\dev\\WaSiM\\src\\wa.jl";include(pt);end
-        try
-            #Base.@showtime using RCall #errors in local scope
-            using RCall
-            printstyled("\nRCall loaded!\n",color=:green,bold=true,underline=true)    
-        catch e
-            printstyled("RCall errors at:\n $e",color=:red)
-        end    
+    if isnothing(src_path)
+        if Sys.isapple()
+            platform = "osx"
+            const homejl = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
+            const mybash = "/Users/apfel/.bash_aliases"
+            src_path = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
+        elseif Sys.iswindows()
+            platform = "windows"
+            src_path = "C:\\Users\\Public\\Documents\\Python_Scripts\\julia"
+            macro wasim() pt="C:\\Users\\chs72fw\\.julia\\dev\\WaSiM\\src\\wa.jl";include(pt);end
+            try
+                #Base.@showtime using RCall #errors in local scope
+                using RCall
+                printstyled("\nRCall loaded!\n",color=:green,bold=true,underline=true)    
+            catch e
+                printstyled("RCall errors at:\n $e",color=:red)
+            end    
+        else
+            platform = "unix"
+            winpt = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
+            pcld = "~/pCloud Drive/Stuff/Python_Scripts/julia"
+            src_path = isdir(winpt) ? winpt : pcld
+            if !isdir(src_path) #for docker images
+                src_path = "/app/pyscripts/julia"
+            end
+            println("sourcepath is $src_path")
+            if isdir(winpt)
+                macro wasim() pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM/src/wa.jl";include(pt);end
+            end
+        end   
     else
-        platform = "unix"
-        winpt = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
-        pcld = "/home/cris/pCloud Drive/Stuff/Python_Scripts/julia"
-        src_path = isdir(winpt) ? winpt : pcld
-        if !isdir(src_path) #for docker images
-            src_path = "/app/pyscripts/julia"
-        end
-        println("sourcepath is $src_path")
-        if isdir(winpt)
-            macro wasim() pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM/src/wa.jl";include(pt);end
-        end
-    end   
+        println("src_path already set to $src_path")
+    end
 end
 
 #startup.jl: C:\Users\chs72fw\.julia\config\startup.jl
@@ -7959,8 +7963,7 @@ module wa
                 1:12, monthabbr.(1:12))
         end
         return p1
-    end
-    
+    end   
     
     """
     takes first two cols of df and plots r2 QQ
@@ -8006,6 +8009,11 @@ module wa
         #halign=:center, rotation=-35.0))
     end
 
+    """
+    uses plotly.R to plot a raster
+    takes first match in current folder
+    no nc filter!
+    """
     function jsrast(R::String)
         rpath="/mnt/d/Fernerkundungsdaten/Klassifikation/R-Sessions"
         run(`wsl -d Ubuntu-18.04 -e Rscript "$rpath/plotly_rast.R" $R`)
@@ -10768,6 +10776,253 @@ module wa
 
         return p
     end
+
+    """
+    also for pest outputfiles
+    """
+    function heatraw(x::Union{String,Regex,DataFrame};selcol::Union{String,Regex}=r"dr",ann=true,kw...)
+        if x isa String
+            printstyled("reading $x\n",color=:light_red)
+            df = waread2(x;silencewarnings=false)
+            dropmissing!(df)    
+        elseif x isa Regex
+            x = first(dfonly(x))
+            printstyled("reading $x\n",color=:light_red)
+            df = waread2(x;silencewarnings=false)
+            dropmissing!(df)
+        else
+            df = copy(x)
+            dropmissing!(df)
+        end
+
+        df = select(df, Cols(selcol))
+
+        if ncol(df)<2
+            @error "only one column available!"
+            return
+        end
+
+        if ncol(df)>30
+            @warn "more than 30 columns, heatmap will be unreadable!"
+            println(names(df))
+            return
+        end
+
+        md = cor(Matrix(df)).^2
+        md = convert(Matrix{Union{Float64, Missing}}, md)
+        replace!(md, 1.0 => missing)
+        replace!(md, 0.0 => missing)
+        p1 = heatmap(md, 
+            c = Plots.colormap("RdBu",size(md, 1),mid=0.33),
+            linewidth = 0.9, 
+            cbar = true,
+            # cbar=true,
+            #colorbar_title = "RSQ",
+            #colorbar_scale = :log10,
+            #colorbar_title_location	= :top,
+            #@show plotattr(:Series)
+            #https://docs.juliaplots.org/latest/generated/attributes_subplot/
+            #colorbar_titlepadding=5,
+            colorbar_titlefontsize=12,
+            #colorbar_titlefontvalign=:bottom,
+            margins=6mm,
+            xticks =false,
+            yticks =false,
+            grid = :false; kw...);
+            # # legend = :outertopright,
+            # # legendtext = string(names(df[:, Not(:date)])),#xlabel="", #ylabel="", 
+            # title="Correlation Heatmap"
+        if ann
+            for i in 1:size(md, 1)
+                for j in 1:size(md, 2)
+                    value = round(md[i, j], digits=2)
+                    color = ismissing(value) ? :transparent : :black
+                    Plots.annotate!(j, i, 
+                        Plots.text(string(value), 8, 
+                        "Computer Modern",
+                        color, 
+                        :center, 
+                        halign=:center, rotation=-35.0))
+                end
+            end
+        end
+        nm = names(df)
+        nm = replace.(nm,
+            r"_" => " ",r"NaN" => " ",
+            r"qoutjl|qout" => "",  r"#" => "")
+        Plots.xticks!(1:length(nm), nm) #reverse(nm)
+        Plots.yticks!(1:length(nm), nm;rotation=-35)
+        return p1
+    end
+
+    """
+    represents how many standard deviations a given data point is from the mean of its dataset.
+    """
+    function zscore(x::Vector{Float64})
+        μ = mean(x)
+        σ = std(x)
+        z = (x .- μ) ./ σ
+        return z
+    end
+
+    
+    """
+    reads from
+    jqloop qb > tst.json 
+    """
+    function jsread(fn::String)
+        d = map(DataFrame,JSON.parsefile(fn))
+        vs = filter(x -> ncol(x) > 3, d)
+        df = vcat(vs...)
+        return df[:, sort(names(df),rev=true)]
+    end
+
+    """
+    csv reader with skiptostring and metadata
+    for groundwater data
+    """
+    function gwread(x::String)
+        ms = ["-999","-9999","-99","Rohdaten"]
+        skiptoline = first(indexin(grep("Datum",readlines(x)[1:12]),readlines(x)[1:12]))
+        df = CSV.read(x,DataFrame,
+            header = skiptoline,
+            missingstring = ms,
+            stripwhitespace=true,
+            silencewarnings=true,
+            delim=';',
+            decimal=',',
+            limit=10^4,
+            select=1:2,
+            types=Dict(
+                1=>Date,
+                2=>Float64))
+
+        tmp=grep("Messstellen-Name",readlines(x))
+        # rename!(df,2=>:dat)
+        # df.dat .= tryparse.(Float64,df.dat)
+        
+        colnm = split(tmp[1],";")[2]
+        rename!(df,Dict(
+            1 => :date,
+            2 => Symbol(colnm)))
+        
+        # if !all(i -> i isa Int64, df.YY)
+        #     filtermask = broadcast(x->looks_like_number(x),df[!,1])
+        #     df = df[filtermask, :]        
+        # end
+        if !isempty(tmp)
+            println(
+                join(hcat(tmp,x,nrow(df))," ")*" rows in df..."
+                )
+        end
+        DataFrames.metadata!(df, "filename", x, style=:note);
+        return df
+    end
+
+    """
+    using GLM with reader. see also trendline
+    """
+    function dftrend(x::Union{String,Regex,DataFrame},col::Any=1;date_col::Symbol=:date)
+        if isa(x,DataFrame)
+            df = x
+        else
+            df = dfr(x)
+        end
+        df.dn .= Dates.value.(df.date .- minimum(df.date))
+        # select the columns to use for the model
+        id = propertynames(df[!,Not(:date)])
+        #if isa(col,Symbol) ? col = string(col) : col
+        #col="we"
+        if isa(col,Number)
+            dat = id[col]
+        else
+            dat = first(grep(Regex(col),id))
+        end
+        #model = lm(@formula(dat ~ dn), df);
+        response = term(dat)
+        predictor = term(:dn)
+        formula = FormulaTerm(response, predictor)
+        model = lm(formula, df)
+        
+        #model = lm(@formula(Matrix(select(df,dat))|>vec ~ dn),df);
+        # col = select(df,col)
+        # col = names(col)|>first
+        # #names(col)[1]
+        # Fit a linear regression model
+        # Get the coefficients
+        #coef(model)
+        intercept, slope = coef(model)
+        #dat = string(dat)
+        #trendline_equations = "$dat\ny = $(round(slope; sigdigits=2))x + $(round(intercept, sigdigits=1))"
+        trendline_equations = "y = $(round(slope; sigdigits=2))x + $(round(intercept, sigdigits=1))"
+
+        plot(df.date, Matrix(select(df,dat))|>vec, 
+            label=string(dat),
+            legend=:topright)
+        #@df df plot(:date, cols(dat), label=string(dat), legend=:topright)
+        plot!(df.date, predict(model, df), 
+            label=trendline_equations, 
+            linewidth=2.5,style=:dash)
+    end
+
+    """
+    sums up julias rootenv
+    269171 files in directory
+    .julia      25.89 GB
+    in ubu      26.78 GB  332643
+    """
+    function juliasize()
+        cwd = joinpath(homedir(),".julia")
+        osize = 0 #Threads.Atomic{Int}(0)
+        n = 0 #Threads.Atomic{Int}(0)
+        for (root, dirs, files) in walkdir(cwd)
+            #Threads.@threads 
+            for file in files
+                osize += stat(joinpath(root, file)).size
+                n += 1
+            end
+         #print every 20th dir
+         for (i, dir) in enumerate(dirs)
+            if i % 20 == 0
+                printstyled("check dir: $dir\n", color=:light_red)
+            end
+        end
+        end 
+        println("$(n) files in directory")
+        @printf("%-40s %15.2f GB\n","$(cwd):",osize/1024^3)
+    end
+
+    """
+    sums up fldr
+    uses MultiThreading
+    """
+    function csize(cwd::String=pwd())
+        osize = Threads.Atomic{Int}(0)
+        n = Threads.Atomic{Int}(0)
+        l = ReentrantLock()
+    
+        for (root, dirs, files) in walkdir(cwd)
+            Threads.@threads for file in files
+                size = stat(joinpath(root, file)).size
+                lock(l)
+                try
+                    osize[] += size
+                    n[] += 1
+                finally
+                    unlock(l)
+                end
+            end
+            #print every nth dir #needs to be 1
+            for (i, dir) in enumerate(dirs)
+                if i % 1 == 0
+                    printstyled("check dir: $dir\n", color=:light_red)
+                end
+            end
+        end 
+        println("$(n[]) files in directory")
+        @printf("%-40s %15.2f GB\n","$(cwd):", osize[]/1024^3)
+    end
+
 
 
 

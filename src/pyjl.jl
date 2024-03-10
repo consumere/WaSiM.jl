@@ -1,20 +1,10 @@
-#would be redefinition of macro pj
-# platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-        
-# if platform == "windows"
-#     src_path = "C:\\Users\\Public\\Documents\\Python_Scripts\\julia"
-#     macro pj() pt=raw"C:\Users\Public\Documents\Python_Scripts\julia\pyjl.jl";include(pt);end
-# else
-#     src_path = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
-#     macro pj() pt="/mnt/c/Users/Public/Documents/Python_Scripts/julia/pyjl.jl";include(pt);end
-# end   
-
 module pyjl
     using PyCall
     using PyPlot
-    PyPlot.rc("font", family="serif", serif=["cmr10"])
     include("smallfuncs.jl")
     #@info "dont forget using PyCall; pygui(true) in vscode!"
+    @pyimport hydroeval as he
+
 
     function looks_like_number(str::AbstractString)
         try
@@ -25,6 +15,24 @@ module pyjl
         end
     end
 
+    """
+    smaller looks_like_number
+    """
+    function llnp(str::Any) 
+        #ternary operator makes no sense
+        #flag = false ? !isnothing(tryparse(Float64, str)) : true
+        #return
+        !isnothing(tryparse(Float64, str))
+    end
+
+    """
+    smaller looks_like_number with regex
+    """
+    function lln(str::Any)
+        is_number = occursin(r"^[-+]?\d+(?:\.\d+)?$", str) || occursin(r"^[-+]?\d+(?:\.\d+)?e[-+]?\d+$", str)
+        return is_number
+    end
+
     function pyread(x)
         """
         pyreader, reads all as stings, conversion later.
@@ -32,7 +40,7 @@ module pyjl
         pd = pyimport("pandas")
         df = pd.read_table(x, 
             engine="c",
-            verbose=true,
+            #verbose=true, #depricated
             low_memory=false,
             header=0,
             skipinitialspace=true,
@@ -435,10 +443,11 @@ module pyjl
         ylog = logy ? :log : :identity
 
         mn = [ monthabbr(x) for x in unique(month.(df.date)) ]
-        #PyPlot.rc("font",**{"family":"serif","serif":["cmr10"]}) #thats the one
         PyPlot.rc("font", family="serif", serif=["cmr10"])
         PyPlot.figure()
         PyPlot.set_cmap("cividis")
+        #PyPlot.rc("font",**{"family":"serif","serif":["cmr10"]}) #thats the one
+        ## PyPlot.axes.formatter.use_mathtext(true) #<-not available
         for yr in years
             su = filter(row -> year(row.date) == yr, df)
             PyPlot.plot(vec(Matrix(select(su, Not(:date)))), label = yr)
@@ -507,6 +516,7 @@ module pyjl
         grouped_df = groupby(df, :Month)
         
         PyPlot.figure()
+        PyPlot.rc("font", family="serif", serif=["cmr10"])
         for (i, group) in enumerate(grouped_df)
             PyPlot.boxplot(group[!, ln[1]], positions=[i], 
             autorange=true,
@@ -687,15 +697,14 @@ module pyjl
     hekge(x::Union{String,Regex,DataFrame};c1::Int64=1,c2::Int64=2)
     c1 = colindex for simulations
     c2 = colindex for observations\n
-    vst = glob(r"qoutjl")\n
+    vst = glob(r"qoutjl")
     dfs = map(pyjl.hekge,vst)
     hcat(vcat(dfs...),basename.(vst))
     \nall to one line:\n
-    odf = rename(hcat(vcat(map(pyjl.hekge,filter(
-        x->endswith(x,"qoutjl"),readdir()
-        ))...),basename.(filter(
-            x->endswith(x,"qoutjl"),readdir()
-            )),Dict(5=>"fn"))
+    see allkge or do:
+    odf = rename(hcat(vcat(map(pyjl.hekge,
+        filter( x->endswith(x,"qoutjl"),readdir() ))...),
+        basename.(filter(x->endswith(x,"qoutjl"),readdir()))),Dict(5=>"fn"))
     """
     function hekge(x::Union{String,Regex,DataFrame};c1::Int64=1,c2::Int64=2)
         if x isa String
@@ -725,8 +734,48 @@ module pyjl
         return df
     end
 
+    function kgevec(a::Vector{Float64},b::Vector{Float64})
+        return DataFrame(Dict(["KGE", "r", "α", "β"].=>he.kge(a,b)))
+    end
+
+    """
+    allkge(;dirpath::String=pwd(),suffix::String="qoutjl")
+    KGE, r, α, β = he.kge(dfvec(ts,1),dfvec(ts,2))
+    """
+    function allkge(;dirpath::String=pwd(),suffix::String="qoutjl")
+        odf = rename(hcat(vcat(map(hekge,
+            filter( x->endswith(x,suffix),
+            readdir(dirpath) ))...),
+            basename.(filter(x->endswith(x,suffix),
+            readdir(dirpath)))),
+            Dict(5=>"fn"))
+        return odf
+    end
+
+    """
+    day of year plot using xarray and matplotlib
+    """
     function doy(simh, simp, obsh; tosum::Bool=false)
         plt = pyimport("matplotlib.pyplot")
+        xr = pyimport("xarray")
+        calendar = pyimport("calendar")
+        if isa(simh,PyObject)
+            simh = simh
+        else
+            simh = xr.open_dataset(simh)
+        end
+        if isa(simp,PyObject)
+            simp = simp
+        else
+            simp = xr.open_dataset(simp)
+        end
+        if isa(obsh,PyObject)
+            obsh = obsh
+        else
+            obsh = xr.open_dataset(obsh)
+        end
+
+        
         k = simh.keys()|>collect|>last
         
         if k != simp.keys()|>collect|>last || k != obsh.keys()|>collect|>last
@@ -767,6 +816,17 @@ module pyjl
         plt.xlim(0, 365)
         plt.gca().grid(alpha=0.3)
         plt.legend()
+        month_labels = ["Jan", "Feb", "Mar", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"]
+       # Set the x-axis tick locations to be the middle day of each month
+        #tick_locations = [calendar.monthrange(2022, i)[1] // 2 + sum(calendar.monthrange(2022, j)[1] for j in range(1, i)) for i in range(1, 13)]
+        tick_locations = [15, 45, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349]
+       
+        plt.xticks(tick_locations)
+
+        # Update the tick labels to display the month names
+        #month_labels = [calendar.month_abbr[i] for i in range(1, 13)]
+        plt.gca().set_xticklabels(month_labels) 
+
         plt.show()
     end
 
@@ -798,8 +858,8 @@ module pyjl
             ltt = "y"
             z = z.assign_coords(t=z.time)
         else
-            lng = ([i for i in idx if endswith(i, "x")] || startswith(i, "lon") )|>first
-            ltt = ([i for i in idx if endswith(i, "y")] || startswith(i, "lat") )|>first
+            lng = ([i for i in idx if endswith(i, "x") || startswith(i, "lon")] )|>first
+            ltt = ([i for i in idx if endswith(i, "y") || startswith(i, "lat")] )|>first
         end
         
         if tosum
@@ -808,7 +868,11 @@ module pyjl
             grouped_ds = z[k].mean(lng).mean(ltt).groupby("time.dayofyear").mean()
         end        
         vr = uppercase(first(k))
-        nm = basename(ds)
+        nm = try 
+            basename(ds)
+        catch
+            ""
+        end
         plt.rc("font", family="serif", serif=["cmr10"])
         plt.figure()
         plt.plot(grouped_ds, label="\$$nm _{$vr}\$")
@@ -823,7 +887,176 @@ module pyjl
         plt.show()
     end
 
-end #end of module endof
+    """
+    export to Main
+    exportall(Main.pyjl) 
+    """
+    function exportall(e::Module)
+        #for n in names(@__MODULE__; all=true)
+        for n in names(e; all=true)
+            if Base.isidentifier(n) && n ∉ (Symbol(@__MODULE__), :eval, :include)
+                @eval export $n
+            end
+        end
+    end
+
+    function importall(e::Module)
+        for n in names(e; all=true)
+            if Base.isidentifier(n) && n ∉ (Symbol(e), :eval, :include)
+                @eval import $(e).$n
+            end
+        end
+    end
+    
+
+    # """
+    # toMain(Main.pyjl)
+    # """
+    # function toMain(e::Module)
+    #     fnames = names(e, all=true)
+    #     for submodule in fnames
+    #         @eval import e.$submodule
+    #     end
+    # end
+          
+    # fnames = names(Main.pyjl, all=true)
+    # for submodule in fnames
+    #     @eval import Main.pyjl.$submodule
+    # end
+    function toMain()
+        for submodule in names(pyjl, all=true)
+            @eval import Main.pyjl.$submodule
+        end
+    end
+    
+
+    """
+    selects from dataframe date an column
+    selt(x::DataFrame, col::Any;dtcol=:date)
+    """
+    function selt(x::DataFrame, col::Any; dtcol=:date)
+        df = select(x,Cols(col,dtcol))
+        println(names(df))
+        return df 
+    end
+
+    """
+    from a vector of dfs.
+    fkge(dfs::Vector{DataFrame})
+
+    see also pxm(map(byear,outd))
+    """
+    function fkge(dfs::Vector{DataFrame})
+        nms = []
+        for i in dfs
+            x=collect(DataFrames.metadata(i))[1][2]|>basename
+            push!(nms, x)
+        end
+        odf = map(hekge,dfs)
+        return rename(hcat(vcat(odf...),nms),Dict(5=>"fn"))
+    end
+
+    function qall(;recursive=false)
+        if recursive
+            files = rglob("qgko")
+        else
+            files = glob("qgko")
+        end
+        outdf::Vector{DataFrame} = []
+        for file in files
+            # Load the file into a DataFrame
+            #x = "qgkofab.m6.2010"
+            x = file
+            try
+                df = DataFrame(CSV.File(x, header=1, 
+                                    delim="\t",
+                                    skipto=366,
+                                    ntasks=1,
+                                    types = String,
+                                    silencewarnings=true,
+                                    ignorerepeated=true,
+                                    ignoreemptyrows=true,
+                                    stripwhitespace=true))
+                                    
+                #df = CSV.read(x,DataFrame;ntasks=1)
+                println(x)
+                pattern = r"^[LIN. R]|^[LOG. R]|^CO"
+                mask = [occursin(pattern, df[i, 1]) for i in 1:nrow(df)]
+                dx = df[mask, :]
+                dx = permutedims(dx) |>dropmissing
+                
+                #mapcols!(x -> parse(Float64, x), dx)
+                #mapcols(x -> x.^2, dx)
+
+                #basins = copy(df[1,5:end])
+                #AsTable(basins)
+                basins = []
+                #for i in copy(df[1,5:end])
+                for i in names(df)[5:end]
+                    push!(basins,i)
+                end
+                #size(basins)
+                insert!(basins, 1, "score")
+                insert!(basins, 2, "timestep")
+                dx[!, "basin"] = basins
+
+                cn = (dx[1,:])
+                rename!(dx, 1 => cn[1], 2 => cn[2], 3 => cn[3], 4 => cn[4])
+                dout = dx[3:end,:]
+                for col in names(dout)[1:end-1]
+                    dout[!, col] = parse.(Float64, replace.(dout[!, col], "," => ""))
+                end          
+                #mapcols!(x -> parse(Float64, x), dout)
+                #dout = hcat(dx[!,Cols(r"bas")],dx[:,Not(Cols(r"bas"))])
+                dout = hcat(dout[:,Cols("basin")],dout[:,Not(Cols(r"bas"))])
+                dout.basin = parse.(Int64,dout[!, :basin])
+                dout.nm .= replace(file,".\\"=>"")
+                push!(outdf,dout)
+            catch
+                @warn("error! file $x can not be loaded as a DataFrame! ")
+                # Skip files that can't be loaded as a DataFrame
+                continue
+            end
+        end
+        return(outdf)
+    end
+
+
+
+    """
+    find LOG. R-SQUARE > .4 recursivley
+    """
+    function findlog(;lb=.4)
+        v = qall(;recursive=true)
+        #map(x->DataFrames.subset(x,3 => ByRow(<(1))),v)
+        k = try 
+            map(x->DataFrames.subset(x,3 => ByRow(>(lb))),v)
+            catch
+                @error "no df on lowerbound! "
+                return
+        end
+        df = try 
+            reduce(vcat,k) 
+            catch
+                @error "vcat failed! "
+                return
+        end
+        
+        df = try 
+            DataFrames.subset(df,3 => ByRow(<(1.0)))
+            catch
+                println(first(k))
+                @error "no df on upperbound! "
+                return
+        end
+        
+        
+        return df
+    end
+
+
+end #end of module #endof
+
 
 @info "running using PyCall; pygui(true) now..."
 using PyCall; pygui(true) 
