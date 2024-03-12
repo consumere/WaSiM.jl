@@ -1,5 +1,20 @@
 name: Docker
 
+
+####via https://shell.cloud.google.com
+# docker pull ghcr.io/consumere/wasim.jl:dev
+# docker tag ghcr.io/consumere/wasim.jl:dev consumere/kernels:wasimjl
+# docker push consumere/kernels:wasimjl
+
+# docker run -it ghcr.io/consumere/wasim.jl:dev
+#docker --mount type=bind,source=$pwd,target=app/gc  run -it ghcr.io/consumere/wasim.jl:dev
+#docker run -it -v $(pwd):/app/gc ghcr.io/consumere/wasim.jl:dev
+# ] activate .
+# using WaSiM
+
+#Pkg.add(PackageSpec(url="https://github.com/consumere/WaSiM.jl", rev="dev"))
+
+
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
 # separate terms of service, privacy policy, and support
