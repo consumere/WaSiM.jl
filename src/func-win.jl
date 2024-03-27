@@ -20,10 +20,12 @@ begin
         else
             platform = "unix"
             winpt = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
-            pcld = "~/pCloud Drive/Stuff/Python_Scripts/julia"
+            #pcld = "/home/pCloud Drive/Stuff/Python_Scripts/julia"
+            pcld = "~/pCloudDrive/Stuff/Python_Scripts/julia"
             src_path = isdir(winpt) ? winpt : pcld
             if !isdir(src_path) #for docker images
-                src_path = "/app/pyscripts/julia"
+                #src_path = "/app/pyscripts/julia"
+                src_path = @__DIR__
             end
             println("sourcepath is $src_path")
             if isdir(winpt)
@@ -11023,11 +11025,153 @@ module wa
         @printf("%-40s %15.2f GB\n","$(cwd):", osize[]/1024^3)
     end
 
+     
+    """
+    controlfile::String = "",
+    match1::String = "[landuse_table]",
+    match2::String = "[",
+    lutable::String = ""
+    see also landuse.jl for plotfuncs
+    m1 = r"^[[]landuse_table[]]"
+    m2 = r"^[[]"
+    a = readbetween(open(fn), m1, m2) #|>first    
 
+    """
+    function lutab(;
+        controlfile::String = "",
+        match1::Regex = r"^[[]landuse_table[]]",
+        match2::Regex = r"^[[]", 
+        lutable::String = "")
+        #match2::String = "\$JDVegReset",
+        if controlfile != ""
+            lutable = open(controlfile) do io
+                a = readbetween(io, match1, match2)
+                return(join(a[3:end-1]," ")) #rem first 2 and last lines
+            end
+        end
+        entries = split(lutable, "}")
+        entries = strip.(entries)
+        entries = filter(s -> !isempty(s) && length(s) > 2 && !occursin(r"^(?i)#",s) && !occursin(r"^[[]",s), entries)
+        map!(x->replace(x,r"\t" => " "),entries,entries)
+        
+        dictionary = Dict{Int, DataFrame}()
+        
+        for entry in entries
+            # Extract key
+            m = match(r"(\d+)\s+(\w+)\s+\{", entry)
+            if m === nothing
+                println("No match found in string: $entry")
+                continue
+            end
+            key = parse(Int, m.captures[1]|>strip)
+            nm = m.captures[2]|>strip
+            println("check: $key $nm")
+            
+            # Extract value
+            value_match = match(r"\{(.*)", entry)
+            if value_match === nothing
+                continue
+            end
+            value = value_match.captures[1]|>strip
+            #value = replace(value, "method = MultipleHorizons;  EvapMaxDepth = 0.15;" => "")
+            value = replace(value, r";" => ",")
+            value = replace(value, r"\$" => "")
+            value = replace(value, r"#" => "")
+            value = replace(value, r"\s+" => " ")
+            value = replace(value, r"^\s+|\s+$" => "")
+            value = replace(value, r",$" => "")
+            pairs = split(value, ",")
+            pairs = lstrip.(pairs)
+            pairs = filter(s -> !isempty(s), pairs)
+            
+            data = [split(strip(pair), " = ", limit = 2) for pair in pairs]
+            #data = vcat([["class",nm]], data) #prepend to first pos
+            data = vcat([["key",key]], data) #prepend to first pos
+            #push!(data, ["class", nm]) #append last pos
+            df = DataFrame(Param=first.(data), Value=last.(data))
+            rename!(df, :Value => Symbol(nm))
+            # Store key-value pair in the dictionary
+            dictionary[key] = df
+        end
+        
+        #return dictionary
+        return [dictionary[i] for i in keys(dictionary)]
+    end
 
+    """
+    get specific vars from landuse table \n
+    dfs = lutab() \n
+    dfs::Vector{DataFrame};par::String="LAI"
+    """
+    function luvars(dfs::Vector{DataFrame};par::String="LAI")
+        reg_var = Regex(par,"i")
+        ad = mapreduce(df -> begin
+            filtered_df = filter(row -> occursin(reg_var, 
+                row[:Param]), df)
+            if nrow(filtered_df) > 0
+                return DataFrame(
+                    class =  replace.(last(names(filtered_df)),r"_" => " "),
+                    par = parse.(Float64, 
+                    split(first(filtered_df[!, 2])))
+                )
+            else
+                return DataFrame(class = String[], 
+                par = Float64[])
+            end
+        end, vcat, dfs)
+        rename!(ad, :par => Symbol(par))
+        return ad
+    end
 
+    """
+    plot specific vars from landuse table \n
+    dfs = lutab() \n
+    """
+    function luplot(dfs::Vector{DataFrame};par::String="LAI")
+        # Initialize an empty plot
+        p1 = Plots.plot();
+        # Iterate over all dataframes in dfs
+        for (i, df) in enumerate(dfs)
+            lai_rows = filter(row -> occursin(Regex(par,"i"), row[:Param]), df)
+            key = @rsubset df :Param=="key"
+            key = first(key[!,2])
+            if nrow(lai_rows) > 0
+                lvs = parse.(Float64, split(first(lai_rows[!,2])))
+                lab = replace(last(names(lai_rows)), r"_" => " ")
+                Plots.plot!(p1, lvs, label = "$lab [$key]",
+                    #seriestype=:bar,
+                    grid = false,
+                    #xlims=(1,12),
+                    xticks = (1:12, 
+                    [ monthabbr(x) for x in 1:12 ]),
+                    xrotation = 35
+                    ) 
+            end
+        end
+        # Display the plot
+        return p1
+    end
 
-   
+    """
+    uses PrettyTables
+    grep_in_files(filepattern, pattern, path)
+    """
+    function grep_in_files(filepattern, pattern, path)
+        matches = grep(filepattern, readdir(path, join=true))
+        for match in matches
+            xf = grep(Regex(pattern,"i"), readlines(match))
+            if !isempty(xf)
+                xf=strip.(xf)
+                PrettyTables.pretty_table(xf, 
+                header = [basename(match)], 
+                alignment = :left)
+                # println("File: $match
+                # \nMatches: $xf")
+            end
+        end
+    end
+
+ 
     
 end ##end of module endof
 

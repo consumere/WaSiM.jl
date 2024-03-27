@@ -2258,16 +2258,27 @@ function waread2(x::String)
     return df
 end
 
+
 """
 Fastest Reader. is also dfr.
 Read the text file, preserve line 1 as header column
 """
-function waread(x::String)
+function dfr(x::String)
     ms = ["-9999","lin","log","--"]
-    df = CSV.read(x, DataFrame; 
-        delim="\t", header=1, missingstring=ms, 
-        maxwarnings = 1, #silencewarnings = true,
-        normalizenames=true, types=Float64)
+    df = try
+     CSV.read(x, DataFrame; 
+        delim="\t", 
+        header=1, 
+        missingstring=ms, 
+        #maxwarnings = 1, 
+        silencewarnings = true,
+        normalizenames=true, 
+        types=Float64)
+    catch e
+        @error("error reading $x\nexiting now\n $e")
+        return nothing
+    end
+    
     df = dropmissing(df, 1)
     dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
     df.date = dt2
@@ -2285,7 +2296,7 @@ end
 """
 dfr = waread
 """
-function waread(x::Regex)
+function dfr(x::Regex)
     """
     Read the text file, preserve line 1 as header column
     """
@@ -2307,7 +2318,7 @@ function waread(x::Regex)
     return df 
 end
 
-dfr = waread
+
 
 function rmeq()
     """
