@@ -1,51 +1,23 @@
 #functions
-#using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions, Printf
-#using DataFrames, CSV, Statistics, Dates, Rasters, StatsPlots, Distributions
-@time using DelimitedFiles, Grep, Printf, Statistics, Dates, DataFrames, CSV, PrettyTables
+
+#module smfc
+
+using DelimitedFiles, Grep, Printf, Statistics, Dates, DataFrames, CSV, PrettyTables
+#@time using DelimitedFiles, Grep, Printf, Statistics, Dates, DataFrames, CSV, PrettyTables
 import InteractiveUtils.clipboard
-printstyled("DelimitedFiles, Grep, Printf, Statistics, Dates, DataFrames, CSV, PrettyTables loaded\n",color=:green)
-#w csv 2sec
-# begin
-#     if Sys.isapple()
-#         platform = "osx"
-#         const homejl = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
-#         const mybash = "/Users/apfel/.bash_aliases"
-#         src_path = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
-#     elseif Sys.iswindows()
-#         platform = "windows"
-#         src_path = "C:\\Users\\Public\\Documents\\Python_Scripts\\julia"
-#         macro wasim() pt="C:\\Users\\chs72fw\\.julia\\dev\\WaSiM\\src\\wa.jl";include(pt);end
-#         try
-#             #Base.@showtime using RCall #errors in local scope
-#             using RCall
-#             printstyled("\nRCall loaded!\n",color=:green,bold=true,underline=true)    
-#         catch e
-#             printstyled("RCall errors at:\n $e",color=:red)
-#         end    
-#     else
-#         platform = "unix"
-#         winpt = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
-#         pcld = "/home/cris/pCloud Drive/Stuff/Python_Scripts/julia"
-#         src_path = isdir(winpt) ? winpt : pcld
-#         if !isdir(src_path) #for docker images
-#             src_path = "/app/pyscripts/julia"
-#         end
-#         println("sourcepath is $src_path")
-#         if isdir(winpt)
-#             macro wasim() pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM/src/wa.jl";include(pt);end
-#         end
-#     end   
-# end
+#printstyled("DelimitedFiles, Grep, Printf, Statistics, 
+#	Dates, DataFrames, CSV, PrettyTables loaded\n",color=:green)
 
-here = pwd()
-#@showtime here = pwd()
-println("\nto edit this script: 
-    @less (ssup()) or @edit (ssup())\n\t",
-    "fdi() for dirinfo, ls() for fileinfo")
+# println("\nto edit this script: 
+    # @less (ssup()) or @edit (ssup())\n\t",
+    # "fdi() for dirinfo, ls() for fileinfo")
 
-printstyled("loc $here\n now initializing...\n",color=:green)
+#printstyled("loc $here\n now initializing...\n",color=:green)
+
+src_path = "../"
+
 function ssup()
-    thisfile=src_path*"/win/smallfuncs.jl"
+    thisfile=src_path*"/smallfuncs.jl"
     include(thisfile)
 end
 
@@ -331,13 +303,23 @@ function vgctl(snippet::AbstractString)
 end
 
 function rglob(prefix::AbstractString)
-    rootdir="."
+    rootdir=pwd();
     results = []
-    for (looproot, dirs, filenames) in walkdir(rootdir)
-        for filename in filenames
+    if (any(x->isdir(x),readdir()))
+        for (looproot, dirs, filenames) in walkdir(rootdir)
+            for filename in filenames
+                #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
+                if (occursin(Regex(prefix,"i"),filename))
+                    push!(results, joinpath(looproot, filename)) 
+                end
+            end
+        end
+    else
+        printstyled("no dirs in $rootdir !\n",color=:light_red)
+        for filename in (filter(x->isfile(x),readdir(;join=false)))
             #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
             if (occursin(Regex(prefix,"i"),filename))
-                push!(results, joinpath(looproot, filename)) 
+                push!(results, filename) 
             end
         end
     end
@@ -2180,24 +2162,18 @@ function cdof(x::Union{String,DataFrame})
     println("current dir: $d")
 end
 
+cdinto = cdof
 
-#k=raw"C:/Users/Public/Documents/Python_Scripts/julia/win/smallfuncs.jl"
-k=src_path*"/win/smallfuncs.jl"
-println("script loc is $k")
+#k=raw"C:/Users/Public/Documents/Python_Scripts/julia/smallfuncs.jl"
+
+# k=src_path*"/smallfuncs.jl"
+# println("script loc is $k")
+
 #homedir()|>cd
-#home() ##necessary for ssup to work
-
-# @vv "surface"
-# x=raw"C:/Users/chs72fw/Documents/Promotionsstudium/Dropbox/brendfab/m3/Soil_Temperature_Stack.nc"
-# r = Raster(x)
-# r = readras(x)
-# plot(r[t=4:5])
-# surface(r[t=5],camera = (0,-75),legend=false)
 
 function pyplot_df(df::DataFrame;log=false)
     x = df.date
     ln = (filter(x -> !occursin(r"date|month|year", x), names(df)))
-
        
     for col in ln
         y = df[!, Symbol(col)]
@@ -2282,16 +2258,27 @@ function waread2(x::String)
     return df
 end
 
+
 """
 Fastest Reader. is also dfr.
 Read the text file, preserve line 1 as header column
 """
-function waread(x::String)
+function dfr(x::String)
     ms = ["-9999","lin","log","--"]
-    df = CSV.read(x, DataFrame; 
-        delim="\t", header=1, missingstring=ms, 
-        maxwarnings = 1, #silencewarnings = true,
-        normalizenames=true, types=Float64)
+    df = try
+     CSV.read(x, DataFrame; 
+        delim="\t", 
+        header=1, 
+        missingstring=ms, 
+        #maxwarnings = 1, 
+        silencewarnings = true,
+        normalizenames=true, 
+        types=Float64)
+    catch e
+        @error("error reading $x\nexiting now\n $e")
+        return nothing
+    end
+    
     df = dropmissing(df, 1)
     dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
     df.date = dt2
@@ -2309,7 +2296,7 @@ end
 """
 dfr = waread
 """
-function waread(x::Regex)
+function dfr(x::Regex)
     """
     Read the text file, preserve line 1 as header column
     """
@@ -2331,7 +2318,7 @@ function waread(x::Regex)
     return df 
 end
 
-dfr = waread
+
 
 function rmeq()
     """
@@ -2636,6 +2623,14 @@ function count_files(path::String, level::Int64)
     return n, s
 end
 
+"""
+see also tovec in wa.
+"""
+function dfvec(df::DataFrame,col::Int64)
+    getproperty(df,propertynames(df)[col])
+end
+
+
 function jlcnt(path=pwd(), level=0)
     n, s = count_files(path, 0)    
     printstyled("Directory: $path\n",color=:yellow)
@@ -2643,13 +2638,175 @@ function jlcnt(path=pwd(), level=0)
     printstyled("Total size: $(round(s / (1024 * 1024), digits=2)) MB\n",color=:yellow)
 end
 
-println("you are here: ")
-printstyled(pwd()*"\n",color=:green)
+"""
+basic tsv reader, takes arguments from CSV.File
+CSV.File(x;kw...)|>DataFrame|>z->dropmissing(z,1)
+"""
+function tsread(x::Union{String,Regex};kw...)
+    if x isa String
+        printstyled("reading $x\n",color=:light_red)
+    else x isa Regex
+        x = first(dfonly(x))
+        printstyled("reading $x\n",color=:light_red)
+    end
+    #ms = ["-9999","-9999.0","lin", "log", "--"]
+    #missingstring=ms,
+    #df = CSV.read(x,DataFrame;kw...)
+    df = CSV.File(x;kw...)|>DataFrame|>z->dropmissing(z,1)
+    DataFrames.metadata!(df, "filename", x, style=:note)
+    for x in names(df)
+        if startswith(x,"_")
+            newname=replace(x,"_"=>"C", count=1)
+            rename!(df,Dict(x=>newname))
+        end
+    end
+    return df 
+end
 
+"""
+dfroute(;ofl="route.txt")
+reads from routeg(infile, ofl) and returns a DataFrame with the following columns:
+    - sim: simulated flow
+    - obs: observed flow
+    - name: name of the station
+"""
+function dfroute(;ofl="route.txt")
+    df = CSV.read(ofl,DataFrame,header=false,skipto=8,delim="\t",footerskip=1,lazystrings=false)
+    rename!(df,1=>"sim",2=>"obs",3=>"name")
+    df.name=map(x->replace(x,r"#" => "",r" " => "",r"_>.*" => "",r"-" => "_"),df[:,3])
+    sort!(df, :sim)
+    return df    
+end
+
+"""
+non-recursively search for control file in current directory
+"""
+function ctlx()
+    matches::Vector{Any} = []
+    for file in readdir(".")
+        if endswith(file, ".xml")
+            path = joinpath(pwd(), file)
+            open(path) do f
+                for line in eachline(f)
+                    if occursin("compiling symbols in control file ", line)
+                        fields = split(line)[8:end]
+                        println(join(fields, " "))
+                        out = join(fields, " ")
+                        push!(matches, out)
+                    end
+                    if occursin("looking for starting date in ", line)
+                        fields = split(line)[9:end]
+                        str = replace(join(fields, " "),r"\"/>.*" => " -> ")
+                        printstyled("discharge file is: $str\n",color=:light_green)
+                    end
+                end
+            end
+        end
+    end
+    if !isempty(matches)
+        fl = first(matches)
+        fl = split(fl) |> last
+        fl = split(fl, "\"") |> first
+        if (!occursin("regio",fl) && occursin("regio",pwd()))
+            fl = replace(fl,"control"=>"D:/Wasim/regio/control")
+        elseif (!occursin("brend",fl) && occursin("brend",pwd()))
+            fl = replace(fl,"control"=>"D:/Wasim/Tanalys/DEM/brend_fab/control")            
+        elseif (!occursin("temp",fl) && occursin("saale",pwd()))
+            fl = replace(fl,"control"=>"D:/temp/saale/control")
+        end
+        return string(fl)
+    else
+        @warn "no control file or xml found!..."
+        return ""
+    end
+end
+
+function qtab(;todf=true)
+    dfs = getq();
+    # z = ctlx()
+    # if isempty(z)
+    #     printstyled("no control file found!\n",color=:light_red)
+    #     pretty_table(dfs,header=uppercasefirst.(names(dfs));)
+    #     return
+    # end
+    ofl = "route.txt"
+    if isempty(ofl)
+        printstyled("no $ofl found!\n",color=:light_red)
+        pretty_table(dfs,header=uppercasefirst.(names(dfs));)
+        return
+    end   
+    dx = dfroute(;ofl=ofl);
+    rename!(dx,"sim"=>"Basin");
+    dfs.Basin = parse.(Int64,dfs.Basin)
+    kd  = innerjoin(dfs, dx, on=:Basin)
+    if todf
+        return kd
+    else
+        pretty_table(kd,header=uppercasefirst.(names(kd));)
+    end
+end
+
+
+function getq(;prefix::AbstractString="qgko")
+    rootdir = pwd()
+    results = []
+    if any(x -> isdir(x), readdir())
+        for (looproot, dirs, filenames) in walkdir(rootdir)
+            for filename in filenames
+                if occursin(Regex(prefix, "i"), filename) && !occursin(r"txt|yrly|nc|png|svg", filename)
+                    push!(results, joinpath(looproot, filename))
+                end
+            end
+        end
+    else
+        printstyled("eval on: $rootdir !\n", color=:light_red)
+        for filename in filter(x -> isfile(x), readdir(; join=false))
+            if occursin(Regex(prefix, "i"), filename) && !occursin(r"txt|yrly|nc|png|svg", filename)
+                printstyled("collecting $filename...\n", color=:light_yellow)
+                push!(results, filename)
+            end
+        end
+    end
+
+    if isempty(results)
+        printstyled("no qgk files found!\n", color=:light_red)
+        return 
+    end
+
+    for file in results
+        x = file
+        try
+            df = CSV.read(x, DataFrame, delim="\t"; header=true, types=String, silencewarnings=true, skipto=364)
+            pattern = r"^[LIN. R]|^[LOG. R]|^CO"
+            mask = occursin.(pattern, df[!, 1])
+            ddd = df[mask, :]
+            new = names(ddd)[5:end]
+            insert!(new, 1, "basin")
+            insert!(new, 2, "timestep")
+            ddd = permutedims(ddd)
+            dropmissing!(ddd)
+            ddd.basin = new
+            select!(ddd, :basin, :)
+            df = permutedims(ddd)
+            columns = uppercasefirst.(getproperty(df, propertynames(df)[1]))
+            rename!(ddd, Symbol.(columns))
+            kd = ddd[3:end, :]
+            return kd
+        catch e
+            println(e)
+            @warn "skipping $x"
+        end
+    end
+
+    return 
+end
+
+
+
+#end #endof of smfc module
+
+# println("you are here: ")
+# printstyled(pwd()*"\n",color=:green)
+
+#import Pkg
 #Pkg.gc(; collect_delay=Second(0))
-
-# #pwd is home
-# pcmd = `perl -E '$z=$ENV{PWD}=~ s#mnt\S##r =~s/(\w)/\U$1:/mr =~s[/][]r;say $z'`
-# run(pcmd)
-# #readchomp(pipeline(pcmd))
-# pwd()

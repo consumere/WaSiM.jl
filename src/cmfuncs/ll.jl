@@ -1,0 +1,6 @@
+# 
+function ll()
+        readdir()
+    end
+
+    

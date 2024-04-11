@@ -1,11 +1,10 @@
 #rasterfuncs
-using Rasters
 
-module rst
-
+#module rst
 using Reexport
-#@reexport using WaSiM
-@reexport using DataFrames, CSV, Statistics, Dates, Distributions,StatsPlots, Plots.PlotMeasures
+@reexport using WaSiM
+#@reexport 
+using DataFrames, CSV, Statistics, Dates, Distributions,StatsPlots, Plots.PlotMeasures
 using DelimitedFiles, Grep, Printf, PrettyTables
 using Rasters, ArchGDAL 
 
@@ -1757,12 +1756,40 @@ begin
         
         
     end
+
+    """
+    facetsplot of RasterSeries by timekey= :t
+    """
+    function serplot(ser::Union{RasterSeries,Regex,AbstractString}; 
+        skipfirst::Bool=false,
+        misval::Number=0.0,
+        timekey::Symbol=:t,
+        c=:matter, title="", xlabel="", ylabel="")
+        if !(ser isa RasterSeries) 
+            matches = try 
+                    nconly(ser)
+                catch
+                    @error "no matches of $ser found!"
+                    return
+                end
+            if skipfirst
+                matches = matches[2:end]
+            end
+            ser = RasterSeries(matches,
+                timekey;
+                missingval=misval)
+        end
+        @info "missingval is $misval ..."
+        Plots.plot(ser; 
+        c=cgrad(c), title=title, xlabel=xlabel, ylabel=ylabel)
+    end
+    
     
 
 
-end
+end #endof fns
 
-end #end module rst
+#end #end of endof module rst
 
 
 # fnames = names(rst, all=true)

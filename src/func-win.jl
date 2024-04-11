@@ -1,34 +1,40 @@
 #no conda.python deps.
 begin
-    if Sys.isapple()
-        platform = "osx"
-        const homejl = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
-        const mybash = "/Users/apfel/.bash_aliases"
-        src_path = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
-    elseif Sys.iswindows()
-        platform = "windows"
-        src_path = "C:\\Users\\Public\\Documents\\Python_Scripts\\julia"
-        macro wasim() pt="C:\\Users\\chs72fw\\.julia\\dev\\WaSiM\\src\\wa.jl";include(pt);end
-        try
-            #Base.@showtime using RCall #errors in local scope
-            using RCall
-            printstyled("\nRCall loaded!\n",color=:green,bold=true,underline=true)    
-        catch e
-            printstyled("RCall errors at:\n $e",color=:red)
-        end    
+    if isnothing(src_path)
+        if Sys.isapple()
+            platform = "osx"
+            const homejl = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
+            const mybash = "/Users/apfel/.bash_aliases"
+            src_path = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
+        elseif Sys.iswindows()
+            platform = "windows"
+            src_path = "C:\\Users\\Public\\Documents\\Python_Scripts\\julia"
+            macro wasim() pt="C:\\Users\\chs72fw\\.julia\\dev\\WaSiM\\src\\wa.jl";include(pt);end
+            try
+                #Base.@showtime using RCall #errors in local scope
+                using RCall
+                printstyled("\nRCall loaded!\n",color=:green,bold=true,underline=true)    
+            catch e
+                printstyled("RCall errors at:\n $e",color=:red)
+            end    
+        else
+            platform = "unix"
+            winpt = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
+            #pcld = "/home/pCloud Drive/Stuff/Python_Scripts/julia"
+            pcld = "~/pCloudDrive/Stuff/Python_Scripts/julia"
+            src_path = isdir(winpt) ? winpt : pcld
+            if !isdir(src_path) #for docker images
+                #src_path = "/app/pyscripts/julia"
+                src_path = @__DIR__
+            end
+            println("sourcepath is $src_path")
+            if isdir(winpt)
+                macro wasim() pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM/src/wa.jl";include(pt);end
+            end
+        end   
     else
-        platform = "unix"
-        winpt = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
-        pcld = "/home/cris/pCloud Drive/Stuff/Python_Scripts/julia"
-        src_path = isdir(winpt) ? winpt : pcld
-        if !isdir(src_path) #for docker images
-            src_path = "/app/pyscripts/julia"
-        end
-        println("sourcepath is $src_path")
-        if isdir(winpt)
-            macro wasim() pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM/src/wa.jl";include(pt);end
-        end
-    end   
+        println("src_path already set to $src_path")
+    end
 end
 
 #startup.jl: C:\Users\chs72fw\.julia\config\startup.jl
@@ -7959,8 +7965,7 @@ module wa
                 1:12, monthabbr.(1:12))
         end
         return p1
-    end
-    
+    end   
     
     """
     takes first two cols of df and plots r2 QQ
@@ -8006,6 +8011,11 @@ module wa
         #halign=:center, rotation=-35.0))
     end
 
+    """
+    uses plotly.R to plot a raster
+    takes first match in current folder
+    no nc filter!
+    """
     function jsrast(R::String)
         rpath="/mnt/d/Fernerkundungsdaten/Klassifikation/R-Sessions"
         run(`wsl -d Ubuntu-18.04 -e Rscript "$rpath/plotly_rast.R" $R`)
@@ -9362,123 +9372,6 @@ module wa
     end
 
     """
-    sim obs plot rglob regex
-    x::Union{Regex,DataFrame}; 
-        yscale::Symbol = :log,
-        fun::Function = sum, 
-        freq::String="monthly",simcol=1,obscol=2
-        freq can also shortened, like D,M,Q,Y
-    """
-    function hyeval(
-        x::Union{Regex,DataFrame}; 
-        yscale::Symbol = :log,
-        fun::Function = sum, 
-        freq::String="monthly",
-        ylab::String="[mm/$freq]",
-        simcol=1,obscol=2)
-        if x isa Regex
-            x = first(dfonly(x))
-            ndf = waread2(x;silencewarnings=true)
-        else
-            ndf = reorder_df(x)
-        end
-                
-        ndf = select(ndf,Cols(simcol,obscol,r"date|month|year"))
-        dropmissing!(ndf)
-
-        @info "aggregation (sum) freq: $freq"
-        try 
-        # Resample the DataFrame based on the specified freq
-            if freq == "daily" || freq == "D" || freq == "day"
-                #ndf = ndf[hour.(ndf.date) .== 0, :]
-                ndf = ndf
-            elseif freq == "monthly" || freq == "M" || freq == "mon" || freq == "month"
-                #df[day.(df.date) .== 1, :]
-                ndf = qrtr(ndf;fun=fun,agg=month) #monsum(ndf)
-            elseif freq == "quarterly" || freq == "Q" 
-                #df[day.(df.date) .== 1 && month.(df.date) % 3 == 1, :]
-                ndf = qrtr(ndf;fun=fun)
-            elseif freq == "seasonal"
-                #df[day.(df.date) .== 1 && month.(df.date) % 3 == 1, :]
-                ndf = qrtr(ndf;fun=fun)
-            elseif freq == "yearly" || freq == "Y" || freq == "yr" || freq == "year"
-                #df[day.(df.date) .== 1 && month.(df.date) == 1, :]
-                ndf = qrtr(ndf;fun=fun,agg=year)  #yrsum(ndf)
-                #DataFrames.combine(groupby(df, year.(df.date)), y .=> mean .=> y);
-                #DataFrames.combine(groupby(df, quarterofyear.(df.date)), y .=> mean .=> y);
-            end
-        catch e
-            @error("smth went wrong",e)
-            return
-        end
-
-        ndf = hcat(ndf[!,Not(Cols(r"date|month|year"))],
-            ndf[:,Cols(r"date|month|year")])
-    
-        #printstyled(names(ndf)...,bold=true,color=:red)
-        #split(names(ndf)...,' '),bold=true,color=:red)
-        printstyled(names(ndf),bold=true,color=:red)
-        
-        rename!(ndf, [:Simulated,:Observed,:Date]) #wie in gof3.r
-        
-        printstyled(" changed to :Simulated,:Observed,:Date ! \n",bold=true,color=:red)
-        
-        overall_pearson_r = cor(ndf[!, :Observed], 
-            ndf[!, :Simulated])
-        r2 = overall_pearson_r^2
-        #nse(simulations, evaluation)
-        nse_score = nse(ndf[!, :Simulated],ndf[!, :Observed])
-        kge_score = kge1(ndf[!, :Simulated],ndf[!, :Observed])
-        ve = round(vef(ndf[!, :Simulated],ndf[!, :Observed]), digits=2)
-        subs = "RSQ: $(round(r2, digits=2))\nNSE: $(round(nse_score, digits=2))\nKGE: $(round(kge_score, digits=2))\nVE: $ve"
-        
-
-        ti = try 
-            first(split(basename(x),"_"))
-        catch
-            @warn "No basename in metadata!"
-            raw""
-        end
-        
-        fr = replace(freq,"ly"=>"")
-        p = Plots.plot(title=ti, ylabel=ylab, 
-            xlabel="", 
-            yaxis = yscale, 
-            legend=:topleft)
-
-        Plots.plot!(p, ndf[!, :Date], ndf[!, :Simulated], 
-                color=:red, label="Modeled")
-        Plots.plot!(p, ndf[!, :Date], ndf[!, :Observed], 
-        line=:dash, color=:blue,label="Observed")
-            
-        
-        Plots.annotate!(
-            :topright,
-            text("$subs", 10, :black, :right)
-        )
-
-        if freq == "quarterly" || freq == "Q" 
-            Plots.xticks!(
-                1:4, ["Q1", "Q2", "Q3", "Q4"])
-        end
-                
-        if freq == "monthly" || freq == "M" || freq == "mon" || freq == "month"
-            Plots.xticks!(
-                1:12, monthabbr.(1:12))
-        end
-        
-        if freq == "yearly" || freq == "Y" || freq == "yr" || freq == "year"
-            Plots.xticks!(
-                #1:nrow(ndf), 
-                ndf.Date, 
-                string.(ndf.Date))
-        end
-        
-
-        return p
-    end
-
-    """
     finds all ctl files in a directory -> NO subdirectories by default
     findctl(snippet::Union{String,Regex};recurse=false, dir="D:/Wasim/regio/control",suffix=".ctl")
     """
@@ -10565,9 +10458,720 @@ module wa
         end
     end
 
+    function hd(x::DataFrame)
+        if nrow(x)>20
+            @info "headtail of df:"
+            vcat(first(x,5),last(x,5))
+        else
+            first(x,5)
+        end
+    end
 
+    """
+    headtail of df using mapcols
+    """
+    function ht(df::DataFrame)
+        mapcols(x -> x[Not(2:end-1)], df)
+    end
 
-   
+    """
+    Plots a histogram of the values in the DataFrame
+    """
+    function correlogram(df)
+        rows = cols = size(df,2)
+        plots = []
+        for row = 1:rows, col = 1:cols
+            if row == col
+                push!(
+                    plots,
+                    histogram(df[:,row],bins=10, xtickfont = font(5), ytickfont = font(5), legend = false))
+            else
+                push!(
+                    plots,
+                    scatter(df[:,row], df[:,col], xtickfont = font(5), ytickfont = font(5), legend = false, markersize=1, alpha = 0.3, smooth = true,
+                    linewidth=3, linecolor=:red),
+                )
+            end
+        end
+        Plots.plot(plots..., #size=(1200, 1000), 
+            layout = (rows, cols))
+    end
+
+    """
+    fillmissing(df,fillval=-9999)
+    """
+    function fillmissing(df,fillval=-9999)
+        for col in eachcol(df)
+            col .= coalesce.(col, fillval)
+        end
+        return df
+    end
+
+    """
+    build_soil_dictionary from soiltable
+    see fsoil
+    soiltable = open(fn) do io
+        a = readbetween(io, "soil_table", "substance_transport")
+        return(join(a[3:end-1]," ")) #rem first 2 and last lines
+    end
+    """
+    function build_soil_dictionary(soiltable::String)     
+        entries = split(soiltable, "}")
+        filter!(s -> !isempty(s), entries)
+        dictionary = Dict{Int, DataFrame}()
+        
+        for entry in entries
+            # Extract key and value
+            key = parse(Int, match(r"(\d+)\s*\{", entry).captures[1]|>strip)
+            println("check: $key")
+            value = match(r"\{\s*(.*)", entry).captures[1]|>strip
+            
+            # Process value string and convert to DataFrame
+            value = replace(value, "method = MultipleHorizons;  EvapMaxDepth = 0.15;" => "")
+            value = replace(value, r";" => ",")
+            value = replace(value, r";" => "")
+            value = replace(value, r"\$" => "")
+            value = replace(value, r"#" => "")
+            value = replace(value, r"\s+" => " ")
+            value = replace(value, r"^\s+|\s+$" => "")
+            value = replace(value, r",$" => "")
+            pairs = split(value, ",")
+            # Create an empty dictionary to store the column names and values
+            #col_dict = Dict{String, Vector{String}}()
+    
+            # Iterate over the key-value pairs and extract the column names and values
+            filter!(s -> !isempty(s), pairs)
+            z=[]
+            for pair in pairs
+                key2, value = split(strip(pair), " = ")
+                push!(z,DataFrame(key2 => value))
+            end
+            # Create the DataFrame using the extracted column names and values
+            df = hcat(z...)
+            # Store key-value pair in the dictionary
+            dictionary[key] = df
+        end
+        
+        return dictionary
+    end
+
+    """
+    soiltable reader wrapper func.
+    """
+    function fsoil(fn::String)
+        soiltable = open(fn) do io
+            a = readbetween(io, "soil_table", "substance_transport")
+            return(join(a[3:end-1]," "))
+        end
+        mysoildict = build_soil_dictionary(soiltable)
+        xdf = DataFrame()
+        # Iterate over the key-value pairs in the dictionary
+        for (key, df) in mysoildict
+            # Add a column named "key" with the current key value to the DataFrame
+            df.key = fill(key, size(df, 1))    
+            # Append the current DataFrame to the combined DataFrame
+            append!(xdf, df)
+        end
+        #propertynames(xdf)|>cb
+        nms=[:horizon, :ksat, :theta_res, :theta_sat, :alpha, :Par_n, :thickness, :maxratio]
+        for col in nms
+            xdf[!, col] .= [parse.(Float64, split(string(x))) for x in xdf[!,col]]
+        end
+        xdf.sums = [sum(x) for x in xdf.thickness]
+        return xdf
+    end
+
+    """
+    [parse.(Float64, split(string(x))) for x in nm]
+    """
+    function fparse(nm)
+        [parse.(Float64, split(string(x))) for x in nm]
+    end
+
+    """
+    Convert DataFrame Column to a Vector
+    returns only first match, see tovec for multiple matches
+    or:
+    m=Symbol.(filter(x->occursin(r"k",x),names(df)))
+    map(x->getproperty(df, x),m)
+    DataFrame(map(x->getproperty(df, x),m),:auto)
+    """
+    function vecdf(x::DataFrame, col::Any)
+        m = try
+                propertynames(df)[findfirst(x->occursin(col,x),names(df))]
+            catch
+                @error "no match found"
+                return
+            end
+            @info "$m found!"
+        return getproperty(x, m)
+    end
+    """
+    extract_layers(df::DataFrame, colkey::String="ksat")
+    form fsoil(infile)
+    or build_soil_dictionary(infile) -> df
+    """
+    function extract_layers(df::DataFrame, colkey::String="ksat")
+        num_layers = size(select(df,Cols(colkey))[1,1],1)
+        layer_columns = [Symbol("layer$i") for i in 1:num_layers]
+        layer_values = Vector{Vector{Float64}}(undef, num_layers)   
+        for i in 1:num_layers
+            layer_values[i] = [ r[1][i] for r in eachrow(select(df, colkey)) ]
+        end    
+        df1 = DataFrame(layer_columns .=> layer_values)
+        dout = rename(hcat(df.key,df1), 1 => :key)
+        return dout    
+    end
+
+    """
+    a reader using filtermask and looks_like_number
+    """
+    function nread(x::Union{String,Regex};kw...)
+        if x isa String
+            printstyled("reading $x\n",color=:light_red)
+        else x isa Regex
+            x = first(dfonly(x))
+            printstyled("reading $x\n",color=:light_red)
+        end
+        ms = ["-9999","-9999.0","lin", "log", "--"]
+        df = CSV.read(x,DataFrame;missingstring=ms,kw...)
+        if "YY" ∉ names(df)
+            println("Column 'YY' not found in the CSV file.")
+            @show first(df,5)
+            return nothing
+        end
+        if !all(i -> i isa Int64, df.YY)
+            filtermask = broadcast(x->looks_like_number(x),df[!,1])
+            df = df[filtermask, :]        
+        end
+        date_strings = string.(df.YY, "-", df.MM, "-", df.DD, "-", df.HH)
+        df.date = DateTime.(date_strings, "yyyy-mm-dd-HH")
+        df = select(df, Not(1:4))
+        DataFrames.metadata!(df, "filename", x, style=:note)
+        for x in names(df)
+            if startswith(x,"_")
+                newname=replace(x,"_"=>"C", count=1)
+                rename!(df,Dict(x=>newname))
+            end
+        end
+        return df 
+    end
+
+    """
+    sim obs plot rglob regex
+    x::Union{Regex,DataFrame}; 
+        yscale::Symbol = :log,
+        fun::Function = sum, 
+        freq::String="monthly",simcol=1,obscol=2
+        freq can also shortened, like D,M,Q,Y
+    """
+    function hyeval(
+        x::Union{Regex,DataFrame}; 
+        yscale::Symbol = :log,
+        fun::Function = sum, 
+        freq::String="monthly",
+        ylab::String="[mm/$freq]",
+        simcol=1,obscol=2)
+        if x isa Regex
+            x = first(dfonly(x))
+            ndf = waread2(x;silencewarnings=true)
+        else
+            ndf = reorder_df(x)
+        end
+                
+        ndf = select(ndf,Cols(simcol,obscol,r"date|month|year"))
+        dropmissing!(ndf)
+
+        @info "aggregation (sum) freq: $freq"
+        try 
+        # Resample the DataFrame based on the specified freq
+            if freq == "daily" || freq == "D" || freq == "day"
+                #ndf = ndf[hour.(ndf.date) .== 0, :]
+                ndf = ndf
+            elseif freq == "monthly" || freq == "M" || freq == "mon" || freq == "month"
+                #df[day.(df.date) .== 1, :]
+                ndf = qrtr(ndf;fun=fun,agg=month) #monsum(ndf)
+            elseif freq == "quarterly" || freq == "Q" 
+                #df[day.(df.date) .== 1 && month.(df.date) % 3 == 1, :]
+                ndf = qrtr(ndf;fun=fun)
+            elseif freq == "seasonal"
+                #df[day.(df.date) .== 1 && month.(df.date) % 3 == 1, :]
+                ndf = qrtr(ndf;fun=fun)
+            elseif freq == "yearly" || freq == "Y" || freq == "yr" || freq == "year"
+                #df[day.(df.date) .== 1 && month.(df.date) == 1, :]
+                ndf = qrtr(ndf;fun=fun,agg=year)  #yrsum(ndf)
+                #DataFrames.combine(groupby(df, year.(df.date)), y .=> mean .=> y);
+                #DataFrames.combine(groupby(df, quarterofyear.(df.date)), y .=> mean .=> y);
+            end
+        catch e
+            @error("smth went wrong",e)
+            return
+        end
+
+        #sim,obs names
+        sim,obs = names(ndf[!,Not(Cols(r"date|month|year"))])[1:2]
+        ndf = hcat(ndf[!,Not(Cols(r"date|month|year"))],
+            ndf[:,Cols(r"date|month|year")])
+    
+        #printstyled(names(ndf)...,bold=true,color=:red)
+        #split(names(ndf)...,' '),bold=true,color=:red)
+        printstyled(names(ndf),bold=true,color=:red)
+        
+        rename!(ndf, [:Simulated,:Observed,:Date]) #wie in gof3.r
+        
+        printstyled(" changed to :Simulated,:Observed,:Date ! \n",bold=true,color=:red)
+        
+        overall_pearson_r = cor(ndf[!, :Observed], 
+            ndf[!, :Simulated])
+        r2 = overall_pearson_r^2
+        #nse(simulations, evaluation)
+        nse_score = nse(ndf[!, :Simulated],ndf[!, :Observed])
+        kge_score = kge1(ndf[!, :Simulated],ndf[!, :Observed])
+        ve = round(vef(ndf[!, :Simulated],ndf[!, :Observed]), digits=2)
+        subs = "RSQ: $(round(r2, digits=2))\nNSE: $(round(nse_score, digits=2))\nKGE: $(round(kge_score, digits=2))\nVE: $ve"
+        
+
+        ti = try 
+            first(split(basename(x),"_"))
+        catch
+            @warn "No basename in metadata!"
+            raw""
+        end
+        
+        fr = replace(freq,"ly"=>"")
+        p = Plots.plot(title=ti, ylabel=ylab, 
+            xlabel="", 
+            yaxis = yscale, 
+            legend=:topleft)
+
+            #sim,obs
+        Plots.plot!(p, ndf[!, :Date], ndf[!, :Simulated], 
+                color=:red, label=sim) #label="Modeled")
+        Plots.plot!(p, ndf[!, :Date], ndf[!, :Observed], 
+        line=:dash, color=:blue, label=obs)
+        #label="Observed")
+            
+        
+        Plots.annotate!(
+            :topright,
+            Plots.text("$subs", 10, :black, :right;
+            family="Computer Modern")
+        )
+
+        if freq == "quarterly" || freq == "Q" || freq == "qrtr" 
+            Plots.xticks!(
+                1:4, ["Q1", "Q2", "Q3", "Q4"])
+        end
+                
+        if freq == "monthly" || freq == "M" || freq == "mon" || freq == "month"
+            Plots.xticks!(
+                1:12, monthabbr.(1:12))
+        end
+        
+        if freq == "yearly" || freq == "Y" || freq == "yr" || freq == "year"
+            Plots.xticks!(
+                #1:nrow(ndf), 
+                ndf.Date, 
+                string.(ndf.Date))
+        end
+        
+
+        return p
+    end
+
+    """
+    also for pest outputfiles
+    """
+    function heatraw(x::Union{String,Regex,DataFrame};selcol::Union{String,Regex}=r"dr",ann=true,kw...)
+        if x isa String
+            printstyled("reading $x\n",color=:light_red)
+            df = waread2(x;silencewarnings=false)
+            dropmissing!(df)    
+        elseif x isa Regex
+            x = first(dfonly(x))
+            printstyled("reading $x\n",color=:light_red)
+            df = waread2(x;silencewarnings=false)
+            dropmissing!(df)
+        else
+            df = copy(x)
+            dropmissing!(df)
+        end
+
+        df = select(df, Cols(selcol))
+
+        if ncol(df)<2
+            @error "only one column available!"
+            return
+        end
+
+        if ncol(df)>30
+            @warn "more than 30 columns, heatmap will be unreadable!"
+            println(names(df))
+            return
+        end
+
+        md = cor(Matrix(df)).^2
+        md = convert(Matrix{Union{Float64, Missing}}, md)
+        replace!(md, 1.0 => missing)
+        replace!(md, 0.0 => missing)
+        p1 = heatmap(md, 
+            c = Plots.colormap("RdBu",size(md, 1),mid=0.33),
+            linewidth = 0.9, 
+            cbar = true,
+            # cbar=true,
+            #colorbar_title = "RSQ",
+            #colorbar_scale = :log10,
+            #colorbar_title_location	= :top,
+            #@show plotattr(:Series)
+            #https://docs.juliaplots.org/latest/generated/attributes_subplot/
+            #colorbar_titlepadding=5,
+            colorbar_titlefontsize=12,
+            #colorbar_titlefontvalign=:bottom,
+            margins=6mm,
+            xticks =false,
+            yticks =false,
+            grid = :false; kw...);
+            # # legend = :outertopright,
+            # # legendtext = string(names(df[:, Not(:date)])),#xlabel="", #ylabel="", 
+            # title="Correlation Heatmap"
+        if ann
+            for i in 1:size(md, 1)
+                for j in 1:size(md, 2)
+                    value = round(md[i, j], digits=2)
+                    color = ismissing(value) ? :transparent : :black
+                    Plots.annotate!(j, i, 
+                        Plots.text(string(value), 8, 
+                        "Computer Modern",
+                        color, 
+                        :center, 
+                        halign=:center, rotation=-35.0))
+                end
+            end
+        end
+        nm = names(df)
+        nm = replace.(nm,
+            r"_" => " ",r"NaN" => " ",
+            r"qoutjl|qout" => "",  r"#" => "")
+        Plots.xticks!(1:length(nm), nm) #reverse(nm)
+        Plots.yticks!(1:length(nm), nm;rotation=-35)
+        return p1
+    end
+
+    """
+    represents how many standard deviations a given data point is from the mean of its dataset.
+    """
+    function zscore(x::Vector{Float64})
+        μ = mean(x)
+        σ = std(x)
+        z = (x .- μ) ./ σ
+        return z
+    end
+
+    
+    """
+    reads from
+    jqloop qb > tst.json 
+    """
+    function jsread(fn::String)
+        d = map(DataFrame,JSON.parsefile(fn))
+        vs = filter(x -> ncol(x) > 3, d)
+        df = vcat(vs...)
+        return df[:, sort(names(df),rev=true)]
+    end
+
+    """
+    csv reader with skiptostring and metadata
+    for groundwater data
+    """
+    function gwread(x::String)
+        ms = ["-999","-9999","-99","Rohdaten"]
+        skiptoline = first(indexin(grep("Datum",readlines(x)[1:12]),readlines(x)[1:12]))
+        df = CSV.read(x,DataFrame,
+            header = skiptoline,
+            missingstring = ms,
+            stripwhitespace=true,
+            silencewarnings=true,
+            delim=';',
+            decimal=',',
+            limit=10^4,
+            select=1:2,
+            types=Dict(
+                1=>Date,
+                2=>Float64))
+
+        tmp=grep("Messstellen-Name",readlines(x))
+        # rename!(df,2=>:dat)
+        # df.dat .= tryparse.(Float64,df.dat)
+        
+        colnm = split(tmp[1],";")[2]
+        rename!(df,Dict(
+            1 => :date,
+            2 => Symbol(colnm)))
+        
+        # if !all(i -> i isa Int64, df.YY)
+        #     filtermask = broadcast(x->looks_like_number(x),df[!,1])
+        #     df = df[filtermask, :]        
+        # end
+        if !isempty(tmp)
+            println(
+                join(hcat(tmp,x,nrow(df))," ")*" rows in df..."
+                )
+        end
+        DataFrames.metadata!(df, "filename", x, style=:note);
+        return df
+    end
+
+    """
+    using GLM with reader. see also trendline
+    """
+    function dftrend(x::Union{String,Regex,DataFrame},col::Any=1;date_col::Symbol=:date)
+        if isa(x,DataFrame)
+            df = x
+        else
+            df = dfr(x)
+        end
+        df.dn .= Dates.value.(df.date .- minimum(df.date))
+        # select the columns to use for the model
+        id = propertynames(df[!,Not(:date)])
+        #if isa(col,Symbol) ? col = string(col) : col
+        #col="we"
+        if isa(col,Number)
+            dat = id[col]
+        else
+            dat = first(grep(Regex(col),id))
+        end
+        #model = lm(@formula(dat ~ dn), df);
+        response = term(dat)
+        predictor = term(:dn)
+        formula = FormulaTerm(response, predictor)
+        model = lm(formula, df)
+        
+        #model = lm(@formula(Matrix(select(df,dat))|>vec ~ dn),df);
+        # col = select(df,col)
+        # col = names(col)|>first
+        # #names(col)[1]
+        # Fit a linear regression model
+        # Get the coefficients
+        #coef(model)
+        intercept, slope = coef(model)
+        #dat = string(dat)
+        #trendline_equations = "$dat\ny = $(round(slope; sigdigits=2))x + $(round(intercept, sigdigits=1))"
+        trendline_equations = "y = $(round(slope; sigdigits=2))x + $(round(intercept, sigdigits=1))"
+
+        plot(df.date, Matrix(select(df,dat))|>vec, 
+            label=string(dat),
+            legend=:topright)
+        #@df df plot(:date, cols(dat), label=string(dat), legend=:topright)
+        plot!(df.date, predict(model, df), 
+            label=trendline_equations, 
+            linewidth=2.5,style=:dash)
+    end
+
+    """
+    sums up julias rootenv
+    269171 files in directory
+    .julia      25.89 GB
+    in ubu      26.78 GB  332643
+    """
+    function juliasize()
+        cwd = joinpath(homedir(),".julia")
+        osize = 0 #Threads.Atomic{Int}(0)
+        n = 0 #Threads.Atomic{Int}(0)
+        for (root, dirs, files) in walkdir(cwd)
+            #Threads.@threads 
+            for file in files
+                osize += stat(joinpath(root, file)).size
+                n += 1
+            end
+         #print every 20th dir
+         for (i, dir) in enumerate(dirs)
+            if i % 20 == 0
+                printstyled("check dir: $dir\n", color=:light_red)
+            end
+        end
+        end 
+        println("$(n) files in directory")
+        @printf("%-40s %15.2f GB\n","$(cwd):",osize/1024^3)
+    end
+
+    """
+    sums up fldr
+    uses MultiThreading
+    """
+    function csize(cwd::String=pwd())
+        osize = Threads.Atomic{Int}(0)
+        n = Threads.Atomic{Int}(0)
+        l = ReentrantLock()
+    
+        for (root, dirs, files) in walkdir(cwd)
+            Threads.@threads for file in files
+                size = stat(joinpath(root, file)).size
+                lock(l)
+                try
+                    osize[] += size
+                    n[] += 1
+                finally
+                    unlock(l)
+                end
+            end
+            #print every nth dir #needs to be 1
+            for (i, dir) in enumerate(dirs)
+                if i % 1 == 0
+                    printstyled("check dir: $dir\n", color=:light_red)
+                end
+            end
+        end 
+        println("$(n[]) files in directory")
+        @printf("%-40s %15.2f GB\n","$(cwd):", osize[]/1024^3)
+    end
+
+     
+    """
+    controlfile::String = "",
+    match1::String = "[landuse_table]",
+    match2::String = "[",
+    lutable::String = ""
+    see also landuse.jl for plotfuncs
+    m1 = r"^[[]landuse_table[]]"
+    m2 = r"^[[]"
+    a = readbetween(open(fn), m1, m2) #|>first    
+
+    """
+    function lutab(;
+        controlfile::String = "",
+        match1::Regex = r"^[[]landuse_table[]]",
+        match2::Regex = r"^[[]", 
+        lutable::String = "")
+        #match2::String = "\$JDVegReset",
+        if controlfile != ""
+            lutable = open(controlfile) do io
+                a = readbetween(io, match1, match2)
+                return(join(a[3:end-1]," ")) #rem first 2 and last lines
+            end
+        end
+        entries = split(lutable, "}")
+        entries = strip.(entries)
+        entries = filter(s -> !isempty(s) && length(s) > 2 && !occursin(r"^(?i)#",s) && !occursin(r"^[[]",s), entries)
+        map!(x->replace(x,r"\t" => " "),entries,entries)
+        
+        dictionary = Dict{Int, DataFrame}()
+        
+        for entry in entries
+            # Extract key
+            m = match(r"(\d+)\s+(\w+)\s+\{", entry)
+            if m === nothing
+                println("No match found in string: $entry")
+                continue
+            end
+            key = parse(Int, m.captures[1]|>strip)
+            nm = m.captures[2]|>strip
+            println("check: $key $nm")
+            
+            # Extract value
+            value_match = match(r"\{(.*)", entry)
+            if value_match === nothing
+                continue
+            end
+            value = value_match.captures[1]|>strip
+            #value = replace(value, "method = MultipleHorizons;  EvapMaxDepth = 0.15;" => "")
+            value = replace(value, r";" => ",")
+            value = replace(value, r"\$" => "")
+            value = replace(value, r"#" => "")
+            value = replace(value, r"\s+" => " ")
+            value = replace(value, r"^\s+|\s+$" => "")
+            value = replace(value, r",$" => "")
+            pairs = split(value, ",")
+            pairs = lstrip.(pairs)
+            pairs = filter(s -> !isempty(s), pairs)
+            
+            data = [split(strip(pair), " = ", limit = 2) for pair in pairs]
+            #data = vcat([["class",nm]], data) #prepend to first pos
+            data = vcat([["key",key]], data) #prepend to first pos
+            #push!(data, ["class", nm]) #append last pos
+            df = DataFrame(Param=first.(data), Value=last.(data))
+            rename!(df, :Value => Symbol(nm))
+            # Store key-value pair in the dictionary
+            dictionary[key] = df
+        end
+        
+        #return dictionary
+        return [dictionary[i] for i in keys(dictionary)]
+    end
+
+    """
+    get specific vars from landuse table \n
+    dfs = lutab() \n
+    dfs::Vector{DataFrame};par::String="LAI"
+    """
+    function luvars(dfs::Vector{DataFrame};par::String="LAI")
+        reg_var = Regex(par,"i")
+        ad = mapreduce(df -> begin
+            filtered_df = filter(row -> occursin(reg_var, 
+                row[:Param]), df)
+            if nrow(filtered_df) > 0
+                return DataFrame(
+                    class =  replace.(last(names(filtered_df)),r"_" => " "),
+                    par = parse.(Float64, 
+                    split(first(filtered_df[!, 2])))
+                )
+            else
+                return DataFrame(class = String[], 
+                par = Float64[])
+            end
+        end, vcat, dfs)
+        rename!(ad, :par => Symbol(par))
+        return ad
+    end
+
+    """
+    plot specific vars from landuse table \n
+    dfs = lutab() \n
+    """
+    function luplot(dfs::Vector{DataFrame};par::String="LAI")
+        # Initialize an empty plot
+        p1 = Plots.plot();
+        # Iterate over all dataframes in dfs
+        for (i, df) in enumerate(dfs)
+            lai_rows = filter(row -> occursin(Regex(par,"i"), row[:Param]), df)
+            key = @rsubset df :Param=="key"
+            key = first(key[!,2])
+            if nrow(lai_rows) > 0
+                lvs = parse.(Float64, split(first(lai_rows[!,2])))
+                lab = replace(last(names(lai_rows)), r"_" => " ")
+                Plots.plot!(p1, lvs, label = "$lab [$key]",
+                    #seriestype=:bar,
+                    grid = false,
+                    #xlims=(1,12),
+                    xticks = (1:12, 
+                    [ monthabbr(x) for x in 1:12 ]),
+                    xrotation = 35
+                    ) 
+            end
+        end
+        # Display the plot
+        return p1
+    end
+
+    """
+    uses PrettyTables
+    grep_in_files(filepattern, pattern, path)
+    """
+    function grep_in_files(filepattern, pattern, path)
+        matches = grep(filepattern, readdir(path, join=true))
+        for match in matches
+            xf = grep(Regex(pattern,"i"), readlines(match))
+            if !isempty(xf)
+                xf=strip.(xf)
+                PrettyTables.pretty_table(xf, 
+                header = [basename(match)], 
+                alignment = :left)
+                # println("File: $match
+                # \nMatches: $xf")
+            end
+        end
+    end
+
+ 
     
 end ##end of module endof
 
