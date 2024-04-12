@@ -40,6 +40,46 @@ module wa
         end
     end
 
+    # DATAFRAME Operations
+    export hd, dfread, dfrib, dfsp, dfsplog, dfroute, dfon, dfp, dfp!, 
+    dfpall, dfr, dfm, dfmo, dfonly, dfl, dfl!, dfilter
+
+    # File Operations
+    export readall, readalloutput, readallras, read_between, 
+    read_log_file, read_mhm, read_soildata, read_soildata_2, 
+    read_soildata_4, read_soildata_raw, read_until_flag, read_wq, 
+    old_waread, old_waread2, op, oplat, ovio, pout, project, 
+    project_o, pydf, pydf_to_julia, read_df, read_landuse_data2, 
+    readmeteo, readras, readras2, readrasrec, readroute, 
+    route_from_dir
+
+    # Alias Functions
+    export hombr, homes, hometeo, homg, homreg
+
+    # Hydrological Functions
+    export hydro, hydro_f, hydromon, hyeval, kge, kge1, kge2, 
+    kge_df, kge_df3, kge_fread, kge_read, kge_rec, kgedf, kgegrep, 
+    kgegrepr, kgerec, kgeval, kgewrite
+
+    # Statistical Functions
+    export all_values_equal, cnt, cntcolread, cntcols, cntcolv, cntplt, colsums, condasize, corrbar, correlogram, cpal, cpinto, cpl, cplt, cs, csize, ct, ctg, ctl, ctl2, ctlook, ctsum, dd, ddense, denselog, denseplot, descr, dfbar, dfilter, dfl, dfl!, dfm, dfmo, dfon, dfonly, dfp, dfp!, dfpall, dfr, dfread, dfrib, dfroute, dfsp, dfsplog, dftrend, dpr, dpr!, dprbig, dsbar, dtrange, du, dubplot, eeread, f1_score, facets, facets_loop, fdd, fdf, fdi, filterdf, filterplot, filterplot!, findalls, findctl, findindf, findlog, fp, fparse, fread, freaddf, fsize, fsoil, fsz, ftp, ftplin, ftsp, fz, fzplot, fzplot2, generate_export_statement, get_folder_size, getdf, getf, getm, getmoduleorder, getnames, ggofbatch, ggofjl, ggofjl_nosvg, glob, globdf, globf, gofbatch, gofbatch_nosvg, grec, grep_KGE, grep_files, grep_in_files, grep_with_context, gwread, 
+    irfan, isroute, jdd, jldf, jldfnm, jlt, jlzonal, jsrast, jsread, juliasize, kernelplot, lat, latx, ldf, ldfpall, lf, lg, listdfs, ll, llf, loadalldfs, loadalloutput, loaddf, loadso, looks_like_number, lplot, lplotf, lpro, ls, luheat, luplot, luscatter, lutab, luvars, mall, malldf, mask_trim, maskplot, mbx, median_filter, merge_vectors, moisture_plot_with_confidence, monc, moncol, monmean, monp, monsum, mvwasim2, mywd, ncdf, ncell, ncmean, nconly, nctodf, nctodfo, nqp, nread, nse, nse2, nse_rec, nsegrep, nsegrepr, 
+    odfr, old_waread, old_waread2, op, oplat, ovio, pall, pe, penman_monteith, pers, pew, pfix, platform, plot_duration_graph, plot_grouped_metrics, plotf, polygonize_raster, pout, print_lines_between_patterns, print_sorted_sizes, process_file2, process_folders_and_subfolders, project, project_o, pw, pww, pydf, pydf_to_julia, qall, qall_num, qba, qbb, qgk, qpl, qplot, qqp, qrtr, rcont, rds, read_df, read_landuse_data2, read_log_file, read_soildata, read_soildata_2, read_soildata_4, read_soildata_raw, read_until_flag, read_wq, rec, regand, rename_columns, rename_columns!, rename_duplicates, renamer, reorder_df, reverse_coords, rglob, rhist, rlpro, rmask, rmdub, rmeq, rmeq_rec, rmlat, rmopt, rmqout, routeg, routg, rowmeans, rowsums, rp, rp3, rpall, rplot, rpm, rpmcf, rpr, rsq, rsqgrep, rstats, runwasim, sdf, seldf, selt, skipyr, so_read, src_path, ssup, stackplot, stats, stp, stplot, stplot!, strans, subset_dataframe_by_mask, subsum, tblcb, tbx, tdiff, tdifnc, te, tff2, theplot, tline, tline!, toMain, tocb, tovec, tree, treeo, vars, vecdf, vef, vef2, vg, vg2, vgctl, vgjl, vgjlrec, vgpy, vgpyo, vgr, vgrep, vgrepl, vgro, vibx, vio, vjl, wa, waba, waba2, waread, waread2, wawrite, wcl, wintree, wqlen, wqpand, wqplot, wqsum, wread, writedesc, writedf, writewa, wslp, wslpath, xread, yrmean, yrsum, zp
+
+    # Plot Functions
+    export lplot, lplotf, lpro, plot_duration_graph, plot_grouped_metrics, 
+    plotf, stackplot, stp, stplot, stplot!, surf, theplot, tline, tline!, 
+    nseval, nsevalraw, nsx, zp, zscore
+
+    # Functions for (Raster) Plotting and Visualization
+    export addname, addplot, agcont, agcont2, agheat, agjson, agmask, 
+    agread, agsurf, aplot, bardf, bardfm, bardfm!, bargroup, barp, 
+    barsum, baryr, baryrmean, baryrsum, build_soil_dictionary, byear, 
+    calculate_folder_size, cb, cdb, cdinto, cdof, cdu, climateplot, 
+    climateplot_dfold, cmplot, colorfunction, filterplot, filterplot!, 
+    mask_trim, maskplot, mbx, tbx
+
+ 
     function qgk(;rootdir=".", prefix="qgk")
         """
         filters internal WaSiM stats of routed discharge files
@@ -12467,6 +12507,168 @@ module wa
         println("$(n[]) files in directory")
         @printf("%-40s %15.2f GB\n","$(cwd):", osize[]/1024^3)
     end
+
+    """
+    controlfile::String = "",
+    match1::String = "[landuse_table]",
+    match2::String = "[",
+    lutable::String = ""
+    see also landuse.jl for plotfuncs
+    m1 = r"^[[]landuse_table[]]"
+    m2 = r"^[[]"
+    a = readbetween(open(fn), m1, m2) #|>first    
+
+    """
+    function lutab(;
+        controlfile::String = "",
+        match1::Regex = r"^[[]landuse_table[]]",
+        match2::Regex = r"^[[]", 
+        lutable::String = "")
+        #match2::String = "\$JDVegReset",
+        if controlfile != ""
+            lutable = open(controlfile) do io
+                a = readbetween(io, match1, match2)
+                return(join(a[3:end-1]," ")) #rem first 2 and last lines
+            end
+        end
+        entries = split(lutable, "}")
+        entries = strip.(entries)
+        entries = filter(s -> !isempty(s) && length(s) > 2 && !occursin(r"^(?i)#",s) && !occursin(r"^[[]",s), entries)
+        map!(x->replace(x,r"\t" => " "),entries,entries)
+        
+        dictionary = Dict{Int, DataFrame}()
+        
+        for entry in entries
+            # Extract key
+            m = match(r"(\d+)\s+(\w+)\s+\{", entry)
+            if m === nothing
+                println("No match found in string: $entry")
+                continue
+            end
+            key = parse(Int, m.captures[1]|>strip)
+            nm = m.captures[2]|>strip
+            println("check: $key $nm")
+            
+            # Extract value
+            value_match = match(r"\{(.*)", entry)
+            if value_match === nothing
+                continue
+            end
+            value = value_match.captures[1]|>strip
+            #value = replace(value, "method = MultipleHorizons;  EvapMaxDepth = 0.15;" => "")
+            value = replace(value, r";" => ",")
+            value = replace(value, r"\$" => "")
+            value = replace(value, r"#" => "")
+            value = replace(value, r"\s+" => " ")
+            value = replace(value, r"^\s+|\s+$" => "")
+            value = replace(value, r",$" => "")
+            pairs = split(value, ",")
+            pairs = lstrip.(pairs)
+            pairs = filter(s -> !isempty(s), pairs)
+            
+            data = [split(strip(pair), " = ", limit = 2) for pair in pairs]
+            #data = vcat([["class",nm]], data) #prepend to first pos
+            data = vcat([["key",key]], data) #prepend to first pos
+            #push!(data, ["class", nm]) #append last pos
+            df = DataFrame(Param=first.(data), Value=last.(data))
+            rename!(df, :Value => Symbol(nm))
+            # Store key-value pair in the dictionary
+            dictionary[key] = df
+        end
+        
+        #return dictionary
+        return [dictionary[i] for i in keys(dictionary)]
+    end
+
+    """
+    get specific vars from landuse table \n
+    dfs = lutab() \n
+    dfs::Vector{DataFrame};par::String="LAI"
+    """
+    function luvars(dfs::Vector{DataFrame};par::String="LAI")
+        reg_var = Regex(par,"i")
+        ad = mapreduce(df -> begin
+            filtered_df = filter(row -> occursin(reg_var, 
+                row[:Param]), df)
+            if nrow(filtered_df) > 0
+                return DataFrame(
+                    class =  replace.(last(names(filtered_df)),r"_" => " "),
+                    par = parse.(Float64, 
+                    split(first(filtered_df[!, 2])))
+                )
+            else
+                return DataFrame(class = String[], 
+                par = Float64[])
+            end
+        end, vcat, dfs)
+        rename!(ad, :par => Symbol(par))
+        return ad
+    end
+
+    """
+    plot specific vars from landuse table \n
+    dfs = lutab() \n
+    """
+    function luplot(dfs::Vector{DataFrame};par::String="LAI")
+        # Initialize an empty plot
+        p1 = Plots.plot();
+        # Iterate over all dataframes in dfs
+        for (i, df) in enumerate(dfs)
+            lai_rows = filter(row -> occursin(Regex(par,"i"), row[:Param]), df)
+            key = @rsubset df :Param=="key"
+            key = first(key[!,2])
+            if nrow(lai_rows) > 0
+                lvs = parse.(Float64, split(first(lai_rows[!,2])))
+                lab = replace(last(names(lai_rows)), r"_" => " ")
+                Plots.plot!(p1, lvs, label = "$lab [$key]",
+                    #seriestype=:bar,
+                    grid = false,
+                    #xlims=(1,12),
+                    xticks = (1:12, 
+                    [ monthabbr(x) for x in 1:12 ]),
+                    xrotation = 35
+                    ) 
+            end
+        end
+        # Display the plot
+        return p1
+    end
+
+    """
+    uses PrettyTables
+    grep_in_files(filepattern, pattern, path)
+    """
+    function grep_in_files(filepattern, pattern, path)
+        matches = grep(filepattern, readdir(path, join=true))
+        for match in matches
+            xf = grep(Regex(pattern,"i"), readlines(match))
+            if !isempty(xf)
+                xf=strip.(xf)
+                PrettyTables.pretty_table(xf, 
+                header = [basename(match)], 
+                alignment = :left)
+                # println("File: $match
+                # \nMatches: $xf")
+            end
+        end
+    end
+
+    
+    """
+    creates a export snippet\n
+    for all Funcs in given Module\n
+    """
+    function generate_export_statement(M::Module)
+        fnames = names(M; all=true)
+        export_statements = String[]
+        for name in fnames
+            if Base.isidentifier(name) && name != :eval
+                push!(export_statements, string(name))
+            end
+        end
+        println("export ", join(export_statements, ", "))
+    end
+
 
     
 end ##end of module endof
