@@ -212,3 +212,14 @@ import GeoDataFrames
 import Shapefile #for jlzonal
 using SHA
 import JSON #jsread
+
+using Pkg
+Pkg.add("GR")
+Pkg.build("GR")
+Pkg.precompile()
+
+cd("/mnt/c/Users/chs72fw/.julia/dev/WaSiM/")
+using Pkg
+Pkg.activate("/mnt/c/Users/chs72fw/.julia/dev/WaSiM/")
+using WaSiM
+using .WaSiM
