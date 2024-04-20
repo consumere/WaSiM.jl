@@ -43,7 +43,7 @@ module WaSiM
     #     ##import rasterstuff
     include("rasterfuncs.jl")
     include("smallfuncs.jl")
-    include("timeseries.jl")
+    #include("timeseries.jl")
     #@reexport using smfc #no Pkg!   
     
     # DATAFRAME Operations
