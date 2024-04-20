@@ -12,9 +12,10 @@
 
 
 module WaSiM
-    if Main.src_path !== nothing
-        src_path = "./src"
-    end
+    # if Main.src_path !== nothing
+    #     src_path = "./src"
+    # end
+    src_path = "./src"
     using DataFrames, CSV, Statistics, Dates 
     using GLM, StatsPlots, Distributions
     using DataFramesMeta
@@ -39,9 +40,16 @@ module WaSiM
     #    default(show = true)
     # using PlotlyJS
     using KernelDensity
+    #     ##import rasterstuff
+    include("rasterfuncs.jl")
+    include("smallfuncs.jl")
+    include("timeseries.jl")
+    #@reexport using smfc #no Pkg!   
+    
     # DATAFRAME Operations
     export dfread, dfrib, dfsp, dfsplog, dfp, dfp!, dfpall, 
-        dfr, yrsum, yrmean, dfm, dfmo, dfl, dfl!, dfilter,
+        #dfr, 
+        yrsum, yrmean, dfm, dfmo, dfl, dfl!, dfilter,
         monmean, monsum, lastcol
         #dfroute, 
 
@@ -3477,12 +3485,12 @@ module WaSiM
         end
     end
 
+    """
+    --- reader with fewer constrains ---
+    no |> dropmissing 
+    df[!,Cols(r"^Col|date")] |>dfp  
+    """
     function odfr(x::AbstractString)
-        """
-        --- reader with fewer constrains ---
-        no |> dropmissing 
-        df[!,Cols(r"^Col|date")] |>dfp  
-        """
         ms=["-9999","lin","log"]
         df::DataFrame = CSV.read(x,    
         DataFrame,    
@@ -11498,62 +11506,62 @@ module WaSiM
         return hp1
     end
 
-    """
-    Fastest Reader. is also dfr.
-    Read the text file, preserve line 1 as header column
-    """
-    function dfr(x::String)
-        ms = ["-9999","lin","log","--"]
-        df = try
-        CSV.read(x, DataFrame; 
-            delim="\t", 
-            header=1, 
-            missingstring=ms, 
-            #maxwarnings = 1, 
-            silencewarnings = true,
-            normalizenames=true, 
-            types=Float64)
-        catch e
-            @error("error reading $x\nexiting now\n $e")
-            return nothing
-        end
+    # """
+    # Fastest Reader. is also dfr.
+    # Read the text file, preserve line 1 as header column
+    # """
+    # function dfr(x::String)
+    #     ms = ["-9999","lin","log","--"]
+    #     df = try
+    #     CSV.read(x, DataFrame; 
+    #         delim="\t", 
+    #         header=1, 
+    #         missingstring=ms, 
+    #         #maxwarnings = 1, 
+    #         silencewarnings = true,
+    #         normalizenames=true, 
+    #         types=Float64)
+    #     catch e
+    #         @error("error reading $x\nexiting now\n $e")
+    #         return nothing
+    #     end
         
-        df = dropmissing(df, 1)
-        dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
-        df.date = dt2
-        df = select(df, Not(1:4))
-        DataFrames.metadata!(df, "filename", x, style=:note)
-        for x in names(df)
-            if startswith(x,"_")
-                newname=replace(x,"_"=>"C", count=1)
-                rename!(df,Dict(x=>newname))
-            end
-        end
-        return df 
-    end
+    #     df = dropmissing(df, 1)
+    #     dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
+    #     df.date = dt2
+    #     df = select(df, Not(1:4))
+    #     DataFrames.metadata!(df, "filename", x, style=:note)
+    #     for x in names(df)
+    #         if startswith(x,"_")
+    #             newname=replace(x,"_"=>"C", count=1)
+    #             rename!(df,Dict(x=>newname))
+    #         end
+    #     end
+    #     return df 
+    # end
 
-    """
-    Read the text file, preserve line 1 as header column
-    see also waread for station data
-    """
-    function dfr(x::Regex)
-        x = dfonly(x)|>first
-        ms = ["-9999","lin","log","--"]
-        df = CSV.read(x, DataFrame; delim="\t", header=1, missingstring=ms, normalizenames=true, types=Float64)
-        df = dropmissing(df, 1)
-        dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
-        df.date = dt2
-        df = select(df, Not(1:4))
-        metadata!(df, "filename", x, style=:note)
-        #renamer
-        for x in names(df)
-            if startswith(x,"_")
-            newname=replace(x,"_"=>"C", count=1)
-            rename!(df,Dict(x=>newname))
-            end
-        end
-        return df 
-    end
+    # """
+    # Read the text file, preserve line 1 as header column
+    # see also waread for station data
+    # """
+    # function dfr(x::Regex)
+    #     x = dfonly(x)|>first
+    #     ms = ["-9999","lin","log","--"]
+    #     df = CSV.read(x, DataFrame; delim="\t", header=1, missingstring=ms, normalizenames=true, types=Float64)
+    #     df = dropmissing(df, 1)
+    #     dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
+    #     df.date = dt2
+    #     df = select(df, Not(1:4))
+    #     metadata!(df, "filename", x, style=:note)
+    #     #renamer
+    #     for x in names(df)
+    #         if startswith(x,"_")
+    #         newname=replace(x,"_"=>"C", count=1)
+    #         rename!(df,Dict(x=>newname))
+    #         end
+    #     end
+    #     return df 
+    # end
 
 end ##end of module endof
 
