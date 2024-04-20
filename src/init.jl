@@ -74,6 +74,7 @@ copy_files_with_warnings(src, dst, files)
 #julia --threads auto -q --startup-file=no --project="." 
 using Pkg; Pkg.add("JET")
 __precompile__(false)
+using JET
 report_package("WaSiM")
 
 cd("/mnt/c/Users/chs72fw/.julia/dev/WaSiM/")
@@ -194,3 +195,20 @@ wa.hyeval(pdf;yscale=:identity,freq="Q",fun=mean)
 Plots.savefig("jlcor-bad-kiss-seasonal.svg")
 wa.hyeval(pdf;yscale=:identity,freq="week",fun=mean)
 Plots.savefig("jlcor-bad-kiss-week.svg")
+
+
+using DataFrames, CSV, Statistics, Dates 
+using GLM, StatsPlots, Distributions
+using DataFramesMeta
+using Grep, Printf
+using PrettyTables
+using Rasters
+import DataFrames: combine, groupby, transform
+import DelimitedFiles: readdlm
+import NCDatasets
+import ArchGDAL
+import GeoInterface #for reverse_coords ->moved to rst
+import GeoDataFrames
+import Shapefile #for jlzonal
+using SHA
+import JSON #jsread

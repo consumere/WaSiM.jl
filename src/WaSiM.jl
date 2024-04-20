@@ -8,7 +8,13 @@
 #include("src/jl")
 # cd(raw"C:\Users\chs72fw\.julia\dev\WaSiM")
 # pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM";cd(pt)
+
+
+
 module WaSiM
+    if Main.src_path !== nothing
+        src_path = "./src"
+    end
     using DataFrames, CSV, Statistics, Dates 
     using GLM, StatsPlots, Distributions
     using DataFramesMeta
@@ -26,65 +32,13 @@ module WaSiM
     using Plots.PlotMeasures
     using PlotThemes
     using SHA
-    using PyCall
+    #using PyCall
     import Conda #for python deps
     import JSON #jsread
     #using RCall
     #    default(show = true)
     # using PlotlyJS
     using KernelDensity
-    
-    if Main.src_path !== nothing
-        if Sys.isapple()
-            platform = "osx"
-            const homejl = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
-            const mybash = "/Users/apfel/.bash_aliases"
-            src_path = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
-        elseif Sys.iswindows()
-            platform = "windows"
-            src_path = "C:\\Users\\Public\\Documents\\Python_Scripts\\julia"
-            macro wasim() pt="C:\\Users\\chs72fw\\.julia\\dev\\WaSiM\\src\\wa.jl";include(pt);end
-        else
-            platform = "unix"
-            winpt = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
-            pcld = "~/pCloud Drive/Stuff/Python_Scripts/julia"
-            src_path = isdir(winpt) ? winpt : pcld
-            println("sourcepath is $src_path")
-            if isdir(winpt)
-                macro wasim() pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM/src/wa.jl";include(pt);end
-            end
-        end
-    end
-
-    # export addname, all_values_equal, aplot, bardf, bardfm, bardfm!, bargroup, barp, barsum, baryr, baryrmean, 
-    # baryrsum, build_soil_dictionary, byear, calculate_folder_size, cb, cdb, cdinto, cdof, cdu, climateplot, 
-    # climateplot_dfold, cmplot, cnt, cntcolread, cntcols, cntcolv, colorfunction, colsums, condasize, corrbar, 
-    # correlogram, cpinto, cs, csize, ct, ctg, ctl, ctl2, ctl3, ctlook, ctsum, dd, ddense, denselog, denseplot, 
-    # dfbar, dfilter, dfl, dfl!, dfm, dfmo, dfon, dfonly, dfp, dfp!, dfpall, dfread, dfrib, dfroute, dfsp, dfsplog, 
-    # dftrend, dpr, dpr!, dprbig, dsbar, dtrange, du, dubplot, eeread, extract_duration_from_xml, extract_layers, 
-    # f1_score, fdd, fdf, fillmissing, filterdf, filterplot, filterplot!, findalls, findctl, findindf, findlog, 
-    # fparse, fread, freaddf, fsize, fsoil, fsz, ftp, ftplin, ftsp, fz, generate_export_statement, get_folder_size, 
-    # getdf, getf, getm, getmoduleorder, getnames, ggofbatch, ggofjl, ggofjl_nosvg, glob, globdf, globf, gofbatch, 
-    # gofbatch_nosvg, grec, grep_KGE, grep_files, grep_in_files, grep_with_context, gwread, hd, heat, heatraw, hombr, 
-    # homes, hometeo, homg, homreg, ht, hydro, hydro_f, hydromon, hyeval, irfan, isroute, jdd, jldf, jldfnm, 
-    # jlt, jsrast, jsread, juliasize, kernelplot, kge, kge1, kge2, kge_df, kge_df3, kge_fread, kge_read, kge_rec, 
-    # kgedf, kgegrep, kgegrepr, kgerec, kgeval, kgewrite, klog, lat, latx, ldf, ldfpall, lf, lg, listdfs, ll, llf, 
-    # loadalldfs, loaddf, loadso, looks_like_number, lplot, lplotf, lpro, ls, luheat, luplot, luscatter, lutab, 
-    # luvars, mall, malldf, mbx, merge_vectors, moisture_plot_with_confidence, monc, monc_f, moncol, monmean, monp, 
-    # monsum, mvwasim2, mywd, nctodf, nctodfo, nqp, nread, nse, nse2, nse_rec, nsegrep, nsegrepr, nseval, nsevalraw, 
-    # nsx, odfr, op, oplat, ovio, pall, pe, penman_monteith, pers, pew, pfix, platform, 
-    # plot_duration_graph, plot_grouped_metrics, plotf, polygonize_raster, pout, print_lines_between_patterns, 
-    # print_sorted_sizes, process_file2, process_folders_and_subfolders, pw, pww, pxm, pydf, pydf_to_julia, qall, 
-    # qall_num, qba, qbb, qgk, qpl, qplot, qqp, qrtr, rds, read_df, read_landuse_data2, read_log_file, read_soildata, 
-    # read_soildata_2, read_soildata_4, read_soildata_raw, read_until_flag, read_wq, readall, readbetween, readdf, 
-    # readf, readmeteo, readmhm, readroute, rec, regand, rename_columns, rename_columns!, rename_duplicates, renamer, 
-    # reorder_df, rglob, rmdub, rmeq, rmeq_rec, rmlat, rmm, rmopt, rmqout, route_from_dir, 
-    # routeg, routg, rowmeans, rowsums, rsq, rsqgrep, runwasim, sdf, seldf, selt, skipyr, so_read, src_path, stplot!, 
-    # strans, subset_dataframe_by_mask, subsum, tblcb, tbx, tdiff, te, theplot, tline, tline!, toMain, tocb, tovec, 
-    # vars, varsdf, vecdf, vef, vef2, vg, vg2, vgctl, vgjl, vgjlrec, vgpy, vgpyo, vgr, vgrep, vgrepl, vgro, vibx, vio, 
-    # vjl, wa, waba, waba2, waread, waread2, wawrite, wcl, wintree, wqlen, wqpand, wqplot, wqsum, wread, writedesc, 
-    # writedf, writewa, wslp, wslpath, xread, yrmean, yrsum, zscore
-
     # DATAFRAME Operations
     export dfread, dfrib, dfsp, dfsplog, dfp, dfp!, dfpall, 
         dfr, yrsum, yrmean, dfm, dfmo, dfl, dfl!, dfilter,
@@ -97,7 +51,6 @@ module WaSiM
         read_until_flag, read_wq, old_waread, old_waread2,         
         pout,         
         project,         
-        pydf, pydf_to_julia, 
         read_landuse_data2, readmeteo, readras, 
         readras2, readrasrec, 
         readroute 
@@ -6955,55 +6908,6 @@ module WaSiM
         return file_columns
     end
 
-    """
-    no transposing
-    """
-    function pydf_to_julia(py_df::PyObject)
-        # Convert each column of the Python DataFrame to a Julia array
-        py_df = py_df.reset_index(inplace=false)
-        col_names = py_df.columns  # Get the column names from the Python DataFrame
-        col_arrays = try 
-            [convert(Array, py_df[col]) for col in col_names]
-        catch
-            @error "error in converting!"
-            return 
-        end
-        cas = [convert(Vector{Float64}, z) for z in col_arrays]
-        # Create a Julia DataFrame using the converted arrays and column names
-        julia_df = DataFrame(Symbol(col) => arr for (col, arr) in zip(col_names, cas))
-        #julia_df = DataFrame(Symbol(col) => arr for (col, arr) in zip(col_names, col_arrays))    
-        return julia_df
-    end 
-    
-    """
-    Convert each column of the Python DataFrame to a Julia array
-    """
-    function pydf(py_df::PyObject)
-        #py_df.reset_index(inplace=true)
-        py_df = py_df.reset_index(inplace=false)
-        col_names = py_df.columns  # Get the column names from the Python DataFrame
-        col_names = convert(Array, col_names)
-        col_arrays = try 
-                    [convert(Array, py_df[col]) for col in col_names]
-                catch
-                    @error "error in converting!"
-                    return 
-                end
-        #col_arrays = [convert(Array, df[col]) for col in col_names]
-        cas = [convert(Vector{Float64}, z) for z in col_arrays]
-        #julia_df = DataFrame(Symbol(col) => arr for (col, arr) in zip(col_names, cas))
-        jdf = DataFrame(cas, :auto)
-        #size(jdf)
-        fn = try
-            py_df.filename
-        catch
-            @info "no filename present"
-        end
-
-        metadata!(jdf, "filename", fn, style=:note);
-        rename!(jdf, col_names);
-        return jdf
-    end
 
     """
     Convert DataFrame Column to a Vector
@@ -8436,24 +8340,7 @@ module WaSiM
         println("abspath of $y in clipboard!")
         abspath(y)|>cb
     end
-
-    # function pyplot_df(df::DataFrame)
-    #     x = df.date
-    #     ln = (filter(x -> !occursin(r"date|month|year", x), names(df)))
-    #     #for col in names(df)[1:end-1]  # Exclude the last column, assuming it's the "date" column
-    #     for col in ln
-    #         y = df[!, Symbol(col)]
-    #         PyPlot.plot(x, y, label=col)
-    #     end
     
-    #     PyPlot.xlabel("Date")
-    #     PyPlot.ylabel("")
-    #     PyPlot.legend()
-    #     ti = only(values(DataFrames.metadata(df)))
-    #     PyPlot.title(ti)
-    #     PyPlot.grid(true)
-    # end
-
     """
     reads from wasim routing table 
     usually named "route.txt"
@@ -10098,49 +9985,6 @@ module WaSiM
         Plots.plot!(legend=false)
     end
 
-
-    """
-    pycall function to polygonize a raster
-    polygonize_raster(input_raster_path::String, output_shapefile_path::String;epsg=25832)
-    """
-    function polygonize_raster(input_raster_path::String, output_shapefile_path::String;epsg=25832)
-        gdal = pyimport("osgeo.gdal")
-        ogr = pyimport("osgeo.ogr")
-        osr = pyimport("osgeo.osr")
-
-        # Open the raster dataset
-        dataset = gdal.Open(input_raster_path)
-
-        # Get the first band
-        band = dataset.GetRasterBand(1)
-
-        # Get the "ESRI Shapefile" driver
-        driver = gdal.GetDriverByName("ESRI Shapefile")
-
-        # Create a new shapefile dataset
-        out_ds = driver.Create(output_shapefile_path, 0, 0, 0, gdal.GDT_Unknown)
-
-        # Create a spatial reference object
-        srs = osr.SpatialReference()
-        srs.ImportFromEPSG(epsg)
-
-        # Create a new layer
-        layer = out_ds.CreateLayer("polygonized", srs, ogr.wkbPolygon)
-
-        # Polygonize the raster
-        try
-            gdal.Polygonize(band, py"None", layer, -1, [], callback=py"None")
-            @info "new shapefile created at: $output_shapefile_path ..."
-        catch
-            @error "gdal.Polygonize failed ..."
-        end
-        
-        # Close the dataset to write it to the disk
-        out_ds = py"None"
-    end
-
-
-
     """
     reads controlfile
     uses Grep.grep to select lines
@@ -11653,6 +11497,64 @@ module WaSiM
 
         return hp1
     end
+
+    """
+    Fastest Reader. is also dfr.
+    Read the text file, preserve line 1 as header column
+    """
+    function dfr(x::String)
+        ms = ["-9999","lin","log","--"]
+        df = try
+        CSV.read(x, DataFrame; 
+            delim="\t", 
+            header=1, 
+            missingstring=ms, 
+            #maxwarnings = 1, 
+            silencewarnings = true,
+            normalizenames=true, 
+            types=Float64)
+        catch e
+            @error("error reading $x\nexiting now\n $e")
+            return nothing
+        end
+        
+        df = dropmissing(df, 1)
+        dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
+        df.date = dt2
+        df = select(df, Not(1:4))
+        DataFrames.metadata!(df, "filename", x, style=:note)
+        for x in names(df)
+            if startswith(x,"_")
+                newname=replace(x,"_"=>"C", count=1)
+                rename!(df,Dict(x=>newname))
+            end
+        end
+        return df 
+    end
+
+    """
+    Read the text file, preserve line 1 as header column
+    see also waread for station data
+    """
+    function dfr(x::Regex)
+        x = dfonly(x)|>first
+        ms = ["-9999","lin","log","--"]
+        df = CSV.read(x, DataFrame; delim="\t", header=1, missingstring=ms, normalizenames=true, types=Float64)
+        df = dropmissing(df, 1)
+        dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
+        df.date = dt2
+        df = select(df, Not(1:4))
+        metadata!(df, "filename", x, style=:note)
+        #renamer
+        for x in names(df)
+            if startswith(x,"_")
+            newname=replace(x,"_"=>"C", count=1)
+            rename!(df,Dict(x=>newname))
+            end
+        end
+        return df 
+    end
+
 end ##end of module endof
 
 println("used Threads: ", Threads.nthreads())
