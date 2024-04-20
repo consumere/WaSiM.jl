@@ -542,19 +542,6 @@ function tff2(x::Vector{String})
     end
 end
 
-"""
-greps from current dir iRegex
-"""
-function glob(x::AbstractString)
-    filter(file -> occursin(Regex(x,"i"),file), readdir())
-end
-
-"""
-greps from current dir Regex
-"""
-function glob(x::Regex)
-    filter(file -> occursin(x,file), readdir())
-end
 
 """
 fdi(;xm::Regex=r"*")
@@ -1217,11 +1204,6 @@ function rmdub(;directory=pwd())
         end
     end
 end
-
-function op()
-    #open(`powershell -noprofile explorer . `,"w",stdout)
-    run(`cmd.exe /c start .`)
-end 
 
 function cntcolv(x::String)
     # Get a list of all files in the directory
@@ -2801,7 +2783,48 @@ function getq(;prefix::AbstractString="qgko")
     return 
 end
 
+"""
+    sf(pattern::Union{AbstractString, Regex}, rootdir::AbstractString=pwd())
 
+Search for files in a directory and its subdirectories that match a given pattern.
+
+# Arguments
+- `pattern::Union{AbstractString, Regex}`: The pattern to match. Can be a string or a regex.
+- `rootdir::AbstractString=pwd()`: The root directory to start the search from. Defaults to the current working directory.
+
+# Returns
+- A list of file paths that match the pattern.
+"""
+function sf(pattern::Union{AbstractString, Regex}, rootdir::AbstractString=pwd())
+    # Check if rootdir is a directory
+    rootdir = isdir(rootdir) ? rootdir : throw(ArgumentError("rootdir is not a directory!"))    
+
+    # Convert pattern to regex if it's a string
+    pattern = pattern isa AbstractString ? Regex("$(pattern)", "i") : pattern
+
+    # Function to check if a filename matches the pattern and add it to results
+    function check_and_add(filename, results)
+        if occursin(pattern, filename)
+            push!(results, filename)
+        end
+    end
+
+    results = []
+    if any(isdir, readdir(rootdir))
+        for (looproot, dirs, filenames) in walkdir(rootdir)
+            for filename in filenames
+                check_and_add(joinpath(looproot, filename), results)
+            end
+        end
+    else
+        printstyled("no dirs in $rootdir !\n", color=:light_red)
+        for filename in filter(isfile, readdir(rootdir; join=true))
+            check_and_add(filename, results)
+        end
+    end
+
+    return results
+end
 
 #end #endof of smfc module
 
