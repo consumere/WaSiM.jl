@@ -9,26 +9,28 @@
 # cd(raw"C:\Users\chs72fw\.julia\dev\WaSiM")
 # pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM";cd(pt)
 
-
-
 module WaSiM
     # if Main.src_path !== nothing
     #     src_path = "./src"
     # end
     src_path = "./src"
-    import ArchGDAL
+    # if !(isdefined(Main, :src_path) && ispath(src_path))
+    #     include("smallfuncs.jl")
+    # end
+    using LaTeXStrings
     import Conda
-    import DataFrames: combine, groupby, transform
-    import DelimitedFiles: readdlm
-    import GeoDataFrames
+    import ArchGDAL
     import GeoInterface
     import InteractiveUtils
     import JSON
     import NCDatasets
-    import Shapefile
+    using GeoDataFrames
+    using Shapefile
+    using DelimitedFiles: readdlm
+    using DataFrames
+    using DataFrames: combine, groupby, transform
 
     using CSV
-    using DataFrames
     using DataFramesMeta
     using Dates
     using Distributions
@@ -1664,13 +1666,7 @@ module WaSiM
         jlt(dfonly(x))
     end
     
-    function waba()
-        wpth="C:/Users/Public/Documents/Python_Scripts/julia/water-balance.jl"
-        include(wpth)
-        yd=waread("waba-input.wa")|>yrsum
-        @info "waba done !"
-    end
-    
+   
     """
     filters internal WaSiM stats of routed discharge files
     works recursively
@@ -14145,7 +14141,6 @@ module WaSiM
         return df_yearsum
     end
 
-    
     """
     hydrograph plot, selection of first column by default
     `x::Union{Regex,String,DataFrame}; col = 1,
@@ -14230,13 +14225,32 @@ module WaSiM
             su = filter(row -> (year(row.date) == yr && 
                 month(row.date) >= 10) || (year(row.date) == yr + 1 && 
                 month(row.date) < 10), df)
+            #mn = sort([monthabbr(x) for x in unique(month.(su.date))], by = x -> month_order[x])
+            #mn = sort([value(month_order(x)) for x in unique(month.(su.date))], by = x -> month_order[x])
+            #mn = sort([month_order[monthabbr(x)] for x in unique(month.(su.date))], by = x -> month_order[x])
+            #st = 1:12:length(su)
             hp1 = plot!(
                 getproperty(su,Symbol(colname)),
             #    xticks =(st, mn),
                 label = yr; kwargs...)
+
+            # hp1 = plot!(vec(Matrix(
+            #     select(su, Not(:date)))),
+            #     xticks =(st, mn),
+            #             label = yr)
+
+                        
         end
         lng = size(df, 1) ./ length(years) ./ 12
         nln = size(df, 1) ./ length(years)
+        # Create a dictionary that maps each month abbreviation to a number
+        # month_order = Dict("Oct" => 1, "Nov" => 2, 
+        #     "Dec" => 3, "Jan" => 4, "Feb" => 5, 
+        #     "Mar" => 6, "Apr" => 7, "May" => 8, 
+        #     "Jun" => 9, "Jul" => 10, "Aug" => 11, 
+        #     "Sep" => 12)
+        # Get the unique months and sort them according to the custom order
+        #mn = sort([monthabbr(x) for x in unique(month.(df.date))], by = x -> month_order[x])
         mn = ["Okt", "Nov", "Dez", "Jan", "Feb", "Mar", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep"]
         st = 15:lng:nln
         xticks!(st, mn)
@@ -14244,107 +14258,429 @@ module WaSiM
         return hp1
     end
 
-    # """
-    # Fastest Reader. is also dfr.
-    # Read the text file, preserve line 1 as header column
-    # """
-    # function dfr(x::String)
-    #     ms = ["-9999","lin","log","--"]
-    #     df = try
-    #     CSV.read(x, DataFrame; 
-    #         delim="\t", 
-    #         header=1, 
-    #         missingstring=ms, 
-    #         #maxwarnings = 1, 
-    #         silencewarnings = true,
-    #         normalizenames=true, 
-    #         types=Float64)
-    #     catch e
-    #         @error("error reading $x\nexiting now\n $e")
-    #         return nothing
-    #     end
-        
-    #     df = dropmissing(df, 1)
-    #     dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
-    #     df.date = dt2
-    #     df = select(df, Not(1:4))
-    #     DataFrames.metadata!(df, "filename", x, style=:note)
-    #     for x in names(df)
-    #         if startswith(x,"_")
-    #             newname=replace(x,"_"=>"C", count=1)
-    #             rename!(df,Dict(x=>newname))
-    #         end
-    #     end
-    #     return df 
-    # end
+    """
+    wrapper for waread2, skipyr, byear
+    reads qoutjl files
+    """
+    function lambda(;rgx::Regex=r"qoutjl$")
+        map(waread2, glob(rgx)) |> λ -> map(skipyr, λ) |> λ -> map(byear, λ)
+    end
 
-    # """
-    # Read the text file, preserve line 1 as header column
-    # see also waread for station data
-    # """
-    # function dfr(x::Regex)
-    #     x = dfonly(x)|>first
-    #     ms = ["-9999","lin","log","--"]
-    #     df = CSV.read(x, DataFrame; delim="\t", header=1, missingstring=ms, normalizenames=true, types=Float64)
-    #     df = dropmissing(df, 1)
-    #     dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
-    #     df.date = dt2
-    #     df = select(df, Not(1:4))
-    #     metadata!(df, "filename", x, style=:note)
-    #     #renamer
-    #     for x in names(df)
-    #         if startswith(x,"_")
-    #         newname=replace(x,"_"=>"C", count=1)
-    #         rename!(df,Dict(x=>newname))
-    #         end
-    #     end
-    #     return df 
-    # end
+    """
+    Rs flowscreen alt version
+    """
+    function xflow_o(TS, q=[0.9, 0.1];
+        text::String="Wolfsmünster", 
+        ylab::LaTeXString = L"\left[\frac{l}{s\cdot km^2}\right]",
+        # y_lims=(0,10), 
+        kw...)
+        TS = copy(TS)
+        TS.Month = month.(TS.date)
+        TS.DOY = Dates.dayofyear.(TS.date)
+        TS.hdoy = mod.(TS.DOY .- 275, 365) .+ 1
+        # Map the months to their names
+        mn = ["Okt", "Nov", "Dez", "Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep"]
+        TS.mn = map(x -> mn[Int(x)], TS.Month)
+        rename!(TS, 1 => :Flow)
+        doy = (TS.DOY)
+        Qdoy = fill(NaN, maximum(map(Int, doy)), 7)      
+        Qdoy[:, 1] .= [maximum(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 2] .= [minimum(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 3] .= [mean(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 4] .= [quantile(TS.Flow[doy .== d], q[1]) for d in levels(doy)]
+        Qdoy[:, 5] .= [quantile(TS.Flow[doy .== d], q[2]) for d in levels(doy)]
+        Qdoy[:, 6] .= [median(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 7] .= [first(TS.Month[doy .== d]) for d in levels(doy)]
+
+        nms = ["MaxQ", "MinQ", "MeanQ", "Q90", "Q10", "Median", "Month"]
+        df = DataFrame(Qdoy, nms)
+        df[!, "SortOrder"] = ifelse.(df.Month .>= 10, df.Month .- 12, df.Month)
+        sort!(df, :SortOrder)
+        p1 = plot(
+            df.MinQ,
+            color=:red,
+            #seriestype=:bar,
+            alpha=0.8,
+            #markersize=.95,markershape=:circle,
+            label=L"Q_{min}")
+            #label="", 
+        #Adds a new, empty subplot overlaid on top of sp, with a mirrored y-axis and linked x-axis.
+        #axis2 = twinx()
+        plot!( 
+            df.MaxQ,
+            color=:red,
+            alpha=0.8,
+            #fillalpha=0.2,
+            seriestype=:scatter,
+            markersize=.95,
+            markershape=:diamond,
+            label=L"Q_{max}");
+        Plots.areaplot!(
+            df.MeanQ,
+            color="#08519C",
+            alpha=0.2,
+            label=L"Q_{Mean}")
+        plot!(df.Q10,color=:blue,seriestype=:scatter,
+            markersize=.75,
+            markershape=:diamond,
+            label=L"Q_{10}")
+        plot!(df.Q90,color=:red,seriestype=:scatter,
+            markersize=.75,
+            markershape=:diamond,
+            label=L"Q_{90}")
+
+        plot!(df.Median,
+            color=:black, 
+            alpha=0.5,
+            seriestype=:line,
+            #markersize=.75,
+            #markershape=:circle,
+            label=L"Q_{Median}",
+            minorticks=false,
+            #yaxis=:log2, #errors.
+            margins=5mm,
+            #ylim = y_lims,
+            ylabel = ylab;
+            kw...)
+
+        lng = size(df, 1)
+        title!(text)
+        xticks!(15:31:lng, mn; xrotation=45)
+        return p1
+    end 
+
+    """
+    Rs flowscreen
+    ```wa.xflow(a,q=[0.6,0.3],ylab=L"mm")```
+    """
+    function xflow(df, q=[0.9, 0.1];
+        #text::String="", 
+        ylab::LaTeXString = L"\left[\frac{l}{s\cdot km^2}\right]",
+        kw...)
+    
+        #TS = copy(TS)
+        # drop if doy is 366
+        TS = filter(row -> Dates.dayofyear(row[date_column]) != 366, df)
+        
+        #ismissing(TS.mn)
+        if any(ismissing.(TS[!,1]))
+            @warn "missing values found!"
+            dropmissing!(TS)
+        end
+    
+        TS.Month = month.(TS.date);
+        TS.DOY = Dates.dayofyear.(TS.date)
+        TS.mnen = Dates.monthname.(TS.date)
+        #sort the months to hydrolocical order
+        TS[!, "SortOrder"] = ifelse.(TS.Month .>= 10, TS.Month .- 12, TS.Month)
+        sort!(TS, :SortOrder)
+        mnv = unique(TS.mnen)
+        # Map the german months to their names
+        mndt = ["Okt", "Nov", "Dez", "Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep"]
+        mndict = Dict(zip(mnv, mndt))
+        TS.mn = map(x -> mndict[x], TS.mnen)        
+        rename!(TS, 1 => :Flow)
+        doy = TS.DOY
+        Qdoy = fill(NaN, maximum(map(Int, doy)), 7)      
+        Qdoy[:, 1] .= [maximum(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 2] .= [minimum(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 3] .= [mean(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 4] .= [quantile(TS.Flow[doy .== d], q[1]) for d in levels(doy)]
+        Qdoy[:, 5] .= [quantile(TS.Flow[doy .== d], q[2]) for d in levels(doy)]
+        Qdoy[:, 6] .= [median(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 7] .= [first(TS.Month[doy .== d]) for d in levels(doy)]
+    
+        nms = ["MaxQ", "MinQ", "MeanQ", "Q90", "Q10", "Median", "Month"]
+        df = DataFrame(Qdoy, nms)
+        df[!, "SortOrder"] = ifelse.(df.Month .>= 10, df.Month .- 12, df.Month)
+        sort!(df, :SortOrder)
+        p1 = plot(
+            df.MinQ,
+            color=:black, #:red,
+            #seriestype=:bar,
+            alpha=0.8,
+            #markersize=.95,markershape=:circle,
+            label=L"Q_{min}")
+            #label="", 
+        #Adds a new, empty subplot overlaid on top of sp, with a mirrored y-axis and linked x-axis.
+        #axis2 = twinx()
+        plot!( 
+            df.MaxQ,
+            color=:red,
+            alpha=0.8,
+            #fillalpha=0.2,
+            seriestype=:scatter,
+            
+            markersize=1.95, #.95,
+            
+            markershape=:diamond,
+            label=L"Q_{max}");
+        plot!(df.Q10,
+            color=:black,
+            seriestype=:scatter,
+            markersize=.75,
+            markershape=:diamond,
+            label=L"Q_{10}")
+        areaplot!(df.Q90,
+            color=:lightblue,
+            alpha=0.5,
+            #seriestype=:scatter,
+            #markersize=.75,
+            #markershape=:diamond,
+            label=L"Q_{90}")
+        
+        areaplot!(
+            df.MeanQ,
+            color="#08519C",
+            alpha=0.3,
+            label=L"Q_{Mean}")
+    
+        plot!(df.Median,
+            color=:grey, 
+            alpha=0.7,
+            seriestype=:line,
+            #markersize=.75,
+            #markershape=:circle,
+            label=L"Q_{Median}",
+            minorticks=false,
+            #yaxis=:log2, #errors.
+            margins=5mm,
+            legend=:topright, #inner
+            legend_font_pointsize = 12,#gibs nicht
+            #ylim = y_lims,
+            ylabel = ylab;
+            kw...)
+        lng = size(df, 1)
+        xticks!(15:31:lng, mndt; xrotation=45)
+        return p1
+    end 
+
+    
+    function remove_leap_days(df::DataFrame, date_column::Symbol)
+        return filter(row -> month(row[date_column]) != 2 || day(row[date_column]) != 29, df)
+    end
+
+
+    """
+    Rs flowscreen
+    ```wa.xflow2(a,q=[0.6,0.3],ylab=L"mm")```
+    """
+    function xflow2(df, q=[0.9, 0.1];
+        ylab::LaTeXString = L"\left[\frac{l}{s\cdot km^2}\right]",
+        date_column::Symbol = :date,
+        kw...)
+    
+        #TS = copy(df)
+        
+        # a = Dates.dayofyear.(TS.date)
+        # count("366",string(a))
+        # count("365",string(a))
+        #so drop the leap year
+        
+        #TS = filter(row -> month(row[date_column]) != 2 || day(row[date_column]) != 29, df)
+        # drop if doy is 366
+        TS = filter(row -> Dates.dayofyear(row[date_column]) != 366, df)
+        
+        if any(ismissing.(TS[!,1]))
+            @warn "missing values found!"
+            dropmissing!(TS)
+        end
+    
+        TS.Month = month.(TS.date);
+        TS.DOY = Dates.dayofyear.(TS.date)
+        TS.mnen = Dates.monthname.(TS.date)
+        #sort the months to hydrolocical order
+        TS[!, "SortOrder"] = ifelse.(TS.Month .>= 10, TS.Month .- 12, TS.Month)
+        sort!(TS, :SortOrder)
+        mnv = unique(TS.mnen)
+        # Map the german months to their names
+        mndt = ["Okt", "Nov", "Dez", "Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep"]
+        mndict = Dict(zip(mnv, mndt))
+        TS.mn = map(x -> mndict[x], TS.mnen)        
+        rename!(TS, 1 => :Flow)        
+        doy = TS.DOY
+        Qdoy = fill(NaN, maximum(map(Int, doy)), 7)      
+        Qdoy[:, 1] .= [maximum(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 2] .= [minimum(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 3] .= [mean(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 4] .= [quantile(TS.Flow[doy .== d], q[1]) for d in levels(doy)]
+        Qdoy[:, 5] .= [quantile(TS.Flow[doy .== d], q[2]) for d in levels(doy)]
+        Qdoy[:, 6] .= [median(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 7] .= [first(TS.Month[doy .== d]) for d in levels(doy)]
+    
+ 
+        nms = ["MaxQ", "MinQ", "MeanQ", "Q90", "Q10", "Median", "Month"]
+        df = DataFrame(Qdoy, nms)
+        df[!, "SortOrder"] = ifelse.(df.Month .>= 10, df.Month .- 12, df.Month)
+        sort!(df, :SortOrder)
+
+        p1 = plot(
+            df.MinQ,
+            color=:black,
+            alpha=0.8,
+            #markersize=.95,markershape=:circle,
+            label=L"Q_{min}")
+        plot!( 
+            df.MaxQ,
+            color=:red,
+            alpha=0.7,
+            #fillalpha=0.2,
+            #seriestype=:scatter,
+            linestyle=:dashdotdot,
+            # markersize=1.95, #.95,
+            # markershape=:diamond,
+            labelfontsize=12,
+            label=L"Q_{max}");
+        areaplot!(df.Q10,
+            color=:grey,
+            alpha = 0.7,
+            #seriestype=:scatter,
+            #markersize=.75,
+            #markershape=:diamond,
+            #linestyle=:auto,
+            label=L"Q_{10}")
+        areaplot!(df.Q90,
+            color=:lightblue,
+            alpha=0.5,
+            label=L"Q_{90}")
+        
+        areaplot!(
+            df.MeanQ,
+            color="#08519C",
+            alpha=0.3,
+            label=L"Q_{Mean}")
+    
+        plot!(df.Median,
+            color=:purple, 
+            alpha=0.7,
+            seriestype=:line,
+            #markersize=.75,
+            #markershape=:circle,
+            label=L"Q_{Median}",
+            minorticks=false,
+            #yaxis=:log, #errors.
+            margins=5mm,
+            legend=:topright, #inner
+            legend_font_pointsize = 12,
+            #ylim = y_lims,
+            ylabel = ylab;
+            kw...)
+        lng = size(df, 1)
+        xticks!(15:31:lng, mndt; xrotation=45)
+        return p1
+    end 
+
+    """
+    climateplot from dfs
+    (r"^tem",r"^pre")
+    """
+    function cmdf(temp::DataFrame,prec::DataFrame;col::Int=1)    
+        yrs = Dates.year.(prec.date)|>unique|>length
+        prec = monsum(prec)
+        if ncol(prec) > 2
+            select!(prec, Not(:month))
+            prec = prec[:,col]
+            precvec = vec(Matrix(prec))
+        else
+            precvec = vec(Matrix(select(prec, Not(:month))))
+        end
+                
+        precvec = precvec ./ yrs
+        
+        temp = monmean(temp)
+        if ncol(temp) > 2
+            select!(temp, Not(:month))
+            temp = temp[:,col]
+            tempvec = vec(Matrix(temp))
+        else
+            tempvec = vec(Matrix(select(temp, Not(:month))))
+        end
+        
+        month_abbr = ["Jan", "Feb", "Mär", "Apr", 
+            "Mai", "Jun", "Jul", "Aug", "Sep", 
+                "Okt", "Nov", "Dez"];
+        #;family="Computer Modern"
+        #Plots.theme(:ggplot2) #passt.
+        #Plots.theme(:dao) #gibt mir falsche twinx margin.
+        #Plots.theme(:sheet)
+        Plots.theme(:wong2)
+        #Plots.showtheme(:dracula)
+        
+        p1 = Plots.bar(prec.month, precvec, 
+            color=:cornflowerblue, 
+            guidefontfamily="Computer Modern",
+            tickfontfamily="Computer Modern",
+            #ylims = (0.0, maximum(precvec) + 5.0),
+            ylims = (0,120),
+            xflip=false,
+            ylabel="Niederschlag [mm]", 
+            ylabelfontsize=10,
+            legend=false, 
+            yflip=true,
+            left_margin = 5mm,
+            tick_direction = :out
+            );
+        xticks!(1:12, month_abbr)
+
+        for i in prec.month
+            val = round(precvec[i]; digits=1)
+            annotate!(i, precvec[i], 
+            Plots.text("$(val)",8,:bottom; family="Computer Modern"))
+        end
+        
+        ann2 = map(x->Plots.text(
+            string.(round(x; digits=1))*"°", 
+                9,
+                :left, 
+                :black;
+                #:red;
+                family="Computer Modern"),
+                tempvec)
+        
+        plot!(twinx(), tempvec,
+            ylabel="Temperatur [°C]", 
+            ylabelfontsize=10,
+            guidefontfamily="Computer Modern",
+            tickfontfamily="Computer Modern",
+            color=:coral2,
+            #ylims = (minimum(tempvec) - 1.0 , 
+            #    maximum(tempvec) + 1.0),
+            ylims = (-5,20),
+
+            annotations = (temp.month .+ 0.125, 
+                tempvec .+ 0.1, ann2, :center),
+            label=false, 
+            linestyle = :dashdot,
+            linewidth = 2,
+            right_margin = 5mm,
+            left_margin = 5mm,
+            #margins = 10mm,
+            tick_direction = :out            
+            );      
+
+        return p1
+    end
+
+    function mos(x::AbstractString)
+        fn = Grep.grep(r"_output.txt$",readdir())
+        #m = Grep.grep(Regex(x, "i"), readlines.(fn))
+        printstyled("Searching for  $x\n",color=:green)
+        for file in fn
+            output = readdlm(file,'\t', String)
+            match = Grep.grep(Regex(x, "i"),output)
+            if !isempty(match)
+                fn = first(split(file,"_qout"))
+                for line in match
+                    line = strip(line) 
+                    line = join(split(line), " ")  ##remove inner whitespaces
+                    printstyled(rpad("$fn:",30),lpad("$line\n",10),color=:green)
+                end
+            end
+        end
+    end
+
+
 
 end ##end of module endof
 
 println("used Threads: ", Threads.nthreads())
-
-
-
-# module WaSiM
-#     #using Reexport
-#     #@reexport 
-#     using DataFrames, StatsPlots, Dates
-#     #import DataFrames
-#     #@reexport using DataFramesMeta, CSV, Statistics, Dates, StatsPlots, Distributions    
-#     using DataFramesMeta, CSV, Statistics, Distributions    
-#     import Conda
-#     # import ArchGDAL
-#     # import GeoDataFrames
-#     # import GeoInterface
-#     # import InteractiveUtils
-#     # import NCDatasets
-#     # import Shapefile
-#     # import StatsPlots:@df
-#     import DelimitedFiles:readdlm
-#     using Grep
-#     using KernelDensity
-#     using Plots.PlotMeasures
-#     using PrettyTables
-#     using Printf
-#     using Rasters
-#     using SHA #for python deps & condasize
-    
-#     ##import rasterstuff
-#     include("rasterfuncs.jl")
-#     src_path = "./src"
-#     include("smallfuncs.jl")
-#     include("timeseries.jl")
-#     #@reexport using smfc #no Pkg!   
-
-#     function toMain()
-#     fnames = names(WaSiM, all=true)
-#         for submodule in fnames
-#             @eval import WaSiM.$submodule
-#         end
-#     end
-    
-#     export toMain
-
-# end #endof module
