@@ -5,10 +5,10 @@
 using DelimitedFiles, Grep, Printf, Statistics, Dates, DataFrames, CSV, PrettyTables
 #@time using DelimitedFiles, Grep, Printf, Statistics, Dates, DataFrames, CSV, PrettyTables
 import InteractiveUtils.clipboard
-#printstyled("DelimitedFiles, Grep, Printf, Statistics, 
+#printstyled("DelimitedFiles, Grep, Printf, Statistics,
 #	Dates, DataFrames, CSV, PrettyTables loaded\n",color=:green)
 
-# println("\nto edit this script: 
+# println("\nto edit this script:
     # @less (ssup()) or @edit (ssup())\n\t",
     # "fdi() for dirinfo, ls() for fileinfo")
 
@@ -93,9 +93,9 @@ function vg(snippet::AbstractString, file_ending::AbstractString)
             for line in eachline(f)
                 counter += 1 # Zähler erhöhen
                 if Base.contains(line,snippet)
-                    printstyled("$counter:\t",color=:light_red) 
-                    printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                    printstyled("$line\n",color=:green,bold=true) 
+                    printstyled("$counter:\t",color=:light_red)
+                    printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true)
+                    printstyled("$line\n",color=:green,bold=true)
                 end
             end
         end
@@ -105,19 +105,19 @@ end
 function vgjl(snippet::AbstractString)
     owd = abspath(pwd())
     platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-    
+
     if platform == "windows"
-        script_dir = "C:/Users/Public/Documents/Python_Scripts/julia"
+        script_dir = dirname(pathof(WaSiM))
     else
         # Assuming you want to use a different path for Linux/WSL, adjust as needed
-        script_dir = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
+        script_dir = dirname(pathof(WaSiM))
     end
-    
+
     cd(script_dir)
-    
+
     # files = []
     files = filter(file -> endswith(file, ".jl"), readdir())
-    fwin = filter(file -> endswith(file, ".jl"), 
+    fwin = filter(file -> endswith(file, ".jl"),
         readdir(script_dir*"/win", join=true))
     files = vcat(files,fwin)
     for file in files
@@ -133,44 +133,15 @@ function vgjl(snippet::AbstractString)
             end
         end
     end
-    
+
     cd(owd)
 end
 
-function vgro(snippet::AbstractString)
-    owd = abspath(pwd())
-    platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-    
-    if platform == "windows"
-        script_dir = "D:/Fernerkundungsdaten/Klassifikation/R-Sessions"
-    else
-        # Assuming you want to use a different path for Linux/WSL, adjust as needed
-        script_dir = "/mnt/d/Fernerkundungsdaten/Klassifikation/R-Sessions"
-    end
-    
-    cd(script_dir)
-
-    files = filter(file -> endswith(file, ".R"), readdir())
-    for file in files
-        open(file) do f
-            counter = 0 # Zähler initialisieren
-            for line in eachline(f)
-                counter += 1 # Zähler erhöhen
-                if Base.contains(line,snippet)
-                    printstyled("$counter:\t",color=:light_red) 
-                    printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                    printstyled("$line\n",color=:green,bold=true) 
-                end
-            end
-        end
-    end
-    cd(owd)
-end
 
 function vgr(snippet::AbstractString)
     #owd = abspath(pwd())
     platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-    
+
     if platform == "windows"
         script_dir = "D:/Fernerkundungsdaten/Klassifikation/R-Sessions"
     else
@@ -185,59 +156,29 @@ function vgr(snippet::AbstractString)
             for line in eachline(f)
                 counter += 1 # Zähler erhöhen
                 if Base.contains(line,snippet)
-                    printstyled("$counter:\t",color=:light_red) 
+                    printstyled("$counter:\t",color=:light_red)
                     printstyled(rpad("$file:",50),color=:light_magenta)
-                    #printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
+                    #printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true)
                     printstyled(lpad("$line\n",30),color=:green,bold=true)
-                    #underline = true 
+                    #underline = true
                 end
             end
         end
     end
 end
 
-function vgpyo(snippet::AbstractString)
-    owd = abspath(pwd())
-    platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-    
-    if platform == "windows"
-        script_dir = "C:/Users/Public/Documents/Python_Scripts"
-    else
-        # Assuming you want to use a different path for Linux/WSL, adjust as needed
-        script_dir = "/mnt/c/Users/Public/Documents/Python_Scripts"
-    end
-    
-    cd(script_dir)
-
-
-    files = filter(file -> endswith(file, ".py"), readdir())
-    for file in files
-        open(file) do f
-            counter = 0 # Zähler initialisieren
-            for line in eachline(f)
-                counter += 1 # Zähler erhöhen
-                if Base.contains(line,snippet)
-                    printstyled("$counter:\t",color=:light_red) 
-                    printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                    printstyled("$line\n",color=:green,bold=true) 
-                end
-            end
-        end
-    end
-    cd(owd)
-end
 
 function vgpy(snippet::AbstractString)
     #owd = abspath(pwd())
     platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-    
+
     if platform == "windows"
         script_dir = "C:/Users/Public/Documents/Python_Scripts"
     else
         # Assuming you want to use a different path for Linux/WSL, adjust as needed
         script_dir = "/mnt/c/Users/Public/Documents/Python_Scripts"
     end
-    
+
     files = filter(file -> endswith(file, ".py"), readdir(script_dir,join=true))
     for file in files
         open(file) do f
@@ -245,11 +186,11 @@ function vgpy(snippet::AbstractString)
             for line in eachline(f)
                 counter += 1 # Zähler erhöhen
                 if Base.contains(line,snippet)
-                    printstyled("$counter:\t",color=:light_red) 
+                    printstyled("$counter:\t",color=:light_red)
                     printstyled(rpad("$file:",50),color=:light_magenta)
-                    #printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
+                    #printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true)
                     printstyled(lpad("$line\n",30),color=:green,bold=true)
-                    #underline = true 
+                    #underline = true
                 end
             end
         end
@@ -310,7 +251,7 @@ function rglob(prefix::AbstractString)
             for filename in filenames
                 #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
                 if (occursin(Regex(prefix,"i"),filename))
-                    push!(results, joinpath(looproot, filename)) 
+                    push!(results, joinpath(looproot, filename))
                 end
             end
         end
@@ -319,7 +260,7 @@ function rglob(prefix::AbstractString)
         for filename in (filter(x->isfile(x),readdir(;join=false)))
             #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
             if (occursin(Regex(prefix,"i"),filename))
-                push!(results, filename) 
+                push!(results, filename)
             end
         end
     end
@@ -332,7 +273,7 @@ function rglob(prefix::Regex)
     for (looproot, dirs, filenames) in walkdir(rootdir)
         for filename in filenames
             if (occursin(prefix,filename))
-                push!(results, joinpath(looproot, filename)) 
+                push!(results, joinpath(looproot, filename))
             end
         end
     end
@@ -352,19 +293,19 @@ cdu() = cdb()
 #like jdd to vector of strings.
 function fdd(;cwd=pwd())
     dirs = readdir(cwd)
-    
-    if length(dirs) == 0 
+
+    if length(dirs) == 0
         println("$cwd is empty!")
         return
     end
-    
+
     if filter(x -> (isdir(x)),dirs) == []
         bn = basename(cwd)
         @info "no dirs in $bn !"
         dd()
         return
     end
-    
+
     s = []
     for dir in dirs
         if isdir(dir)
@@ -390,7 +331,7 @@ function vgr(regex, file_ending)
             #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
             #if (occursin(Regex(prefix,"i"),filename))
             if (endswith(filename, file_ending))
-                push!(files, joinpath(looproot, filename)) 
+                push!(files, joinpath(looproot, filename))
             end
         end
     end
@@ -445,10 +386,10 @@ function du(;cwd=pwd())
      for dir in dirs
         printstyled("check dir: $dir\n",color=:light_red)
      end
-    end 
+    end
     println("$(n) files in directory")
     @printf("%-40s %15.2f MB\n","$(cwd):",osize/1024^2)
-end 
+end
 
 function route_from_dir(dir::String)
     dirs = readdir(dir)
@@ -486,7 +427,7 @@ function llf()
         return(v)
     end
 end
-        
+
 
 function vg2(regex::AbstractString, ending::AbstractString)
     cmd = `grep --color=always -C2 -rIHn -E "$regex" --include="*.$ending"`
@@ -504,7 +445,7 @@ function tff2(x::Vector{String})
 
         open(filename) do file
             first_line = true
-            
+
 
             for (i, line) in enumerate(eachline(file))
                 fields = split(line)
@@ -549,13 +490,13 @@ lists dirs if isdir(dir) & occursin(xm,dir)
 """
 function fdi(cwd::AbstractString;xm::Regex=r"")
         dirs = (length(cwd)>1) ? readdir(cwd) : readdir(pwd())
-        for dir in dirs 
+        for dir in dirs
             if isdir(dir) & occursin(xm,dir)
                 @printf("%-8s\t|","$dir")
             end
         end
     end
-    
+
 
 
 function jdd()
@@ -581,12 +522,12 @@ function dd()
      for file in files
          osize += stat(joinpath(root, file)).size
      end
-    end 
+    end
     @printf("%-40s %15.3f GB\n","$(cwd):",osize/1024^3);
-end 
+end
 
 function ct(ext::AbstractString)
-    cwd = pwd() 
+    cwd = pwd()
     osize = 0
     fz = 0
     m = []
@@ -599,14 +540,14 @@ function ct(ext::AbstractString)
 	 fz += stat(nm).size
 	 push!(m,(nm))
      end
-    end 
-    end 
+    end
+    end
      n=repeat(" - -",10)
      println(n*" sum of ",ext*n)
      @printf("%-40s %15.2f MB\n","$(cwd):",fz/1024^2);
      println(n,length(m)," matches "*n,"\n")
      return(m)
-end 
+end
 
 function print_sorted_sizes(dir)
     folders = [joinpath(dir, f) for f in readdir(dir)]
@@ -642,7 +583,7 @@ end
 gets sorted DF by size recursivley
 """
 function fz()
-    cwd = pwd() 
+    cwd = pwd()
     osize = 0
 #    fn = 0
     m = []
@@ -658,14 +599,14 @@ function fz()
 #           :total=>(fn/1024^2),
            :fullnaname=>nm))
         end
-    end 
+    end
 end
-    df = DataFrame(m)     
+    df = DataFrame(m)
     sort!(df, [order(:size,rev = true), order(:name)])
     return(df)
     # fn = fn/1024^2
     # printstyled("$fn MB",color=:blue)
-end 
+end
 
 function jdd()
     cwd = pwd()
@@ -691,12 +632,12 @@ function dd()
      for file in files
          osize += stat(joinpath(root, file)).size
      end
-    end 
+    end
     @printf("%-40s %15.3f GB\n","$(cwd):",osize/1024^3);
-end 
+end
 
 function ct(ext::AbstractString)
-    cwd = pwd() 
+    cwd = pwd()
     osize = 0
     fz = 0
     m = []
@@ -709,17 +650,17 @@ function ct(ext::AbstractString)
 	 fz += stat(nm).size
 	 push!(m,(nm))
      end
-    end 
-    end 
+    end
+    end
      n=repeat(" - -",10)
      println(n*" sum of ",ext*n)
      @printf("%-40s %15.2f MB\n","$(cwd):",fz/1024^2);
      println(n,length(m)," matches "*n,"\n")
      return(m)
-end 
+end
 
 function ct()
-    cwd = pwd() 
+    cwd = pwd()
     osize = 0
     fz = 0
     m = []
@@ -733,10 +674,10 @@ function ct()
 	    @printf("%-40s %15.2f MB\n","$(nm):",osize/1024^2);
 	    fz += stat(nm).size
 	    push!(m,(nm))
-     end     
-    end 
-    end 
-    # sort(df, [order(:a), order(:b, rev = true)]) 
+     end
+    end
+    end
+    # sort(df, [order(:a), order(:b, rev = true)])
     # sorted_files = sort(collect(keys(sizes)), by=x->sizes[x], rev=false)
     # println(sorted_files)
      n=repeat(" - -",10)
@@ -780,7 +721,7 @@ end
 gets sorted DF by size recursivley
 """
 function fz()
-    cwd = pwd() 
+    cwd = pwd()
     osize = 0
 #    fn = 0
     m = []
@@ -796,12 +737,12 @@ function fz()
 #           :total=>(fn/1024^2),
            :fullnaname=>nm))
         end
-    end 
+    end
 end
-    df = DataFrame(m)     
+    df = DataFrame(m)
     sort!(df, [order(:size,rev = true), order(:name)])
     return(df)
-end 
+end
 
 function homg()
     pt="D:/Wasim/Goldbach/revision/"
@@ -861,13 +802,13 @@ formerly lat()
 """
 function lf()
     directory = pwd()
-    files = readdir(directory)  
+    files = readdir(directory)
     file_times = Dict{String, Dates.DateTime}()
     for file in files
         file_path = joinpath(directory, file)
         stat_info = stat(file_path)
         file_times[file] = Dates.unix2datetime(stat_info.mtime)
-    end   
+    end
     file_times = collect(file_times)
     xf = sort(file_times, by = x -> x[2], rev=true)
     sz = []                 #::Vector{Float64}
@@ -885,7 +826,7 @@ function lf()
     return(df)
 end
 
-##very nice meta programming... 
+##very nice meta programming...
 macro vv(s) vgjl(s);end
 #@vv "unter"
 macro vpy(s) vgpy(s);end
@@ -914,7 +855,7 @@ macro pj() pt=src_path*"/pyjl.jl";include(pt);end
 macro pyjl() pt=src_path*"/pyjl.jl";include(pt);end
 
 # using TOML
-# #TOML is short for Tom’s Obvious Minimal Language and is a configuration file format 
+# #TOML is short for Tom’s Obvious Minimal Language and is a configuration file format
 # #that should be “easy to parse into data structures in a wide variety of languages”
 # macro toml_str(s::String)
 #     TOML.parse(s)::Dict{String, <:Any}
@@ -927,7 +868,7 @@ macro pyjl() pt=src_path*"/pyjl.jl";include(pt);end
 # q011 = 0.02
 # """
 
-# dx = toml"""ki11 = 6.6 
+# dx = toml"""ki11 = 6.6
 # dr11 = 1
 # kb11 = 0.4
 # q011 = 0.02"""|>DataFrame
@@ -947,7 +888,7 @@ macro pyjl() pt=src_path*"/pyjl.jl";include(pt);end
 
 function regand(v::Vector{String},x1::AbstractString,y1::AbstractString)
     needle=join([x1,y1],"+.*");
-    z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))] 
+    z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
     return(z)
 end
 
@@ -976,7 +917,7 @@ r"this+.*that"
 """
 function regand(v::Vector{String},x1::AbstractString,y1::AbstractString)
     needle=join([x1,y1],"+.*");
-    z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))] 
+    z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
 return(z)
 end
 
@@ -991,7 +932,7 @@ here you can put any regex to filter the Vector
 like regand(getnames(dfs),r"tem")
 """
 function regand(v::Vector{Any},xv::Regex)
-    z = v[(broadcast(x->occursin(xv,x),v))] 
+    z = v[(broadcast(x->occursin(xv,x),v))]
     return(z)
 end
 
@@ -1042,7 +983,7 @@ list_files_sorted_by_last_change
 """
 function latx()
     directory = pwd()
-    files = readdir(directory)  
+    files = readdir(directory)
     file_times = Dict{String, Dates.DateTime}()
     for file in files
         file_path = joinpath(directory, file)
@@ -1050,9 +991,9 @@ function latx()
         file_times[file] = Dates.unix2datetime(stat_info.mtime)
     end
     #xf = sort(file_times, by = x -> x[2], rev=true)
-    
+
     file_times = collect(file_times)
-    
+
     xf = sort(file_times, by = x -> x[2], rev=true)
     xf = first(xf,11)
     sz = []                 #::Vector{Float64}
@@ -1064,7 +1005,7 @@ function latx()
         datetime = Dates.format(dt, "yyyy-mm-dd HH:MM")
         printstyled(rpad(file,35),color=:yellow),
         printstyled("$datetime\t" ,color=:green),
-        printstyled(rpad(size,7)," MB\n",color=:yellow)    
+        printstyled(rpad(size,7)," MB\n",color=:yellow)
     end
 end
 
@@ -1078,9 +1019,9 @@ end
 
 """
 grabs methods
-asin|>getm  
+asin|>getm
 ?asin
-@code_llvm readf|>getm|>first 
+@code_llvm readf|>getm|>first
 """
 function getm(s::Any)
     methods(s);
@@ -1145,7 +1086,7 @@ function sdf()
 end
 
 """
-Read wasim ts with DelimitedFiles.readdlm, skipto line 3 
+Read wasim ts with DelimitedFiles.readdlm, skipto line 3
 no header column
 """
 function wread(x::String;skip=3)
@@ -1154,7 +1095,7 @@ function wread(x::String;skip=3)
     df = DataFrame(df,:auto)
     for i in 5:size(df,2)
         df[!,i]=replace(df[!,i],-9999.0 => missing)
-    end 
+    end
     for i in 5:size(df,2)
         replace!(df[!,i],-9999.0 => missing)
     end
@@ -1168,11 +1109,11 @@ function wread(x::String;skip=3)
 end
 
 """
-recursively removes duplicates 
+recursively removes duplicates
 uses SHA
 """
 function rmdub(;directory=pwd())
-    
+
     # Create a dictionary to store file hashes as keys and file paths as values
     #hash_dict = Dict{String, String}()
     hash_dict = Dict{Vector{UInt8}, String}()
@@ -1208,14 +1149,14 @@ end
 function cntcolv(x::String)
     # Get a list of all files in the directory
     #x = "."
-    files = filter(file -> (occursin(Regex(x, "i"), file) & 
+    files = filter(file -> (occursin(Regex(x, "i"), file) &
                         (!occursin(r"xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg|txt", file))
                         ), readdir())
 
     files = filter(inF->isfile(inF),files)
                         #if isfile(inF)
     file_columns = []
-    
+
     for file in files
         # Open the file for reading
         open(file, "r") do io
@@ -1228,10 +1169,10 @@ function cntcolv(x::String)
             push!(file_columns, (file, num_columns))
         end
     end
-    
+
     # Sort the file_columns array based on the number of columns in descending order
     sorted_files = sort(file_columns, by = x -> x[2], rev = true)
-    
+
     for (file, num_columns) in sorted_files
         printstyled(
             rpad("File: $file",45),
@@ -1289,10 +1230,10 @@ end
 function kgewrite(;output_file="kge-table.txt")
     path = pwd()
     files = glob(r"_output.txt|_outputjl") #non-recurse
-    
+
     # Create an empty vector to store the matched lines
     matched_lines = Vector{String}()
-    
+
     for file in filter(file -> endswith(file, "_output.txt"), files)
         output = DelimitedFiles.readdlm(file, '\t', String)
         match = Grep.grep(r"KGE", output)
@@ -1305,7 +1246,7 @@ function kgewrite(;output_file="kge-table.txt")
             end
         end
     end
-    
+
     #output_file = "matched_results.csv"
     writedlm(output_file, matched_lines, '\t')
     println("Matched results saved to $output_file")
@@ -1398,7 +1339,7 @@ function nsegrepr()
         if !isempty(match)
             fn = first(split(file,"_qout"))
             for line in match
-                line = strip(line) 
+                line = strip(line)
                 line = join(split(line), " ")  ##remove inner whitespaces
                 printstyled(rpad("$fn:",30),lpad("$line\n",10),color=:green)
             end
@@ -1409,7 +1350,7 @@ end
 function nconly(x1::AbstractString)
     v::Vector{String} = readdir();
     v = v[broadcast(x->endswith(x,"nc"),v)];
-    z = v[(broadcast(x->occursin(Regex(x1),x),v))] 
+    z = v[(broadcast(x->occursin(Regex(x1),x),v))]
     return(z)
 end
 
@@ -1419,19 +1360,19 @@ function dfonly(x1::AbstractString;recursive=false)
     else
         v = rglob(x1)
     end
-    
+
     z = v[broadcast(x->!endswith(x,r"nc|png|svg|jpg|txt|log"i),v)];
     return(z)
 end
 
 function dfonly(x1::Regex)
-    z = filter(file -> occursin(x1,file), 
+    z = filter(file -> occursin(x1,file),
     readdir()[broadcast(x->!endswith(x,"nc"),readdir())]);
     return(z)
 end
 
 function dfon(x1::AbstractString)
-    z = filter(file -> occursin(Regex(x1,"i"),file), 
+    z = filter(file -> occursin(Regex(x1,"i"),file),
     readdir()[broadcast(x->!endswith(x,"nc"),readdir())]);
     return(z)
 end
@@ -1468,7 +1409,7 @@ function jlt(x::Vector{String})
 
         open(filename) do file
             first_line = true
-            
+
 
             for (i, line) in enumerate(eachline(file))
                 fields = split(line)
@@ -1527,11 +1468,11 @@ function qgk(;rootdir=".", prefix="qgk")
     for (looproot, dirs, filenames) in walkdir(rootdir)
         for filename in filenames
             if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
-                push!(files, joinpath(looproot, filename)) 
+                push!(files, joinpath(looproot, filename))
             end
         end
     end
-    
+
     for z in files
         println(raw"file:	",basename(z),"...")
         m = filter(line -> occursin(r"^[LIN. R]|^[LOG. R]|^CO",line), readlines(open(z)))
@@ -1618,7 +1559,7 @@ function op()
     #open(`cmd.exe /c start . `,"w",stdout)
     #this wrks in wsl, too
     run(`cmd.exe /c start .`)
-end 
+end
 
 macro pwp_str(s) open(`powershell`,"w",stdout) do io; print(io, s); end;end
 macro cmd_str(s) open(`cmd \c`,"w",stdout) do io; print(io, s); end;end
@@ -1713,7 +1654,7 @@ function nsegrepr()
         if !isempty(match)
             fn = first(split(file,"_qout"))
             for line in match
-                line = strip(line) 
+                line = strip(line)
                 line = join(split(line), " ")  ##remove inner whitespaces
                 printstyled(rpad("$fn:",30),lpad("$line\n",10),color=:green)
             end
@@ -1729,7 +1670,7 @@ function pfix()
     files = readdir()
     fzs = [(file, filesize(file) / 2^20) for file in files]
     tot = round(sum(map(x->x[2],fzs));digits=3)
-    #d=Dict(fzs) 
+    #d=Dict(fzs)
     #sort(collect(d), by = x -> x[2];rev=true)
     sv = sort(collect(fzs), by = x -> x[2];rev=true)
     sv = first(sv,8)
@@ -1743,7 +1684,7 @@ function pfix()
     lf = length(files)
     printstyled("$lf files ...\n Total Size: $tot MB\n",color=:green)
 end
-    
+
 """
 varinfo(Main,r"ds")
 """
@@ -1797,7 +1738,7 @@ function bigf()
 
     cwd = pwd()
     dirs = filter(isdir, readdir(; sort=false))
-    
+
     rs, rcnt = [], []
 
     for i in dirs
@@ -1811,7 +1752,7 @@ function bigf()
         println("No directories found.")
         return
     end
-    
+
     # Create an array of directories, sizes in MB, and file counts
     data = [(dir, rs[i], rcnt[i]) for (i, dir) in enumerate(dirs)]
 
@@ -1825,7 +1766,7 @@ function bigf()
 
     # Extract the largest directories and display them in green
     largest_dirs = sorted_data[1:5]
-    
+
     # Create a formatted string for printing
     dirs_to_display = join([string(dir[1], "\t\t Size: ", dir[2], " MB \t Files: ", dir[3], "\t") for dir in largest_dirs], "\n")
     #dirs_to_display = join([string(dir[1], " (Size: ", dir[2], " MB, Files: ", dir[3], ")") for dir in largest_dirs], "\n")
@@ -1881,13 +1822,13 @@ function oplat()
             run(`open $lat`)
         else
             try
-                run(`cmd /c start $lat`)    
+                run(`cmd /c start $lat`)
             catch
                 @error "could not open $lat via cmd.exe"
             end
         end
     end
-end   
+end
 
 """
 removes latest file
@@ -1924,9 +1865,9 @@ function lat()
 end
 
 function tree_helper(root, indent)
-    
+
     entries = filter(isdir, readdir(root))
-    
+
     # #das geht auch, aber too much
     # entries = []
     # for (root, dirs, files) in walkdir(root)
@@ -1936,26 +1877,26 @@ function tree_helper(root, indent)
     #         push!(entries, dstr)
     #     end
     # end
-    
+
     for (i, entry) in enumerate(entries)
-        entry_path = joinpath(root, entry)  
+        entry_path = joinpath(root, entry)
         is_last = i == length(entries)
         entry_path = replace(entry_path, "/"=>"\\") #for win.
-        
+
         entry_path = replace(entry_path, "\\mnt"=>"mnt") #
         # Calculate the depth of the current directory
         #depth = count(x -> x == '/', entry_path) - count(x -> x == '/', root)
         depth = count(x -> x == '\\', entry_path) - count(x -> x == '\\', root)
-        
+
         # Print indentation
         if depth > 0
             print(indent)
             print(is_last ? "└── " : "├── ")
         end
-        
+
         # Print the current entry name
         println(entry)
-        
+
         # Recursively process subdirectories
         tree_helper(entry_path, indent * (is_last ? "    " : "│   "))
     end
@@ -1982,7 +1923,7 @@ function pyread(x::Union{String,Regex})
         x = dfonly(x)|>first
     end
     pd = pyimport("pandas")
-    df = pd.read_table(x, 
+    df = pd.read_table(x,
         engine="c",
         verbose=true,
         low_memory=false,
@@ -1995,11 +1936,11 @@ function pyread(x::Union{String,Regex})
     col_names = convert(Array, col_names)
     col_arrays = [convert(Array, df[col]) for col in col_names]
     filtered_rows = broadcast(x->looks_like_number(x),col_arrays[1])
-    
+
     df = DataFrame(col_arrays, :auto)
-    
+
     df = df[filtered_rows, :]
-    
+
     rename!(df, col_names)
     if "YY" ∉ names(df)
         println("Column 'YY' not found in the CSV file.")
@@ -2016,11 +1957,11 @@ function pyread(x::Union{String,Regex})
             return missing  # Return missing if parsing fails
         end
     end
-    
+
     df.date = map(parse_date, eachrow(df))
-    
+
     df = select(df, Not(1:4))
-    
+
     for x in names(df)
         if looks_like_number(x)
             newname=replace(x,"$x"=>"C$x", count=1)
@@ -2039,7 +1980,7 @@ function pyread(x::Union{String,Regex})
     end
 
     DataFrames.metadata!(df, "filename", x, style=:note)
-    return df 
+    return df
 end
 
 function read_df(s::Union{String,Regex})
@@ -2058,11 +1999,11 @@ function read_df(s::Union{String,Regex})
     end
     for i in 5:size(df,2)
         df[!,i]=replace(df[!,i],-9999.0 => missing)
-    end 
+    end
     for i in 5:size(df,2)
         replace!(df[!,i],-9999.0 => missing)
     end
-    
+
     for i in 1:3
         df[!,i]=map(x ->Int(x),df[!,i])
     end
@@ -2075,7 +2016,7 @@ end
 
 function wread(x::String;skip=3)
     """
-    Read wasim ts with DelimitedFiles.readdlm, skipto line 3 
+    Read wasim ts with DelimitedFiles.readdlm, skipto line 3
     no header column
     """
     df = DelimitedFiles.readdlm(x, '\t', Float64, '\n';
@@ -2083,7 +2024,7 @@ function wread(x::String;skip=3)
     df = DataFrame(df,:auto)
     for i in 5:size(df,2)
         df[!,i]=replace(df[!,i],-9999.0 => missing)
-    end 
+    end
     for i in 5:size(df,2)
         replace!(df[!,i],-9999.0 => missing)
     end
@@ -2098,7 +2039,7 @@ end
 
 function wread(x::Regex;skip=3)
     """
-    Read wasim ts with DelimitedFiles.readdlm, skipto line 3 
+    Read wasim ts with DelimitedFiles.readdlm, skipto line 3
     no header column
     """
     rgx = glob(x)|>first
@@ -2108,7 +2049,7 @@ function wread(x::Regex;skip=3)
     df = DataFrame(df,:auto)
     for i in 5:size(df,2)
         df[!,i]=replace(df[!,i],-9999.0 => missing)
-    end 
+    end
     for i in 5:size(df,2)
         replace!(df[!,i],-9999.0 => missing)
     end
@@ -2156,7 +2097,7 @@ cdinto = cdof
 function pyplot_df(df::DataFrame;log=false)
     x = df.date
     ln = (filter(x -> !occursin(r"date|month|year", x), names(df)))
-       
+
     for col in ln
         y = df[!, Symbol(col)]
         PyPlot.plot(x, y, label=col)
@@ -2180,7 +2121,7 @@ function fsz(;rec=false)
     """
     total_size = 0
     files = readdir()  # Get a list of files in the current directory
-    
+
     for file in files
         filepath = joinpath(pwd(), file)  # Get the full path of the file
         if isfile(filepath)
@@ -2188,13 +2129,13 @@ function fsz(;rec=false)
             total_size += size
         end
     end
-    
+
     nr=length(files)
 
     total_size_mb = total_size / (1024 * 1024)  # Convert size to megabytes
     total_size_mb = round(total_size_mb, digits=2)  # Round to 2 decimal places
     printstyled("Total size of $nr files in $(pwd()): $total_size_mb MB\n", color=:green)
-    
+
     if rec
         dirs = readdir()
         for dir in dirs
@@ -2227,7 +2168,7 @@ function waread2(x::String)
     """
     Read the text file, preserve line 1 as header column
     Instead of using CSV.read, we use CSV.File to create a lazy representation of the file.
-    This avoids reading the entire file into memory at once, 
+    This avoids reading the entire file into memory at once,
     which can be more memory-efficient for large datasets.
     """
     ms = ["-9999", "lin", "log", "--"]
@@ -2248,19 +2189,19 @@ Read the text file, preserve line 1 as header column
 function dfr(x::String)
     ms = ["-9999","lin","log","--"]
     df = try
-     CSV.read(x, DataFrame; 
-        delim="\t", 
-        header=1, 
-        missingstring=ms, 
-        #maxwarnings = 1, 
+     CSV.read(x, DataFrame;
+        delim="\t",
+        header=1,
+        missingstring=ms,
+        #maxwarnings = 1,
         silencewarnings = true,
-        normalizenames=true, 
+        normalizenames=true,
         types=Float64)
     catch e
         @error("error reading $x\nexiting now\n $e")
         return nothing
     end
-    
+
     df = dropmissing(df, 1)
     dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
     df.date = dt2
@@ -2272,7 +2213,7 @@ function dfr(x::String)
             rename!(df,Dict(x=>newname))
         end
     end
-    return df 
+    return df
 end
 
 """
@@ -2297,33 +2238,33 @@ function dfr(x::Regex)
         rename!(df,Dict(x=>newname))
         end
     end
-    return df 
+    return df
 end
 
 
 
 function rmeq()
     """
-    removes empty TS; 
+    removes empty TS;
     use with caution!
     """
     #x = pwd()
 
-    # files = filter(file -> (occursin(Regex(x, "i"), file) & 
+    # files = filter(file -> (occursin(Regex(x, "i"), file) &
     # (!occursin(r"xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg|txt", file))
     # ), readdir())
-    
-    files = filter(file -> 
+
+    files = filter(file ->
     !occursin(r"tex|pl|sh|csv|html|xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg|txt", file)
     , readdir())
-    
+
     ms = ["-9999", "lin", "log", "--"]
     for inF in files
         if isfile(inF)
             df = CSV.File(inF; delim="\t", header=1,
-            silencewarnings=true, 
-                normalizenames=false, 
-                missingstring=ms, 
+            silencewarnings=true,
+                normalizenames=false,
+                missingstring=ms,
                 types=Float64) |> DataFrame
             dropmissing!(df,ncol(df))
             if nrow(df)==0
@@ -2395,13 +2336,13 @@ function npp(fl::String;opener="c:/Program Files (x86)/Notepad++/notepad++.exe")
             fl = fl
             run(`"/mnt/c/Program Files (x86)/Notepad++/notepad++.exe" $fl`)
         else
-            fx = `wslpath -m $fl` #translate from a WSL path to a Windows path, with '/' 
+            fx = `wslpath -m $fl` #translate from a WSL path to a Windows path, with '/'
             opcmd = `wslpath -a $opener` #force result to absolute path format
             wslpt = readchomp(pipeline(opcmd))
             run(`$wslpt $fx`)
 
         end
-    catch        
+    catch
           @error "could not open $fl via notepad++
               check if notepad++ is installed in $opener"
     end
@@ -2417,7 +2358,7 @@ function npplat(;opener="c:/Program Files (x86)/Notepad++/notepad++.exe")
         @error "$fl cannot be opened in notepad++"
         return
     end
-    
+
     try
         if platform == "windows"
             run(`$opener $fl`)
@@ -2425,13 +2366,13 @@ function npplat(;opener="c:/Program Files (x86)/Notepad++/notepad++.exe")
             fl = fl
             run(`"/mnt/c/Program Files (x86)/Notepad++/notepad++.exe" $fl`)
         else
-            fx = `wslpath -m $fl` #translate from a WSL path to a Windows path, with '/' 
+            fx = `wslpath -m $fl` #translate from a WSL path to a Windows path, with '/'
             opcmd = `wslpath -a $opener` #force result to absolute path format
             wslpt = readchomp(pipeline(opcmd))
             run(`$wslpt $fx`)
 
         end
-    catch        
+    catch
           @error "could not open $fl via notepad++
               check if notepad++ is installed in $opener"
     end
@@ -2439,30 +2380,30 @@ end
 
 """
 gets pkgversion
-filter(x-> x.second.name == pkg, Pkg.dependencies()) |> 
+filter(x-> x.second.name == pkg, Pkg.dependencies()) |>
          x -> first(x)[2].version
 """
 function pkgversion(pkg::String)
     #pak = Pkg.dependencies()
-    # filter(x-> x.second.name == pkg, Pkg.dependencies()) |> 
+    # filter(x-> x.second.name == pkg, Pkg.dependencies()) |>
     #     x -> first(x)[2].version
     #info = filter(x-> x.second.name == pkg, Pkg.dependencies())
     #
     try
         pkg = strip(pkg)
         info = filter(x-> occursin(pkg,x.second.name),
-            #Regex(x.second.name,"i")), 
+            #Regex(x.second.name,"i")),
             Pkg.dependencies())
         nam = first(info)[2].name
         ver = first(info)[2].version
         #nam = map(x->first(x)[2].name,info)
         #ver = map(x->first(x)[2].version,info)
-        println("$nam: $ver")    
+        println("$nam: $ver")
     catch
         @error ("not found: $pkg")
         return
     end
-    
+
 end
 
 
@@ -2476,8 +2417,8 @@ function wawrite(df::DataFrame,file::AbstractString)
     #in("date",names(dout))
     if in("year",names(dout))
         @warn "yearcol found!"
-        CSV.write(file, dout, 
-        transform = (col, val) -> something(val, missing), delim="\t")  
+        CSV.write(file, dout,
+        transform = (col, val) -> something(val, missing), delim="\t")
         return
     end
     dout.YY = map(x ->year(x),dout.date)
@@ -2485,8 +2426,8 @@ function wawrite(df::DataFrame,file::AbstractString)
     dout.DD = map(x ->day(x),dout.date)
     dout[!, "HH"] .= 0
     dout = dout[!,Cols([:YY,:MM,:DD,:HH],Not(Cols(r"date")))]
-    CSV.write(file, dout, 
-    transform = (col, val) -> something(val, missing), delim="\t")  
+    CSV.write(file, dout,
+    transform = (col, val) -> something(val, missing), delim="\t")
     nothing
 end
 
@@ -2502,7 +2443,7 @@ function writedf(df::Union{DataFrame,String},file::Union{DataFrame,String})
         return
     end
     @info "write DataFrame to $file !"
-    CSV.write(file, df, 
+    CSV.write(file, df,
     transform = (col, val) -> something(val, missing),
         delim="\t")
     nothing
@@ -2512,23 +2453,23 @@ end
 writes describe(df) to file, no date conversion
 """
 function writedesc(table,file)
-    CSV.write(file, describe(table), transform = (col, val) -> something(val, missing),delim="\t")  
+    CSV.write(file, describe(table), transform = (col, val) -> something(val, missing),delim="\t")
     nothing
 end
 
 
 
 """
-read df to datetime 
+read df to datetime
 """
 function dfrdt(x::String)
     ms = ["-9999","lin","log","--"]
-    df = CSV.read(x, DataFrame; 
-        delim="\t", header=1, missingstring=ms, 
+    df = CSV.read(x, DataFrame;
+        delim="\t", header=1, missingstring=ms,
         maxwarnings = 1, #silencewarnings = true,
         normalizenames=true, types=Float64)
     df = dropmissing(df, 1)
-    dt2 = map(row -> Dates.DateTime(Int(row[1]), Int(row[2]), Int(row[3]), 
+    dt2 = map(row -> Dates.DateTime(Int(row[1]), Int(row[2]), Int(row[3]),
     Int(row[4]),0,0,0),  #note that: Dates.DateTime,dateformat"yyyy mm dd HH MM SS s"
     eachrow(df))
     df.date = dt2
@@ -2540,7 +2481,7 @@ function dfrdt(x::String)
             rename!(df,Dict(x=>newname))
         end
     end
-    return df 
+    return df
 end
 
 
@@ -2556,13 +2497,13 @@ function npplat(;opener="c:/Program Files (x86)/Notepad++/notepad++.exe")
             fl = fl
             run(`"/mnt/c/Program Files (x86)/Notepad++/notepad++.exe" $fl`)
         else
-            fx = `wslpath -m $fl` #translate from a WSL path to a Windows path, with '/' 
+            fx = `wslpath -m $fl` #translate from a WSL path to a Windows path, with '/'
             opcmd = `wslpath -a $opener` #force result to absolute path format
             wslpt = readchomp(pipeline(opcmd))
             run(`$wslpt $fx`)
 
         end
-    catch        
+    catch
           @error "could not open $fl via notepad++
               check if notepad++ is installed in $opener"
     end
@@ -2582,15 +2523,15 @@ end
 function count_files(path::String, level::Int64)
     n = 0  # Number of files
     s = 0  # Total size in bytes
-    
+
     for entry in readdir(path)
         if entry == "." || entry == ".."
             continue
         end
-        
+
         subpath = joinpath(path, entry)
         stat_result = stat(subpath)
-        
+
         if isfile(stat_result)
             n += 1
             s += stat_result.size
@@ -2601,7 +2542,7 @@ function count_files(path::String, level::Int64)
             s += subs
         end
     end
-    
+
     return n, s
 end
 
@@ -2614,7 +2555,7 @@ end
 
 
 function jlcnt(path=pwd(), level=0)
-    n, s = count_files(path, 0)    
+    n, s = count_files(path, 0)
     printstyled("Directory: $path\n",color=:yellow)
     printstyled("Number of files: $n\n",color=:yellow)
     printstyled("Total size: $(round(s / (1024 * 1024), digits=2)) MB\n",color=:yellow)
@@ -2642,7 +2583,7 @@ function tsread(x::Union{String,Regex};kw...)
             rename!(df,Dict(x=>newname))
         end
     end
-    return df 
+    return df
 end
 
 """
@@ -2657,7 +2598,7 @@ function dfroute(;ofl="route.txt")
     rename!(df,1=>"sim",2=>"obs",3=>"name")
     df.name=map(x->replace(x,r"#" => "",r" " => "",r"_>.*" => "",r"-" => "_"),df[:,3])
     sort!(df, :sim)
-    return df    
+    return df
 end
 
 """
@@ -2692,7 +2633,7 @@ function ctlx()
         if (!occursin("regio",fl) && occursin("regio",pwd()))
             fl = replace(fl,"control"=>"D:/Wasim/regio/control")
         elseif (!occursin("brend",fl) && occursin("brend",pwd()))
-            fl = replace(fl,"control"=>"D:/Wasim/Tanalys/DEM/brend_fab/control")            
+            fl = replace(fl,"control"=>"D:/Wasim/Tanalys/DEM/brend_fab/control")
         elseif (!occursin("temp",fl) && occursin("saale",pwd()))
             fl = replace(fl,"control"=>"D:/temp/saale/control")
         end
@@ -2716,7 +2657,7 @@ function qtab(;todf=true)
         printstyled("no $ofl found!\n",color=:light_red)
         pretty_table(dfs,header=uppercasefirst.(names(dfs));)
         return
-    end   
+    end
     dx = dfroute(;ofl=ofl);
     rename!(dx,"sim"=>"Basin");
     dfs.Basin = parse.(Int64,dfs.Basin)
@@ -2752,7 +2693,7 @@ function getq(;prefix::AbstractString="qgko")
 
     if isempty(results)
         printstyled("no qgk files found!\n", color=:light_red)
-        return 
+        return
     end
 
     for file in results
@@ -2780,7 +2721,7 @@ function getq(;prefix::AbstractString="qgko")
         end
     end
 
-    return 
+    return
 end
 
 """
@@ -2797,7 +2738,7 @@ Search for files in a directory and its subdirectories that match a given patter
 """
 function sf(pattern::Union{AbstractString, Regex}, rootdir::AbstractString=pwd())
     # Check if rootdir is a directory
-    rootdir = isdir(rootdir) ? rootdir : throw(ArgumentError("rootdir is not a directory!"))    
+    rootdir = isdir(rootdir) ? rootdir : throw(ArgumentError("rootdir is not a directory!"))
 
     # Convert pattern to regex if it's a string
     pattern = pattern isa AbstractString ? Regex("$(pattern)", "i") : pattern

@@ -49,72 +49,72 @@ module WaSiM
     include("rasterfuncs.jl")
     # include("smallfuncs.jl") #<-depricated
     #include("timeseries.jl")
-    #@reexport using smfc #no Pkg!   
-    
+    #@reexport using smfc #no Pkg!
+
     # DATAFRAME Operations
-    export dfread, dfrib, dfsp, dfsplog, dfp, dfp!, dfpall, 
-        #dfr, 
+    export dfread, dfrib, dfsp, dfsplog, dfp, dfp!, dfpall,
+        #dfr,
         yrsum, yrmean, dfm, dfmo, dfl, dfl!, dfilter,
         monmean, monsum, lastcol
-        #dfroute, 
+        #dfroute,
 
     # File Operations
-    export readall, readalloutput, readallras, read_between, read_log_file, 
-        read_mhm, read_soildata, read_soildata_2, read_soildata_4, 
-        read_until_flag, read_wq, old_waread, old_waread2,         
-        pout,         
-        project,         
-        read_landuse_data2, readmeteo, readras, 
-        readras2, readrasrec, 
-        readroute 
+    export readall, readalloutput, readallras, read_between, read_log_file,
+        read_mhm, read_soildata, read_soildata_2, read_soildata_4,
+        read_until_flag, read_wq, old_waread, old_waread2,
+        pout,
+        project,
+        read_landuse_data2, readmeteo, readras,
+        readras2, readrasrec,
+        readroute
 
     # Hydrological Functions
-    export hd, hydro, hydro_f, hydromon, hyeval, 
-        kge, kge1, kge2, kge_df, kge_df3, kge_fread, kge_read, 
+    export hd, hydro, hydro_f, hydromon, hyeval,
+        kge, kge1, kge2, kge_df, kge_df3, kge_fread, kge_read,
         kge_rec, kgedf, kgerec, kgeval,
         yearsum, hyd2
 
     # Statistical Functions
     export addname, all_values_equal,
         barsum, baryr,
-        baryrmean, baryrsum, build_soil_dictionary, byear, climateplot, 
-        climateplot_dfold, cmplot, cntcolread, cntcols, colorfunction, colsums, 
-        condasize, corrbar, correlogram, csize, ctl, ctl2, ctl3, ctlook, ctsum, 
-        ddense, denselog, dfilter, dfl, dfl!, dfm, dfmo, dfp, 
+        baryrmean, baryrsum, build_soil_dictionary, byear, climateplot,
+        climateplot_dfold, cmplot, cntcolread, cntcols, colorfunction, colsums,
+        condasize, corrbar, correlogram, csize, ctl, ctl2, ctl3, ctlook, ctsum,
+        ddense, denselog, dfilter, dfl, dfl!, dfm, dfmo, dfp,
         dfread, dfsp, dfsplog, dftrend,
-        dprbig, dsbar, dtrange, dubplot, eeread, extract_duration_from_xml, 
-        extract_layers, f1_score, fdf, fillmissing, filterdf, 
-        
-        findalls, findctl, fparse, fread, freaddf, fsoil, 
-        
-        generate_export_statement, getdf, getf, getnames, 
-        ggofbatch, ggofjl, ggofjl_nosvg, globdf, globf, gofbatch, gofbatch_nosvg, 
-        grec, grep_files, grep_in_files, grep_with_context, gwread, hd, heat, 
-        heatraw, homes, ht, hydro, hydro_f, hydromon, hyeval, irfan, isroute, jldf, 
-        jldfnm, jsrast, jsread, juliasize, kernelplot, kge, kge1, kge2, kge_df, 
-        kge_df3, kge_fread, kge_read, kge_rec, kgedf, kgerec, kgeval, klog, ldf, 
-        ldfpall, lg, listdfs, loadalldfs, loaddf, loadso, lplot, lplotf, lpro, 
-        luheat, luplot, lutab, luvars, mall, malldf, mbx, 
+        dprbig, dsbar, dtrange, dubplot, eeread, extract_duration_from_xml,
+        extract_layers, f1_score, fdf, fillmissing, filterdf,
+
+        findalls, findctl, fparse, fread, freaddf, fsoil,
+
+        generate_export_statement, getdf, getf, getnames,
+        ggofbatch, ggofjl, ggofjl_nosvg, globdf, globf, gofbatch, gofbatch_nosvg,
+        grec, grep_files, grep_in_files, grep_with_context, gwread, hd, heat,
+        heatraw, homes, ht, hydro, hydro_f, hydromon, hyeval, irfan, isroute, jldf,
+        jldfnm, jsrast, jsread, juliasize, kernelplot, kge, kge1, kge2, kge_df,
+        kge_df3, kge_fread, kge_read, kge_rec, kgedf, kgerec, kgeval, klog, ldf,
+        ldfpall, lg, listdfs, loadalldfs, loaddf, loadso, lplot, lplotf, lpro,
+        luheat, luplot, lutab, luvars, mall, malldf, mbx,
         moisture_plot_with_confidence, monc, monc_f, moncol, monp
         #revcrds, reverse_coords #moved to rst
 
-        
+
     # Plotting Functions
-    export aplot, bardf, bardfm, bardfm!, bargroup, barp, 
-    dfrib, dfp!, dfpall, ftp, ftplin, ftsp, filterplot!, dpr, dpr!, filterplot,  denseplot, 
-    dfbar, stplot!,moisture_plot_with_confidence, mbx, lplot, lplotf, lpro, luheat, luplot, luscatter 
-    
+    export aplot, bardf, bardfm, bardfm!, bargroup, barp,
+    dfrib, dfp!, dfpall, ftp, ftplin, ftsp, filterplot!, dpr, dpr!, filterplot,  denseplot,
+    dfbar, stplot!,moisture_plot_with_confidence, mbx, lplot, lplotf, lpro, luheat, luplot, luscatter
+
     export lutab, luvars, mall, malldf,
-        monc, monc_f, moncol, monmean, monp, monsum, 
-        mvwasim2, mywd, nctodf, nctodfo, nqp, nread, nse, nse2, nse_rec, nseval, 
-        nsevalraw, nsx, odfr, pall, penman_monteith, pers, pout, plot_duration_graph, 
-        plot_grouped_metrics, plotf, polygonize_raster, print_lines_between_patterns, 
+        monc, monc_f, moncol, monmean, monp, monsum,
+        mvwasim2, mywd, nctodf, nctodfo, nqp, nread, nse, nse2, nse_rec, nseval,
+        nsevalraw, nsx, odfr, pall, penman_monteith, pers, pout, plot_duration_graph,
+        plot_grouped_metrics, plotf, polygonize_raster, print_lines_between_patterns,
         process_file2, process_folders_and_subfolders, pw, pww, pxm,
-        qall_num, qba, qbb, qpl, qplot, qqp, qrtr, rds, read_landuse_data2, 
-        read_log_file, read_soildata, read_soildata_2, read_soildata_4, 
-        read_soildata_raw, read_until_flag, read_wq, readall, readdf, readf, readmeteo, 
-        readmhm, readroute, rec, rename_columns, rename_columns!, rename_duplicates, 
-        renamer, reorder_df, rmm, rmopt, rmqout, routeg, routg, 
+        qall_num, qba, qbb, qpl, qplot, qqp, qrtr, rds, read_landuse_data2,
+        read_log_file, read_soildata, read_soildata_2, read_soildata_4,
+        read_soildata_raw, read_until_flag, read_wq, readall, readdf, readf, readmeteo,
+        readmhm, readroute, rec, rename_columns, rename_columns!, rename_duplicates,
+        renamer, reorder_df, rmm, rmopt, rmqout, routeg, routg,
         rowmeans, rowsums, runwasim, seldf, selt, skipyr, so_read, stplot!, strans
 
         # qall, findlog,
@@ -123,14 +123,14 @@ module WaSiM
     #     thisfile=src_path*"/smallfuncs.jl"
     #     include(thisfile)
     # end
-    
+
     # function setup()
     #     thisfile=src_path*"/func-win.jl"
     #     include(thisfile)
     # end
-    
 
-    
+
+
     """
     filters internal WaSiM stats of routed discharge files
     works recursively
@@ -140,11 +140,11 @@ module WaSiM
         for (looproot, dirs, filenames) in walkdir(rootdir)
             for filename in filenames
                 if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
-                    push!(files, joinpath(looproot, filename)) 
+                    push!(files, joinpath(looproot, filename))
                 end
             end
         end
-        
+
         for z in files
             println(raw"file:	",basename(z),"...")
             m = filter(line -> occursin(r"^[LIN. R]|^[LOG. R]|^CO",line), readlines(open(z)))
@@ -218,7 +218,7 @@ module WaSiM
 
         return PET
     end
-    
+
     function ls()
         p=pwd()
         f=readdir()
@@ -239,7 +239,7 @@ module WaSiM
             println("$p\n")
         end
     end
-    
+
     """
     counts lines like wc -l in bash
     """
@@ -253,7 +253,7 @@ module WaSiM
             end
         end
     end
-    
+
     function vgrep(regex, file_ending)
         files = filter(file -> endswith(file, file_ending), readdir())
         # loop over each file
@@ -271,7 +271,7 @@ module WaSiM
             end
         end
     end
-    
+
     function vg(snippet::AbstractString, file_ending::AbstractString)
         files = filter(file -> endswith(file, file_ending), readdir())
         # loop over each file
@@ -281,31 +281,31 @@ module WaSiM
                 for line in eachline(f)
                     counter += 1 # Zähler erhöhen
                     if Base.contains(line,snippet)
-                        printstyled("$counter:\t",color=:light_red) 
-                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled("$line\n",color=:green,bold=true) 
+                        printstyled("$counter:\t",color=:light_red)
+                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true)
+                        printstyled("$line\n",color=:green,bold=true)
                     end
                 end
             end
         end
     end
-    
+
     function vgjl(snippet::AbstractString)
         owd = abspath(pwd())
         platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-        
+
         if platform == "windows"
-            script_dir = "C:/Users/Public/Documents/Python_Scripts/julia"
+            script_dir = dirname(pathof(WaSiM))
         else
             # Assuming you want to use a different path for Linux/WSL, adjust as needed
-            script_dir = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
+            script_dir = dirname(pathof(WaSiM))
         end
-        
+
         cd(script_dir)
-        
+
         # files = []
         files = filter(file -> endswith(file, ".jl"), readdir())
-        fwin = filter(file -> endswith(file, ".jl"), 
+        fwin = filter(file -> endswith(file, ".jl"),
             readdir(script_dir*"/win", join=true))
         files = vcat(files,fwin)
         for file in files
@@ -321,23 +321,23 @@ module WaSiM
                 end
             end
         end
-        
+
         cd(owd)
     end
-    
+
     function vgro(snippet::AbstractString)
         owd = abspath(pwd())
         platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-        
+
         if platform == "windows"
             script_dir = "D:/Fernerkundungsdaten/Klassifikation/R-Sessions"
         else
             # Assuming you want to use a different path for Linux/WSL, adjust as needed
             script_dir = "/mnt/d/Fernerkundungsdaten/Klassifikation/R-Sessions"
         end
-        
+
         cd(script_dir)
-    
+
         files = filter(file -> endswith(file, ".R"), readdir())
         for file in files
             open(file) do f
@@ -345,27 +345,27 @@ module WaSiM
                 for line in eachline(f)
                     counter += 1 # Zähler erhöhen
                     if Base.contains(line,snippet)
-                        printstyled("$counter:\t",color=:light_red) 
-                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled("$line\n",color=:green,bold=true) 
+                        printstyled("$counter:\t",color=:light_red)
+                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true)
+                        printstyled("$line\n",color=:green,bold=true)
                     end
                 end
             end
         end
         cd(owd)
     end
-    
+
     function vgr(snippet::AbstractString)
         #owd = abspath(pwd())
         platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-        
+
         if platform == "windows"
             script_dir = "D:/Fernerkundungsdaten/Klassifikation/R-Sessions"
         else
             # Assuming you want to use a different path for Linux/WSL, adjust as needed
             script_dir = "/mnt/d/Fernerkundungsdaten/Klassifikation/R-Sessions"
         end
-    
+
         files = filter(file -> endswith(file, ".R"), readdir(script_dir,join=true))
         for file in files
             open(file) do f
@@ -373,31 +373,31 @@ module WaSiM
                 for line in eachline(f)
                     counter += 1 # Zähler erhöhen
                     if Base.contains(line,snippet)
-                        printstyled("$counter:\t",color=:light_red) 
+                        printstyled("$counter:\t",color=:light_red)
                         printstyled(rpad("$file:",50),color=:light_magenta)
-                        #printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
+                        #printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true)
                         printstyled(lpad("$line\n",30),color=:green,bold=true)
-                        #underline = true 
+                        #underline = true
                     end
                 end
             end
         end
     end
-    
+
     function vgpyo(snippet::AbstractString)
         owd = abspath(pwd())
         platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-        
+
         if platform == "windows"
             script_dir = "C:/Users/Public/Documents/Python_Scripts"
         else
             # Assuming you want to use a different path for Linux/WSL, adjust as needed
             script_dir = "/mnt/c/Users/Public/Documents/Python_Scripts"
         end
-        
+
         cd(script_dir)
-    
-    
+
+
         files = filter(file -> endswith(file, ".py"), readdir())
         for file in files
             open(file) do f
@@ -405,27 +405,27 @@ module WaSiM
                 for line in eachline(f)
                     counter += 1 # Zähler erhöhen
                     if Base.contains(line,snippet)
-                        printstyled("$counter:\t",color=:light_red) 
-                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled("$line\n",color=:green,bold=true) 
+                        printstyled("$counter:\t",color=:light_red)
+                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true)
+                        printstyled("$line\n",color=:green,bold=true)
                     end
                 end
             end
         end
         cd(owd)
     end
-    
+
     function vgpy(snippet::AbstractString)
         #owd = abspath(pwd())
         platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-        
+
         if platform == "windows"
             script_dir = "C:/Users/Public/Documents/Python_Scripts"
         else
             # Assuming you want to use a different path for Linux/WSL, adjust as needed
             script_dir = "/mnt/c/Users/Public/Documents/Python_Scripts"
         end
-        
+
         files = filter(file -> endswith(file, ".py"), readdir(script_dir,join=true))
         for file in files
             open(file) do f
@@ -433,24 +433,24 @@ module WaSiM
                 for line in eachline(f)
                     counter += 1 # Zähler erhöhen
                     if Base.contains(line,snippet)
-                        printstyled("$counter:\t",color=:light_red) 
+                        printstyled("$counter:\t",color=:light_red)
                         printstyled(rpad("$file:",50),color=:light_magenta)
-                        #printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
+                        #printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true)
                         printstyled(lpad("$line\n",30),color=:green,bold=true)
-                        #underline = true 
+                        #underline = true
                     end
                 end
             end
         end
     end
-    
+
     """
     Usage: vgctl("set \$TS")
     """
     function vgctl(snippet::AbstractString)
         owd = pwd()
         platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-    
+
         if platform == "windows"
             nwd = "D:/Wasim/regio/control/"
             nwd2 = "D:/temp/saale/control/"
@@ -465,9 +465,9 @@ module WaSiM
             nwd4 = "/mnt/d/Wasim/Goldbach/revision/control/"
             nwd5 = "/mnt/d/Wasim/streu/control/"
         end
-    
+
         paths = [nwd, nwd2, nwd3, nwd4, nwd5]
-    
+
         for path in paths
             cd(path)
             println("Searching in directory: $path")
@@ -486,10 +486,10 @@ module WaSiM
                 end
             end
         end
-    
+
         cd(owd)
     end
-    
+
     function rglob(prefix::AbstractString)
         rootdir=pwd();
         results = []
@@ -498,7 +498,7 @@ module WaSiM
                 for filename in filenames
                     #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
                     if (occursin(Regex(prefix,"i"),filename))
-                        push!(results, joinpath(looproot, filename)) 
+                        push!(results, joinpath(looproot, filename))
                     end
                 end
             end
@@ -507,26 +507,26 @@ module WaSiM
             for filename in (filter(x->isfile(x),readdir(;join=false)))
                 #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
                 if (occursin(Regex(prefix,"i"),filename))
-                    push!(results, filename) 
+                    push!(results, filename)
                 end
             end
         end
         return results
     end
-    
+
     function rglob(prefix::Regex)
         rootdir="."
         results = []
         for (looproot, dirs, filenames) in walkdir(rootdir)
             for filename in filenames
                 if (occursin(prefix,filename))
-                    push!(results, joinpath(looproot, filename)) 
+                    push!(results, joinpath(looproot, filename))
                 end
             end
         end
         return results
     end
-    
+
     """
     go dir up
     """
@@ -534,27 +534,27 @@ module WaSiM
         dirname(pwd())|>cd
         pwd()|>println
     end
-    
+
     cdu() = cdb()
-    
+
     """
     like jdd to vector of strings.
     """
     function fdd(;cwd=pwd())
         dirs = readdir(cwd)
-        
-        if length(dirs) == 0 
+
+        if length(dirs) == 0
             println("$cwd is empty!")
             return
         end
-        
+
         if filter(x -> (isdir(x)),dirs) == []
             bn = basename(cwd)
             @info "no dirs in $bn !"
             dd()
             return
         end
-        
+
         s = []
         for dir in dirs
             if isdir(dir)
@@ -570,7 +570,7 @@ module WaSiM
         end
         return(s)
     end
-    
+
     function vgr(regex, file_ending)
         rootdir=pwd()
         println("starting on: $rootdir...\n searching for >> $regex << with file ending >> $file_ending <<\n")
@@ -580,7 +580,7 @@ module WaSiM
                 #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
                 #if (occursin(Regex(prefix,"i"),filename))
                 if (endswith(filename, file_ending))
-                    push!(files, joinpath(looproot, filename)) 
+                    push!(files, joinpath(looproot, filename))
                 end
             end
         end
@@ -597,7 +597,7 @@ module WaSiM
             end
         end
     end
-    
+
     function vjl(regex)
         # greps jl from julia folder
         pt="/mnt/c/Users/Public/Documents/Python_Scripts/julia";
@@ -615,11 +615,11 @@ module WaSiM
             end
         end
     end
-    
+
     function cnt()
         return(length(readdir(pwd())))
     end
-    
+
     """
     topdown dirsize
     du(;cwd=pwd())
@@ -635,11 +635,11 @@ module WaSiM
          for dir in dirs
             printstyled("check dir: $dir\n",color=:light_red)
          end
-        end 
+        end
         println("$(n) files in directory")
         @printf("%-40s %15.2f MB\n","$(cwd):",osize/1024^2)
-    end 
-    
+    end
+
     function route_from_dir(dir::String)
         dirs = readdir(dir)
         routes::Vector{String} = []
@@ -656,7 +656,7 @@ module WaSiM
         end
         routes
     end
-    
+
     function llf()
         cwd = pwd()
         #n = length(readdir(cwd))
@@ -676,13 +676,13 @@ module WaSiM
             return(v)
         end
     end
-            
-    
+
+
     function vg2(regex::AbstractString, ending::AbstractString)
         cmd = `grep --color=always -C2 -rIHn -E "$regex" --include="*.$ending"`
         run(cmd)
     end
-        
+
     function tff2(x::Vector{String})
         for filename in x
             b = Dict{String, Float64}()
@@ -690,11 +690,11 @@ module WaSiM
             h = Dict{String, Float64}()
             cnte = Dict{String, Int64}()
             ncols = 0
-    
+
             open(filename) do file
                 first_line = true
-                
-    
+
+
                 for (i, line) in enumerate(eachline(file))
                     fields = split(line)
                     if first_line
@@ -705,7 +705,7 @@ module WaSiM
                         first_line = false
                         continue
                     end
-    
+
                     if match(r"^\d{4}$", fields[1]) != nothing
                         cnte[match(r"^\d+", fields[1]).match] = get(cnte, match(r"^\d+", fields[1]).match, 0) + 1
                         b[fields[1]] = get(b, fields[1], 0.0) + parse(Float64, replace(fields[5], r"-9999" => "0"))
@@ -714,7 +714,7 @@ module WaSiM
                     end
                 end
             end
-    
+
             if ncols <= 5
                 for key in sort(collect(keys(b)))
                     println("$key\t$(@sprintf("%.2f", h[key]))\t| means: $(@sprintf("%.2f", h[key] / cnte[key]))\t| counts: $(cnte[key])")
@@ -730,20 +730,20 @@ module WaSiM
             end
         end
     end
-    
+
     """
     fdi(;xm::Regex=r"*")
     lists dirs if isdir(dir) & occursin(xm,dir)
     """
     function fdi(cwd::AbstractString;xm::Regex=r"")
         dirs = (length(cwd)>1) ? readdir(cwd) : readdir(pwd())
-        for dir in dirs 
+        for dir in dirs
             if isdir(dir) & occursin(xm,dir)
                     @printf("%-8s\t|","$dir")
             end
         end
     end
-    
+
     function jdd()
         cwd = pwd()
         dirs = readdir(".")
@@ -759,7 +759,7 @@ module WaSiM
             end
         end
     end
-    
+
     function dd()
         cwd = pwd()
         osize = 0
@@ -767,12 +767,12 @@ module WaSiM
          for file in files
              osize += stat(joinpath(root, file)).size
          end
-        end 
+        end
         @printf("%-40s %15.3f GB\n","$(cwd):",osize/1024^3);
-    end 
-    
+    end
+
     function ct(ext::AbstractString)
-        cwd = pwd() 
+        cwd = pwd()
         osize = 0
         fz = 0
         m = []
@@ -785,15 +785,15 @@ module WaSiM
          fz += stat(nm).size
          push!(m,(nm))
          end
-        end 
-        end 
+        end
+        end
          n=repeat(" - -",10)
          println(n*" sum of ",ext*n)
          @printf("%-40s %15.2f MB\n","$(cwd):",fz/1024^2);
          println(n,length(m)," matches "*n,"\n")
          return(m)
-    end 
-    
+    end
+
     function print_sorted_sizes(dir)
         folders = [joinpath(dir, f) for f in readdir(dir)]
         sizes = Dict()
@@ -809,7 +809,7 @@ module WaSiM
             end
         end
     end
-    
+
     function get_folder_size(folder)
         files = readdir(folder)
         size = 0
@@ -823,7 +823,7 @@ module WaSiM
         end
         return size
     end
-       
+
     function jdd()
         cwd = pwd()
         dirs = readdir(".")
@@ -839,7 +839,7 @@ module WaSiM
             end
         end
     end
-    
+
     function dd()
         cwd = pwd()
         osize = 0
@@ -847,12 +847,12 @@ module WaSiM
          for file in files
              osize += stat(joinpath(root, file)).size
          end
-        end 
+        end
         @printf("%-40s %15.3f GB\n","$(cwd):",osize/1024^3);
-    end 
-    
+    end
+
     function ct(ext::AbstractString)
-        cwd = pwd() 
+        cwd = pwd()
         osize = 0
         fz = 0
         m = []
@@ -865,17 +865,17 @@ module WaSiM
          fz += stat(nm).size
          push!(m,(nm))
          end
-        end 
-        end 
+        end
+        end
          n=repeat(" - -",10)
          println(n*" sum of ",ext*n)
          @printf("%-40s %15.2f MB\n","$(cwd):",fz/1024^2);
          println(n,length(m)," matches "*n,"\n")
          return(m)
-    end 
-    
+    end
+
     function ct()
-        cwd = pwd() 
+        cwd = pwd()
         osize = 0
         fz = 0
         m = []
@@ -888,10 +888,10 @@ module WaSiM
             @printf("%-40s %15.2f MB\n","$(nm):",osize/1024^2);
             fz += stat(nm).size
             push!(m,(nm))
-         end     
-        end 
-        end 
-        # sort(df, [order(:a), order(:b, rev = true)]) 
+         end
+        end
+        end
+        # sort(df, [order(:a), order(:b, rev = true)])
         # sorted_files = sort(collect(keys(sizes)), by=x->sizes[x], rev=false)
         # println(sorted_files)
          n=repeat(" - -",10)
@@ -900,7 +900,7 @@ module WaSiM
          println(n,length(m)," files present "*n,"\n")
          return(m)
     end
-    
+
     function print_sorted_sizes(dir)
         folders = [joinpath(dir, f) for f in readdir(dir)]
         sizes = Dict()
@@ -916,7 +916,7 @@ module WaSiM
             end
         end
     end
-    
+
     function get_folder_size(folder)
         files = readdir(folder)
         size = 0
@@ -930,12 +930,12 @@ module WaSiM
         end
         return size
     end
-    
+
     """
     gets sorted DF by size recursivley
     """
     function fz()
-        cwd = pwd() 
+        cwd = pwd()
         osize = 0
     #    fn = 0
         m = []
@@ -951,36 +951,36 @@ module WaSiM
     #           :total=>(fn/1024^2),
                :fullnaname=>nm))
             end
-        end 
+        end
     end
-        df = DataFrame(m)     
+        df = DataFrame(m)
         sort!(df, [order(:size,rev = true), order(:name)])
         return(df)
-    end 
-    
+    end
+
     function homg()
         pt="D:/Wasim/Goldbach/revision/"
         cd(pt)
         println("you are here: ",pwd())
     end
-    
+
     function hombr()
         pt="D:/Wasim/Tanalys/DEM/brend_fab/out/m4/"
         cd(pt)
         println("you are here: ",pwd())
     end
-    
+
     function hometeo()
         cd("D:/Wasim/Tanalys/DEM/Input_V2/meteo/")
         println("you are here: ",pwd())
     end
-    
+
     function homreg()
         cd("D:/Wasim/regio/out/");
         println("you are here: ",pwd())
         fdi()
     end
-    
+
     function homrc()
         if platform == "unix"
             cd("/mnt/d/Wasim/regio/out/rc200");
@@ -990,39 +990,39 @@ module WaSiM
         println("you are here: ",pwd())
         fdi()
     end
-    
-    
+
+
     function homg()
         cd("D:/Wasim/Goldbach/");
         println("you are here: ",pwd())
         fdi()
     end
-    
+
     function home()
         cd("D:/Wasim/");
         println("you are here: ",pwd())
         fdi()
     end
-    
+
     function homqm()
         pt="D:/remo/qm/"
         cd(pt)
         println("you are here: ",pwd())
     end
-    
+
     """
     list_files_sorted_by_last_change
     formerly lat()
     """
     function lf()
         directory = pwd()
-        files = readdir(directory)  
+        files = readdir(directory)
         file_times = Dict{String, Dates.DateTime}()
         for file in files
             file_path = joinpath(directory, file)
             stat_info = stat(file_path)
             file_times[file] = Dates.unix2datetime(stat_info.mtime)
-        end   
+        end
         file_times = collect(file_times)
         xf = sort(file_times, by = x -> x[2], rev=true)
         sz = []                 #::Vector{Float64}
@@ -1039,8 +1039,8 @@ module WaSiM
         df.modified=map(x -> Dates.format(x, "yyyy-mm-dd HH:MM"),df.modified)
         return(df)
     end
-    
-    ##very nice meta programming... 
+
+    ##very nice meta programming...
     macro vv(s) vgjl(s);end
     #@vv "unter"
     macro vpy(s) vgpy(s);end
@@ -1067,22 +1067,22 @@ module WaSiM
     macro rgof() pt=src_path*"/RCall_gof.jl";include(pt);end
     macro pj() pt=src_path*"/pyjl.jl";include(pt);end
     macro pyjl() pt=src_path*"/pyjl.jl";include(pt);end
-    
+
     # using TOML
-    # #TOML is short for Tom’s Obvious Minimal Language and is a configuration file format 
+    # #TOML is short for Tom’s Obvious Minimal Language and is a configuration file format
     # #that should be “easy to parse into data structures in a wide variety of languages”
     # macro toml_str(s::String)
     #     TOML.parse(s)::Dict{String, <:Any}
     # end
-    
+
     # toml"""
     # ki11 = 6.6
     # dr11 = 1
     # kb11 = 0.4
     # q011 = 0.02
     # """
-    
-    # dx = toml"""ki11 = 6.6 
+
+    # dx = toml"""ki11 = 6.6
     # dr11 = 1
     # kb11 = 0.4
     # q011 = 0.02"""|>DataFrame
@@ -1092,64 +1092,64 @@ module WaSiM
     # findlast
     # findnext
     # findprev
-    
+
     # fx=raw"D:\Wasim\regio\control\rcm200_r6.ctl"
     # for (i, line) in enumerate(eachline(fx))
     #     if findfirst("dr11", line) !== nothing
     #         println("Line $i: $line")
     #     end
     # end
-    
+
     function regand(v::Vector{String},x1::AbstractString,y1::AbstractString)
         needle=join([x1,y1],"+.*");
-        z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))] 
+        z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
         return(z)
     end
-    
+
     function regand(v::Vector{String},xv::Tuple{String, String})
         needle=join([xv[1],xv[2]],"+.*");
         z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
         return(z)
     end
-    
+
     function regand(v::Vector{String},xv::Vector{Symbol})
         needle=join(xv,"+.*");
         z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
         return(z)
     end
-    
+
     function regand(v::Vector{String},xv::Vector{String})
         needle=join(xv,"+.*");
         z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
         return(z)
     end
-    
-    
+
+
     """
     join([x1,y1],"+.*")
     r"this+.*that"
     """
     function regand(v::Vector{String},x1::AbstractString,y1::AbstractString)
         needle=join([x1,y1],"+.*");
-        z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))] 
+        z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
     return(z)
     end
-    
+
     function regand(v::Vector{String},xv::Tuple{String, String})
         needle=join([xv[1],xv[2]],"+.*");
         z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
     return(z)
     end
-    
+
     """
     here you can put any regex to filter the Vector
     like regand(getnames(dfs),r"tem")
     """
     function regand(v::Vector{Any},xv::Regex)
-        z = v[(broadcast(x->occursin(xv,x),v))] 
+        z = v[(broadcast(x->occursin(xv,x),v))]
         return(z)
     end
-    
+
     """
     dir_path::String, match::String;file_ending="ctl"
     """
@@ -1173,7 +1173,7 @@ module WaSiM
             end
         end
     end
-    
+
     function merge_vectors(vector1::Vector{Any}, vector2::Vector{Pair{String, DateTime}})
         merged_vector = []
         for (item1, item2) in zip(vector1, vector2)
@@ -1182,7 +1182,7 @@ module WaSiM
         end
         return merged_vector
     end
-    
+
     function merge_vectors(vector1::Vector{String}, vector2::Dict{String, DateTime})
         merged_vector = []
         for (item1, item2) in zip(vector1, vector2)
@@ -1191,13 +1191,13 @@ module WaSiM
         end
         return merged_vector
     end
-    
+
     """
     list_files_sorted_by_last_change
     """
     function latx()
         directory = pwd()
-        files = readdir(directory)  
+        files = readdir(directory)
         file_times = Dict{String, Dates.DateTime}()
         for file in files
             file_path = joinpath(directory, file)
@@ -1205,9 +1205,9 @@ module WaSiM
             file_times[file] = Dates.unix2datetime(stat_info.mtime)
         end
         #xf = sort(file_times, by = x -> x[2], rev=true)
-        
+
         file_times = collect(file_times)
-        
+
         xf = sort(file_times, by = x -> x[2], rev=true)
         xf = first(xf,11)
         sz = []                 #::Vector{Float64}
@@ -1219,28 +1219,28 @@ module WaSiM
             datetime = Dates.format(dt, "yyyy-mm-dd HH:MM")
             printstyled(rpad(file,35),color=:yellow),
             printstyled("$datetime\t" ,color=:green),
-            printstyled(rpad(size,7)," MB\n",color=:yellow)    
+            printstyled(rpad(size,7)," MB\n",color=:yellow)
         end
     end
-    
+
     # ll=latx
-    
+
     function ll()
         readdir(;join=true)
     end
-    
-    
-    
+
+
+
     """
     grabs methods
-    asin|>getm  
+    asin|>getm
     ?asin
-    @code_llvm readf|>getm|>first 
+    @code_llvm readf|>getm|>first
     """
     function getm(s::Any)
         methods(s);
     end
-    
+
     function calculate_folder_size(directory)
         size = 0
         count = 0
@@ -1252,15 +1252,15 @@ module WaSiM
         end
         return size, count
     end
-    
+
     function print_folder_size(directory, size, count)
         size_gb = round(size / 1024^3, digits=3)
         printstyled(rpad("$directory: $size_gb GB", 40), color=:green)
         printstyled(lpad("($count files)", 20), "\n", color=:green)
     end
-    
+
     function sdf()
-    
+
         function calculate_folder_size(directory)
             size = 0
             count = 0
@@ -1272,25 +1272,25 @@ module WaSiM
             end
             return size, count
         end
-    
+
         function print_folder_size(directory, size, count)
             size_gb = round(size / 1024^3, digits=3)
             printstyled(rpad("$directory: $size_gb GB", 40), color=:green)
             printstyled(lpad("($count files)", 20), "\n", color=:green)
         end
-    
+
         printstyled("folder sizes on Julia...\n", color=:red)
-    
+
         cwd = pwd()
         dirs = readdir(cwd)
-    
+
         rs, rcnt = calculate_folder_size(cwd)
-    
+
         print_folder_size(cwd,rs,rcnt)
-    
+
         n = repeat(" - -", 10)
         printstyled(n * " subfolders of " * basename(cwd) * n, "\n", color=:yellow)
-    
+
         for dir in dirs
             if isdir(dir)
                 size, count = calculate_folder_size(joinpath(cwd, dir))
@@ -1298,9 +1298,9 @@ module WaSiM
             end
         end
     end
-    
+
     """
-    Read wasim ts with DelimitedFiles.readdlm, skipto line 3 
+    Read wasim ts with DelimitedFiles.readdlm, skipto line 3
     no header column
     """
     function wread(x::String;skip=3)
@@ -1309,7 +1309,7 @@ module WaSiM
         df = DataFrame(df,:auto)
         for i in 5:size(df,2)
             df[!,i]=replace(df[!,i],-9999.0 => missing)
-        end 
+        end
         for i in 5:size(df,2)
             replace!(df[!,i],-9999.0 => missing)
         end
@@ -1321,17 +1321,17 @@ module WaSiM
         df=df[:,Not(1:4)]
         metadata!(df, "filename", x, style=:note);
     end
-    
+
     """
-    recursively removes duplicates 
+    recursively removes duplicates
     uses SHA
     """
     function rmdub(;directory=pwd())
-        
+
         # Create a dictionary to store file hashes as keys and file paths as values
         #hash_dict = Dict{String, String}()
         hash_dict = Dict{Vector{UInt8}, String}()
-    
+
         # Get a list of all files in the directory
         #files = readdir(directory)
         for (root, dirs, files) in walkdir(directory)
@@ -1346,7 +1346,7 @@ module WaSiM
                     filehash = sha256(io)
                     #println(filehash)
                     close(io)
-    
+
                     # If the hash is not already in the dictionary, add it
                     if !haskey(hash_dict, filehash)
                         hash_dict[filehash] = filepath
@@ -1359,18 +1359,18 @@ module WaSiM
             end
         end
     end
-    
+
     function cntcolv(x::String)
         # Get a list of all files in the directory
         #x = "."
-        files = filter(file -> (occursin(Regex(x, "i"), file) & 
+        files = filter(file -> (occursin(Regex(x, "i"), file) &
                             (!occursin(r"xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg|txt", file))
                             ), readdir())
-    
+
         files = filter(inF->isfile(inF),files)
                             #if isfile(inF)
         file_columns = []
-        
+
         for file in files
             # Open the file for reading
             open(file, "r") do io
@@ -1383,10 +1383,10 @@ module WaSiM
                 push!(file_columns, (file, num_columns))
             end
         end
-        
+
         # Sort the file_columns array based on the number of columns in descending order
         sorted_files = sort(file_columns, by = x -> x[2], rev = true)
-        
+
         for (file, num_columns) in sorted_files
             printstyled(
                 rpad("File: $file",45),
@@ -1394,7 +1394,7 @@ module WaSiM
         end
         return file_columns
     end
-    
+
     """
     mkdir("route-bak")
     cpinto(glob("so_inf"), "route-bak")
@@ -1404,24 +1404,24 @@ module WaSiM
     function cpinto(src::Vector{String}, dst::AbstractString;force=false)
         map(x->cp(x,"$dst/$x";force=force),src)
     end
-    
+
     function getmoduleorder(file1::AbstractString)
         # Run the awk command and capture the STDOUT
         result = read(`awk '$0 ~ /^[[]/{c=1} c&&c--' $file1`, String)
-    
+
         # Split the result into lines and strip \r and \t characters
         lines = replace(split(result, "\n"), r"[\r\t]" => "")
-    
+
         # Extract the names inside square brackets using regular expressions
         pattern = r"\[(.*?)\]"
         names_inside_brackets = [match(pattern, line) === nothing ? "" : match(pattern, line).captures[1] for line in lines]
-    
+
         # Create a DataFrame with the extracted names inside the square brackets
         df = DataFrame(Line = names_inside_brackets)
-    
+
         return df
     end
-    
+
     function ctg(match::String ; dir=".", file_ending=".ctl")
         for file in readdir(dir)
             if occursin(file_ending, file)
@@ -1440,14 +1440,14 @@ module WaSiM
             end
         end
     end
-    
+
     function kgewrite(;output_file="kge-table.txt")
         path = pwd()
         files = glob(r"_output.txt|_outputjl") #non-recurse
-        
+
         # Create an empty vector to store the matched lines
         matched_lines = Vector{String}()
-        
+
         for file in filter(file -> endswith(file, "_output.txt"), files)
             output = DelimitedFiles.readdlm(file, '\t', String)
             match = Grep.grep(r"KGE", output)
@@ -1460,12 +1460,12 @@ module WaSiM
                 end
             end
         end
-        
+
         #output_file = "matched_results.csv"
         writedlm(output_file, matched_lines, '\t')
         println("Matched results saved to $output_file")
     end
-    
+
     function rsqgrep()
         path = pwd()
         files = glob(r"_output.txt|_outputjl")
@@ -1483,12 +1483,12 @@ module WaSiM
             end
         end
     end
-    
+
     #rsqgrep()
     function rsq(x::AbstractVector, y::AbstractVector)
         cor(x, y)^2
     end
-    
+
     function kgegrep()
         path = pwd()
         files = glob(r"_output.txt|_outputjl") #non-recurse
@@ -1507,7 +1507,7 @@ module WaSiM
             end
         end
     end
-    
+
     function nsegrep()
         path = pwd()
         files = glob(r"_output.txt|_outputjl") #non-recurse
@@ -1524,7 +1524,7 @@ module WaSiM
             end
         end
     end
-    
+
     function kgegrepr()
         path = pwd()
         files = rglob(r"_output.txt|_outputjl") #recurse
@@ -1542,7 +1542,7 @@ module WaSiM
             end
         end
     end
-    
+
     function nsegrepr()
         path = pwd()
         files = rglob(r"_output.txt|_outputjl") #recurse
@@ -1553,49 +1553,49 @@ module WaSiM
             if !isempty(match)
                 fn = first(split(file,"_qout"))
                 for line in match
-                    line = strip(line) 
+                    line = strip(line)
                     line = join(split(line), " ")  ##remove inner whitespaces
                     printstyled(rpad("$fn:",30),lpad("$line\n",10),color=:green)
                 end
             end
         end
     end
-    
+
     function nconly(x1::AbstractString)
         v::Vector{String} = readdir();
         v = v[broadcast(x->endswith(x,"nc"),v)];
-        z = v[(broadcast(x->occursin(Regex(x1),x),v))] 
+        z = v[(broadcast(x->occursin(Regex(x1),x),v))]
         return(z)
     end
-    
+
     function dfonly(x1::AbstractString;recursive=false)
         if recursive==false
             v = filter(file -> occursin(Regex(x1,"i"),file), readdir());
         else
             v = rglob(x1)
         end
-        
+
         z = v[broadcast(x->!endswith(x,r"nc|png|svg|jpg|txt|log"i),v)];
         return(z)
     end
-    
+
     function dfonly(x1::Regex)
-        z = filter(file -> occursin(x1,file), 
+        z = filter(file -> occursin(x1,file),
         readdir()[broadcast(x->!endswith(x,"nc"),readdir())]);
         return(z)
     end
-    
+
     function dfon(x1::AbstractString)
-        z = filter(file -> occursin(Regex(x1,"i"),file), 
+        z = filter(file -> occursin(Regex(x1,"i"),file),
         readdir()[broadcast(x->!endswith(x,"nc"),readdir())]);
         return(z)
     end
-    
+
     # x=nothing
     # typeof(x)
     # isa(x,Any) #true
     #Nothing,
-    
+
     function nconly(rx::Union{AbstractString,Regex})
         z = filter(z -> endswith(z,".nc"),readdir()[map(x->occursin(rx,x),readdir())])
         # v = readdir();
@@ -1603,13 +1603,13 @@ module WaSiM
         # z = z[map(x->endswith(x,"nc"),z)]
         return(z)
     end
-    
+
     function nconly()
         z = filter(z -> endswith(z,".nc"),readdir())
         return(z)
     end
-    
-    
+
+
     """
     tff2
     """
@@ -1620,11 +1620,11 @@ module WaSiM
             h = Dict{String, Float64}()
             cnte = Dict{String, Int64}()
             ncols = 0
-    
+
             open(filename) do file
                 first_line = true
-                
-    
+
+
                 for (i, line) in enumerate(eachline(file))
                     fields = split(line)
                     if first_line
@@ -1636,7 +1636,7 @@ module WaSiM
                         first_line = false
                         continue
                     end
-    
+
                     if match(r"^\d{4}$", fields[1]) != nothing
                         cnte[match(r"^\d+", fields[1]).match] = get(cnte, match(r"^\d+", fields[1]).match, 0) + 1
                         b[fields[1]] = get(b, fields[1], 0.0) + parse(Float64, replace(fields[5], r"-9999" => "0"))
@@ -1645,7 +1645,7 @@ module WaSiM
                     end
                 end
             end
-    
+
             if ncols <= 5
                 for key in sort(collect(keys(b)))
                     println("$key\t$(@sprintf("%.2f", h[key]))\t| means: $(@sprintf("%.2f", h[key] / cnte[key]))\t| counts: $(cnte[key])")
@@ -1661,12 +1661,12 @@ module WaSiM
             end
         end
     end
-    
+
     function tf(x::Union{AbstractString,Regex})
         jlt(dfonly(x))
     end
-    
-   
+
+
     """
     filters internal WaSiM stats of routed discharge files
     works recursively
@@ -1676,11 +1676,11 @@ module WaSiM
         for (looproot, dirs, filenames) in walkdir(rootdir)
             for filename in filenames
                 if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
-                    push!(files, joinpath(looproot, filename)) 
+                    push!(files, joinpath(looproot, filename))
                 end
             end
         end
-        
+
         for z in files
             println(raw"file:	",basename(z),"...")
             m = filter(line -> occursin(r"^[LIN. R]|^[LOG. R]|^CO",line), readlines(open(z)))
@@ -1692,7 +1692,7 @@ module WaSiM
         end
         return nothing
     end
-    
+
     function readbetween(io::IO, start::String, stop::String)
         output = Vector{String}()
         while !eof(io)
@@ -1712,7 +1712,7 @@ module WaSiM
         end
         return output
     end
-    
+
     function readbetween(io::IO, start::Regex, stop::Regex)
         output = Vector{String}()
         while !eof(io)
@@ -1732,7 +1732,7 @@ module WaSiM
         end
         return output
     end
-    
+
     """
     prints out the function definition
     """
@@ -1742,21 +1742,21 @@ module WaSiM
         _str = "$(func)"
         readbetween(open(pt),Regex(_str),r"^\s*function")
     end
-    
+
     macro wajs() pt="C:\\Users\\Public\\Documents\\Python_Scripts\\julia\\wajs.jl";include(pt);end
     macro bash_str(s) open(`bash`,"w",stdout) do io; print(io, s); end;end
-    
+
     #@bash_str "which python" #redirects to wsl bash
     # @bash_str "python -V"
     # @bash_str "python -c 'import sys; print(sys.version_info)'"
     # @bash_str @bash_str "python -c 'import rasterio; print(rasterio.__version__)'"
-    
+
     #@bash_str "python -c 'import rasterio; print(rasterio.__version__)'"
     #@cmd_str "python -c 'import rasterio; print(rasterio.__version__)\n\n'"
-    
+
     #pwrs""" which python """
     #pwrs""" pwd """
-    
+
     """
     this works in wsl too
     run(`cmd.exe /c start .`)
@@ -1767,8 +1767,8 @@ module WaSiM
         #open(`cmd.exe /c start . `,"w",stdout)
         #this wrks in wsl, too
         run(`cmd.exe /c start .`)
-    end 
-    
+    end
+
     macro pwp_str(s) open(`powershell`,"w",stdout) do io; print(io, s); end;end
     macro cmd_str(s) open(`cmd \c`,"w",stdout) do io; print(io, s); end;end
     ##nope, bad idea
@@ -1812,7 +1812,7 @@ module WaSiM
             end
         end
     end
-    
+
     function grep_KGE(path::AbstractString)
         #@printf("Searching for KGE values > 0.3 in files matching pattern %s\n", path)
         for file in filter(file -> endswith(file, "_output.txt"), readdir(path))
@@ -1833,7 +1833,7 @@ module WaSiM
             end
         end
     end
-    
+
     function kgegrepr()
         path = pwd()
         files = rglob(r"_output.txt|_outputjl") #recurse
@@ -1851,7 +1851,7 @@ module WaSiM
             end
         end
     end
-    
+
     function nsegrepr()
         path = pwd()
         files = rglob(r"_output.txt|_outputjl") #recurse
@@ -1862,14 +1862,14 @@ module WaSiM
             if !isempty(match)
                 fn = first(split(file,"_qout"))
                 for line in match
-                    line = strip(line) 
+                    line = strip(line)
                     line = join(split(line), " ")  ##remove inner whitespaces
                     printstyled(rpad("$fn:",30),lpad("$line\n",10),color=:green)
                 end
             end
         end
     end
-    
+
     """
     names and size in MB via readdir
     """
@@ -1878,7 +1878,7 @@ module WaSiM
         files = readdir()
         fzs = [(file, filesize(file) / 2^20) for file in files]
         tot = round(sum(map(x->x[2],fzs));digits=3)
-        #d=Dict(fzs) 
+        #d=Dict(fzs)
         #sort(collect(d), by = x -> x[2];rev=true)
         sv = sort(collect(fzs), by = x -> x[2];rev=true)
         sv = first(sv,8)
@@ -1892,14 +1892,14 @@ module WaSiM
         lf = length(files)
         printstyled("$lf files ...\n Total Size: $tot MB\n",color=:green)
     end
-        
+
     """
     varinfo(Main,r"ds")
     """
     function vars()
         InteractiveUtils.varinfo(;sortby=:size,minsize=1)
     end
-    
+
     function rtreeo()
         dir = pwd()
         dirs = readdir(dir)
@@ -1918,7 +1918,7 @@ module WaSiM
         end
         routes
     end
-    
+
     function treeo(;root = pwd(), indent::String = "    ")
         println(root)
         for (root, dirs, files) in walkdir(root)
@@ -1936,52 +1936,52 @@ module WaSiM
             end
         end
     end
-    
+
     """
     5 biggest folders.
     """
     function bigf()
-    
+
         printstyled("5 biggest folders...\n", color=:red)
-    
+
         cwd = pwd()
         dirs = filter(isdir, readdir(; sort=false))
-        
+
         rs, rcnt = [], []
-    
+
         for i in dirs
             ts, tcnt = calculate_folder_size(i)
             push!(rs, round(ts / 1024^2, digits=3))  # Convert size to MB and round to 3 digits
             push!(rcnt, tcnt)
         end
-    
+
         # Check if the matrix is empty
         if isempty(dirs)
             println("No directories found.")
             return
         end
-        
+
         # Create an array of directories, sizes in MB, and file counts
         data = [(dir, rs[i], rcnt[i]) for (i, dir) in enumerate(dirs)]
-    
+
         # Sort the array by size (second element) in descending order
         sorted_data = sort(data, by = x -> x[2], rev = true)
-    
+
         if isempty(sorted_data)
             println("No directories with size information found.")
             return
         end
-    
+
         # Extract the largest directories and display them in green
         largest_dirs = sorted_data[1:5]
-        
+
         # Create a formatted string for printing
         dirs_to_display = join([string(dir[1], "\t\t Size: ", dir[2], " MB \t Files: ", dir[3], "\t") for dir in largest_dirs], "\n")
         #dirs_to_display = join([string(dir[1], " (Size: ", dir[2], " MB, Files: ", dir[3], ")") for dir in largest_dirs], "\n")
-    
+
         printstyled("$dirs_to_display\n--> ", color=:green)
     end
-    
+
     """
     import InteractiveUtils.clipboard
     wslpath()|>clipboard
@@ -1995,7 +1995,7 @@ module WaSiM
         # Return the WSL path
         return wsl_path
     end
-    
+
     """
     import InteractiveUtils.clipboard
     wslpath()|>clipboard
@@ -2012,14 +2012,14 @@ module WaSiM
             println("$pt in clipoard...")
         end
     end
-    
+
     """
     return clipboard(x)
     """
     function cb(x)
         return clipboard(x)
     end
-    
+
     function oplat()
         files = filter(isfile, readdir())
         sorted_files = sort(files, by = mtime, rev = true)
@@ -2030,14 +2030,14 @@ module WaSiM
                 run(`open $lat`)
             else
                 try
-                    run(`cmd /c start $lat`)    
+                    run(`cmd /c start $lat`)
                 catch
                     @error "could not open $lat via cmd.exe"
                 end
             end
         end
-    end   
-    
+    end
+
     """
     removes latest file
     """
@@ -2058,7 +2058,7 @@ module WaSiM
             end
         end
     end
-    
+
     function lat()
         files = filter(isfile, readdir(;sort=false))
         sf = sort(files, by = mtime, rev = true)
@@ -2071,11 +2071,11 @@ module WaSiM
         printstyled("$sf\n--> ",color=:green)
         return lat
     end
-    
+
     function tree_helper(root, indent)
-        
+
         entries = filter(isdir, readdir(root))
-        
+
         # #das geht auch, aber too much
         # entries = []
         # for (root, dirs, files) in walkdir(root)
@@ -2085,35 +2085,35 @@ module WaSiM
         #         push!(entries, dstr)
         #     end
         # end
-        
+
         for (i, entry) in enumerate(entries)
-            entry_path = joinpath(root, entry)  
+            entry_path = joinpath(root, entry)
             is_last = i == length(entries)
             entry_path = replace(entry_path, "/"=>"\\") #for win.
-            
+
             entry_path = replace(entry_path, "\\mnt"=>"mnt") #
             # Calculate the depth of the current directory
             #depth = count(x -> x == '/', entry_path) - count(x -> x == '/', root)
             depth = count(x -> x == '\\', entry_path) - count(x -> x == '\\', root)
-            
+
             # Print indentation
             if depth > 0
                 print(indent)
                 print(is_last ? "└── " : "├── ")
             end
-            
+
             # Print the current entry name
             println(entry)
-            
+
             # Recursively process subdirectories
             tree_helper(entry_path, indent * (is_last ? "    " : "│   "))
         end
     end
-    
+
     function tree(;root = pwd())
         tree_helper(root, "")
     end
-    
+
     function looks_like_number(str::AbstractString)
         try
             parse(Float64, str)
@@ -2122,7 +2122,7 @@ module WaSiM
             return false
         end
     end
-    
+
     function pyread(x::Union{String,Regex})
         """
         pyreader, reads all as stings, conversion later.
@@ -2131,7 +2131,7 @@ module WaSiM
             x = dfonly(x)|>first
         end
         pd = pyimport("pandas")
-        df = pd.read_table(x, 
+        df = pd.read_table(x,
             engine="c",
             verbose=true,
             low_memory=false,
@@ -2144,17 +2144,17 @@ module WaSiM
         col_names = convert(Array, col_names)
         col_arrays = [convert(Array, df[col]) for col in col_names]
         filtered_rows = broadcast(x->looks_like_number(x),col_arrays[1])
-        
+
         df = DataFrame(col_arrays, :auto)
-        
+
         df = df[filtered_rows, :]
-        
+
         rename!(df, col_names)
         if "YY" ∉ names(df)
             println("Column 'YY' not found in the CSV file.")
             return nothing
         end
-    
+
         function parse_date(row)
             try
                 year = parse(Int, row[1])
@@ -2165,20 +2165,20 @@ module WaSiM
                 return missing  # Return missing if parsing fails
             end
         end
-        
+
         df.date = map(parse_date, eachrow(df))
-        
+
         df = select(df, Not(1:4))
-        
+
         for x in names(df)
             if looks_like_number(x)
                 newname=replace(x,"$x"=>"C$x", count=1)
                 rename!(df,Dict(x=>newname))
             end
         end
-    
+
         #map(y->typeof(y),eachcol(df))
-    
+
         # Iterate over column names
         for colname in names(df)
             # Check if the column type is not Date
@@ -2186,11 +2186,11 @@ module WaSiM
                 df[!, colname] .= tryparse.(Float64, df[!, colname])
             end
         end
-    
+
         DataFrames.metadata!(df, "filename", x, style=:note)
-        return df 
+        return df
     end
-    
+
     function read_df(s::Union{String,Regex})
         """
         reads a DataFrame from a file w dlm and tryparse subsetting
@@ -2207,11 +2207,11 @@ module WaSiM
         end
         for i in 5:size(df,2)
             df[!,i]=replace(df[!,i],-9999.0 => missing)
-        end 
+        end
         for i in 5:size(df,2)
             replace!(df[!,i],-9999.0 => missing)
         end
-        
+
         for i in 1:3
             df[!,i]=map(x ->Int(x),df[!,i])
         end
@@ -2221,10 +2221,10 @@ module WaSiM
         metadata!(df, "filename", s, style=:note);
         return df
     end
-    
+
     function wread(x::String;skip=3)
         """
-        Read wasim ts with DelimitedFiles.readdlm, skipto line 3 
+        Read wasim ts with DelimitedFiles.readdlm, skipto line 3
         no header column
         """
         df = DelimitedFiles.readdlm(x, '\t', Float64, '\n';
@@ -2232,7 +2232,7 @@ module WaSiM
         df = DataFrame(df,:auto)
         for i in 5:size(df,2)
             df[!,i]=replace(df[!,i],-9999.0 => missing)
-        end 
+        end
         for i in 5:size(df,2)
             replace!(df[!,i],-9999.0 => missing)
         end
@@ -2244,10 +2244,10 @@ module WaSiM
         df=df[:,Not(1:4)]
         metadata!(df, "filename", x, style=:note);
     end
-    
+
     function wread(x::Regex;skip=3)
         """
-        Read wasim ts with DelimitedFiles.readdlm, skipto line 3 
+        Read wasim ts with DelimitedFiles.readdlm, skipto line 3
         no header column
         """
         rgx = glob(x)|>first
@@ -2257,7 +2257,7 @@ module WaSiM
         df = DataFrame(df,:auto)
         for i in 5:size(df,2)
             df[!,i]=replace(df[!,i],-9999.0 => missing)
-        end 
+        end
         for i in 5:size(df,2)
             replace!(df[!,i],-9999.0 => missing)
         end
@@ -2269,12 +2269,12 @@ module WaSiM
         df=df[:,Not(1:4)]
         metadata!(df, "filename", x, style=:note);
     end
-    
+
     function wintree()
         #run(`cmd /c tree /f`)
         run(`cmd /c tree`)
     end
-    
+
     """
     cd into dir of file
     """
@@ -2292,29 +2292,29 @@ module WaSiM
         d=pwd()
         println("current dir: $d")
     end
-    
+
     cdinto = cdof
-    
+
     #k=raw"C:/Users/Public/Documents/Python_Scripts/julia/smallfuncs.jl"
-    
+
     # k=src_path*"/smallfuncs.jl"
     # println("script loc is $k")
-    
+
     #homedir()|>cd
-    
+
     function pyplot_df(df::DataFrame;log=false)
         x = df.date
         ln = (filter(x -> !occursin(r"date|month|year", x), names(df)))
-           
+
         for col in ln
             y = df[!, Symbol(col)]
             PyPlot.plot(x, y, label=col)
         end
-    
+
         if log
             PyPlot.yscale("log")
         end
-    
+
         PyPlot.xlabel("Date")
         PyPlot.ylabel("")
         PyPlot.legend()
@@ -2322,14 +2322,14 @@ module WaSiM
         PyPlot.title(ti)
         PyPlot.grid(true)
     end
-    
+
     function fsz(;rec=false)
         """
         Returns the total size of all files in the current directory non recursively.
         """
         total_size = 0
         files = readdir()  # Get a list of files in the current directory
-        
+
         for file in files
             filepath = joinpath(pwd(), file)  # Get the full path of the file
             if isfile(filepath)
@@ -2337,13 +2337,13 @@ module WaSiM
                 total_size += size
             end
         end
-        
+
         nr=length(files)
-    
+
         total_size_mb = total_size / (1024 * 1024)  # Convert size to megabytes
         total_size_mb = round(total_size_mb, digits=2)  # Round to 2 decimal places
         printstyled("Total size of $nr files in $(pwd()): $total_size_mb MB\n", color=:green)
-        
+
         if rec
             dirs = readdir()
             for dir in dirs
@@ -2356,7 +2356,7 @@ module WaSiM
         end
         #return total_size_mb
     end
-    
+
     function fsize()
         """
         ALL names and size in MB via readdir
@@ -2370,13 +2370,13 @@ module WaSiM
         printstyled("Total Size: $tot MB\n",color=:green)
         return(odf)
     end
-    
+
     #when Df loaded
     function waread2(x::String)
         """
         Read the text file, preserve line 1 as header column
         Instead of using CSV.read, we use CSV.File to create a lazy representation of the file.
-        This avoids reading the entire file into memory at once, 
+        This avoids reading the entire file into memory at once,
         which can be more memory-efficient for large datasets.
         """
         ms = ["-9999", "lin", "log", "--"]
@@ -2388,8 +2388,8 @@ module WaSiM
         metadata!(df, "filename", x, style=:note)
         return df
     end
-    
-    
+
+
     """
     Fastest Reader. is also dfr.
     Read the text file, preserve line 1 as header column
@@ -2397,19 +2397,19 @@ module WaSiM
     function dfr(x::String)
         ms = ["-9999","lin","log","--"]
         df = try
-         CSV.read(x, DataFrame; 
-            delim="\t", 
-            header=1, 
-            missingstring=ms, 
-            #maxwarnings = 1, 
+         CSV.read(x, DataFrame;
+            delim="\t",
+            header=1,
+            missingstring=ms,
+            #maxwarnings = 1,
             silencewarnings = true,
-            normalizenames=true, 
+            normalizenames=true,
             types=Float64)
         catch e
             @error("error reading $x\nexiting now\n $e")
             return nothing
         end
-        
+
         df = dropmissing(df, 1)
         dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
         df.date = dt2
@@ -2421,9 +2421,9 @@ module WaSiM
                 rename!(df,Dict(x=>newname))
             end
         end
-        return df 
+        return df
     end
-    
+
     """
     dfr = waread
     """
@@ -2446,33 +2446,33 @@ module WaSiM
             rename!(df,Dict(x=>newname))
             end
         end
-        return df 
+        return df
     end
-    
-    
-    
+
+
+
     function rmeq()
         """
-        removes empty TS; 
+        removes empty TS;
         use with caution!
         """
         #x = pwd()
-    
-        # files = filter(file -> (occursin(Regex(x, "i"), file) & 
+
+        # files = filter(file -> (occursin(Regex(x, "i"), file) &
         # (!occursin(r"xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg|txt", file))
         # ), readdir())
-        
-        files = filter(file -> 
+
+        files = filter(file ->
         !occursin(r"tex|pl|sh|csv|html|xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg|txt", file)
         , readdir())
-        
+
         ms = ["-9999", "lin", "log", "--"]
         for inF in files
             if isfile(inF)
                 df = CSV.File(inF; delim="\t", header=1,
-                silencewarnings=true, 
-                    normalizenames=false, 
-                    missingstring=ms, 
+                silencewarnings=true,
+                    normalizenames=false,
+                    missingstring=ms,
                     types=Float64) |> DataFrame
                 dropmissing!(df,ncol(df))
                 if nrow(df)==0
@@ -2482,7 +2482,7 @@ module WaSiM
             end
         end
     end
-    
+
     function pew()
         try
             in = clipboard()
@@ -2494,7 +2494,7 @@ module WaSiM
             @error "smth errored $e"
         end
     end
-    
+
     function pe()
         try
         inp = clipboard()
@@ -2509,8 +2509,8 @@ module WaSiM
             println("Failed to translate to wslpath.")
         end
     end
-    
-    
+
+
     """
     function to cb windowspath
     """
@@ -2532,7 +2532,7 @@ module WaSiM
             #return wsl_path
         end
     end
-    
+
     """
     function to open in notepad++
     """
@@ -2544,18 +2544,18 @@ module WaSiM
                 fl = fl
                 run(`"/mnt/c/Program Files (x86)/Notepad++/notepad++.exe" $fl`)
             else
-                fx = `wslpath -m $fl` #translate from a WSL path to a Windows path, with '/' 
+                fx = `wslpath -m $fl` #translate from a WSL path to a Windows path, with '/'
                 opcmd = `wslpath -a $opener` #force result to absolute path format
                 wslpt = readchomp(pipeline(opcmd))
                 run(`$wslpt $fx`)
-    
+
             end
-        catch        
+        catch
               @error "could not open $fl via notepad++
                   check if notepad++ is installed in $opener"
         end
     end
-    
+
     """
     function to open latest file in notepad++
     """
@@ -2566,7 +2566,7 @@ module WaSiM
             @error "$fl cannot be opened in notepad++"
             return
         end
-        
+
         try
             if platform == "windows"
                 run(`$opener $fl`)
@@ -2574,48 +2574,48 @@ module WaSiM
                 fl = fl
                 run(`"/mnt/c/Program Files (x86)/Notepad++/notepad++.exe" $fl`)
             else
-                fx = `wslpath -m $fl` #translate from a WSL path to a Windows path, with '/' 
+                fx = `wslpath -m $fl` #translate from a WSL path to a Windows path, with '/'
                 opcmd = `wslpath -a $opener` #force result to absolute path format
                 wslpt = readchomp(pipeline(opcmd))
                 run(`$wslpt $fx`)
-    
+
             end
-        catch        
+        catch
               @error "could not open $fl via notepad++
                   check if notepad++ is installed in $opener"
         end
     end
-    
+
     """
     gets pkgversion
-    filter(x-> x.second.name == pkg, Pkg.dependencies()) |> 
+    filter(x-> x.second.name == pkg, Pkg.dependencies()) |>
              x -> first(x)[2].version
     """
     function pkgversion(pkg::String)
         #pak = Pkg.dependencies()
-        # filter(x-> x.second.name == pkg, Pkg.dependencies()) |> 
+        # filter(x-> x.second.name == pkg, Pkg.dependencies()) |>
         #     x -> first(x)[2].version
         #info = filter(x-> x.second.name == pkg, Pkg.dependencies())
         #
         try
             pkg = strip(pkg)
             info = filter(x-> occursin(pkg,x.second.name),
-                #Regex(x.second.name,"i")), 
+                #Regex(x.second.name,"i")),
                 Pkg.dependencies())
             nam = first(info)[2].name
             ver = first(info)[2].version
             #nam = map(x->first(x)[2].name,info)
             #ver = map(x->first(x)[2].version,info)
-            println("$nam: $ver")    
+            println("$nam: $ver")
         catch
             @error ("not found: $pkg")
             return
         end
-        
+
     end
-    
-    
-    
+
+
+
     """
     newer version with copy df and switched func positions
     """
@@ -2625,8 +2625,8 @@ module WaSiM
         #in("date",names(dout))
         if in("year",names(dout))
             @warn "yearcol found!"
-            CSV.write(file, dout, 
-            transform = (col, val) -> something(val, missing), delim="\t")  
+            CSV.write(file, dout,
+            transform = (col, val) -> something(val, missing), delim="\t")
             return
         end
         dout.YY = map(x ->year(x),dout.date)
@@ -2634,11 +2634,11 @@ module WaSiM
         dout.DD = map(x ->day(x),dout.date)
         dout[!, "HH"] .= 0
         dout = dout[!,Cols([:YY,:MM,:DD,:HH],Not(Cols(r"date")))]
-        CSV.write(file, dout, 
-        transform = (col, val) -> something(val, missing), delim="\t")  
+        CSV.write(file, dout,
+        transform = (col, val) -> something(val, missing), delim="\t")
         nothing
     end
-    
+
     """
     writes df to file, no date conversion
     """
@@ -2651,33 +2651,33 @@ module WaSiM
             return
         end
         @info "write DataFrame to $file !"
-        CSV.write(file, df, 
+        CSV.write(file, df,
         transform = (col, val) -> something(val, missing),
             delim="\t")
         nothing
     end
-    
+
     """
     writes describe(df) to file, no date conversion
     """
     function writedesc(table,file)
-        CSV.write(file, describe(table), transform = (col, val) -> something(val, missing),delim="\t")  
+        CSV.write(file, describe(table), transform = (col, val) -> something(val, missing),delim="\t")
         nothing
     end
-    
-    
-    
+
+
+
     """
-    read df to datetime 
+    read df to datetime
     """
     function dfrdt(x::String)
         ms = ["-9999","lin","log","--"]
-        df = CSV.read(x, DataFrame; 
-            delim="\t", header=1, missingstring=ms, 
+        df = CSV.read(x, DataFrame;
+            delim="\t", header=1, missingstring=ms,
             maxwarnings = 1, #silencewarnings = true,
             normalizenames=true, types=Float64)
         df = dropmissing(df, 1)
-        dt2 = map(row -> Dates.DateTime(Int(row[1]), Int(row[2]), Int(row[3]), 
+        dt2 = map(row -> Dates.DateTime(Int(row[1]), Int(row[2]), Int(row[3]),
         Int(row[4]),0,0,0),  #note that: Dates.DateTime,dateformat"yyyy mm dd HH MM SS s"
         eachrow(df))
         df.date = dt2
@@ -2689,10 +2689,10 @@ module WaSiM
                 rename!(df,Dict(x=>newname))
             end
         end
-        return df 
+        return df
     end
-    
-    
+
+
     """
     function to open latest file in notepad++
     """
@@ -2705,18 +2705,18 @@ module WaSiM
                 fl = fl
                 run(`"/mnt/c/Program Files (x86)/Notepad++/notepad++.exe" $fl`)
             else
-                fx = `wslpath -m $fl` #translate from a WSL path to a Windows path, with '/' 
+                fx = `wslpath -m $fl` #translate from a WSL path to a Windows path, with '/'
                 opcmd = `wslpath -a $opener` #force result to absolute path format
                 wslpt = readchomp(pipeline(opcmd))
                 run(`$wslpt $fx`)
-    
+
             end
-        catch        
+        catch
               @error "could not open $fl via notepad++
                   check if notepad++ is installed in $opener"
         end
     end
-    
+
     """
     df to clipboard
     """
@@ -2724,22 +2724,22 @@ module WaSiM
         strs = sprint(io -> pretty_table(io, x, header=uppercasefirst.(names(x)), backend = Val(:text)))
         clipboard(strs)
     end
-    
-    
-    
+
+
+
     #macro jlcnt() pt=src_path*"/win/ccnt.jl";include(pt);end
     function count_files(path::String, level::Int64)
         n = 0  # Number of files
         s = 0  # Total size in bytes
-        
+
         for entry in readdir(path)
             if entry == "." || entry == ".."
                 continue
             end
-            
+
             subpath = joinpath(path, entry)
             stat_result = stat(subpath)
-            
+
             if isfile(stat_result)
                 n += 1
                 s += stat_result.size
@@ -2750,25 +2750,25 @@ module WaSiM
                 s += subs
             end
         end
-        
+
         return n, s
     end
-    
+
     """
     see also tovec in wa.
     """
     function dfvec(df::DataFrame,col::Int64)
         getproperty(df,propertynames(df)[col])
     end
-    
-    
+
+
     function jlcnt(path=pwd(), level=0)
-        n, s = count_files(path, 0)    
+        n, s = count_files(path, 0)
         printstyled("Directory: $path\n",color=:yellow)
         printstyled("Number of files: $n\n",color=:yellow)
         printstyled("Total size: $(round(s / (1024 * 1024), digits=2)) MB\n",color=:yellow)
     end
-    
+
     """
     basic tsv reader, takes arguments from CSV.File
     CSV.File(x;kw...)|>DataFrame|>z->dropmissing(z,1)
@@ -2791,9 +2791,9 @@ module WaSiM
                 rename!(df,Dict(x=>newname))
             end
         end
-        return df 
+        return df
     end
-    
+
     """
     dfroute(;ofl="route.txt")
     reads from routeg(infile, ofl) and returns a DataFrame with the following columns:
@@ -2806,9 +2806,9 @@ module WaSiM
         rename!(df,1=>"sim",2=>"obs",3=>"name")
         df.name=map(x->replace(x,r"#" => "",r" " => "",r"_>.*" => "",r"-" => "_"),df[:,3])
         sort!(df, :sim)
-        return df    
+        return df
     end
-    
+
     """
     non-recursively search for control file in current directory
     """
@@ -2841,7 +2841,7 @@ module WaSiM
             if (!occursin("regio",fl) && occursin("regio",pwd()))
                 fl = replace(fl,"control"=>"D:/Wasim/regio/control")
             elseif (!occursin("brend",fl) && occursin("brend",pwd()))
-                fl = replace(fl,"control"=>"D:/Wasim/Tanalys/DEM/brend_fab/control")            
+                fl = replace(fl,"control"=>"D:/Wasim/Tanalys/DEM/brend_fab/control")
             elseif (!occursin("temp",fl) && occursin("saale",pwd()))
                 fl = replace(fl,"control"=>"D:/temp/saale/control")
             end
@@ -2851,7 +2851,7 @@ module WaSiM
             return ""
         end
     end
-    
+
     function qtab(;todf=true)
         dfs = getq();
         # z = ctlx()
@@ -2865,7 +2865,7 @@ module WaSiM
             printstyled("no $ofl found!\n",color=:light_red)
             pretty_table(dfs,header=uppercasefirst.(names(dfs));)
             return
-        end   
+        end
         dx = dfroute(;ofl=ofl);
         rename!(dx,"sim"=>"Basin");
         dfs.Basin = parse.(Int64,dfs.Basin)
@@ -2876,8 +2876,8 @@ module WaSiM
             pretty_table(kd,header=uppercasefirst.(names(kd));)
         end
     end
-    
-    
+
+
     function getq(;prefix::AbstractString="qgko")
         rootdir = pwd()
         results = []
@@ -2898,12 +2898,12 @@ module WaSiM
                 end
             end
         end
-    
+
         if isempty(results)
             printstyled("no qgk files found!\n", color=:light_red)
-            return 
+            return
         end
-    
+
         for file in results
             x = file
             try
@@ -2928,36 +2928,36 @@ module WaSiM
                 @warn "skipping $x"
             end
         end
-    
-        return 
+
+        return
     end
-    
+
     """
         sf(pattern::Union{AbstractString, Regex}, rootdir::AbstractString=pwd())
-    
+
     Search for files in a directory and its subdirectories that match a given pattern.
-    
+
     # Arguments
     - `pattern::Union{AbstractString, Regex}`: The pattern to match. Can be a string or a regex.
     - `rootdir::AbstractString=pwd()`: The root directory to start the search from. Defaults to the current working directory.
-    
+
     # Returns
     - A list of file paths that match the pattern.
     """
     function sf(pattern::Union{AbstractString, Regex}, rootdir::AbstractString=pwd())
         # Check if rootdir is a directory
-        rootdir = isdir(rootdir) ? rootdir : throw(ArgumentError("rootdir is not a directory!"))    
-    
+        rootdir = isdir(rootdir) ? rootdir : throw(ArgumentError("rootdir is not a directory!"))
+
         # Convert pattern to regex if it's a string
         pattern = pattern isa AbstractString ? Regex("$(pattern)", "i") : pattern
-    
+
         # Function to check if a filename matches the pattern and add it to results
         function check_and_add(filename, results)
             if occursin(pattern, filename)
                 push!(results, filename)
             end
         end
-    
+
         results = []
         if any(isdir, readdir(rootdir))
             for (looproot, dirs, filenames) in walkdir(rootdir)
@@ -2971,10 +2971,10 @@ module WaSiM
                 check_and_add(filename, results)
             end
         end
-    
+
         return results
     end
-    
+
     function jdd(;return_string=true)
         """
         """
@@ -2994,7 +2994,7 @@ module WaSiM
                     #v = string.(cwd,"\\",dir,": ",size/1024^2," MB\n")
                     v = hcat(string.(cwd,"\\",dir,),size/1024^2)
                     push!(vst,v)
-                end   
+                end
             end
         end
       return(vst)
@@ -3006,21 +3006,21 @@ module WaSiM
         lfs = 0
         for (root, dirs, files) in walkdir(cwd)
             for file in files
-                lfs += 1 
+                lfs += 1
                 osize += stat(joinpath(root, file)).size
             end
-        end 
+        end
         if (msg)
             lfs = string(lfs)
             log = string("# $lfs files\n# $cwd: ",round(osize/1024^2;digits=2)," MB")
             @printf("%-40s %15.3f GB\n","$cwd:",osize/1024^3)
-            return clipboard(log)      
-        end 
+            return clipboard(log)
+        end
         @printf("%-40s %15.3f GB\n","$(cwd):",osize/1024^3)
-    end 
+    end
 
     function ct(ext::AbstractString)
-        cwd = pwd() 
+        cwd = pwd()
         osize = 0
         fz = 0
         m = []
@@ -3033,17 +3033,17 @@ module WaSiM
         fz += stat(nm).size
         push!(m,(nm))
         end
-        end 
-        end 
+        end
+        end
         n=repeat(" - -",10)
         println(n*" sum of ",ext*n)
         @printf("%-40s %15.2f MB\n","$(cwd):",fz/1024^2);
         println(n,length(m)," matches "*n,"\n")
         return(m)
-    end 
+    end
 
     function ct()
-        cwd = pwd() 
+        cwd = pwd()
         osize = 0
         fz = 0
         m = []
@@ -3057,10 +3057,10 @@ module WaSiM
             @printf("%-40s %15.2f MB\n","$(nm):",osize/1024^2);
             fz += stat(nm).size
             push!(m,(nm))
-        end     
-        end 
-        end 
-        # sort(df, [order(:a), order(:b, rev = true)]) 
+        end
+        end
+        end
+        # sort(df, [order(:a), order(:b, rev = true)])
         # sorted_files = sort(collect(keys(sizes)), by=x->sizes[x], rev=false)
         # println(sorted_files)
         n=repeat(" - -",10)
@@ -3107,7 +3107,7 @@ module WaSiM
     get sorted DF by size recursivley
     """
     function fz()
-        cwd = pwd() 
+        cwd = pwd()
         osize = 0
         m = []
         for (root, dirs, files) in walkdir(cwd)
@@ -3119,12 +3119,12 @@ module WaSiM
             :size=>osize,
             :fullnaname=>nm))
             end
-        end 
+        end
     end
-        df = DataFrame(m)     
+        df = DataFrame(m)
         sort!(df, [order(:size,rev = true), order(:name)])
         return(df)
-    end 
+    end
 
     function lg(path::AbstractString, ext::AbstractString)
         files = readdir(path)
@@ -3165,7 +3165,7 @@ module WaSiM
                 cols(s),
                 title=ti,
                 yaxis=:log,
-                legend = :topright) 
+                legend = :topright)
     end
 
     function ddense(df::DataFrame)
@@ -3195,7 +3195,7 @@ module WaSiM
             for (looproot, dirs, filenames) in walkdir(rootdir)
                 for filename in filenames
                     if (occursin(x,filename)) && (!occursin(r"txt|yrly|nc|png|svg|grd",filename))
-                        push!(results, joinpath(looproot, filename)) 
+                        push!(results, joinpath(looproot, filename))
                     end
                 end
             end
@@ -3205,8 +3205,8 @@ module WaSiM
             end
             fn=first(results)
         else
-            fn=try 
-                first(filter(file -> (occursin(x,file) & 
+            fn=try
+                first(filter(file -> (occursin(x,file) &
                 (!occursin(r"xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg",
                 file))), readdir()))
                 #That’s a speedup of about 2x, but x is a string
@@ -3221,7 +3221,7 @@ module WaSiM
         x = fn
         ms=["-9999","lin","log","--"]
         df = CSV.read(x,DataFrame,
-        missingstring = ms, 
+        missingstring = ms,
         # ntasks=4,
         limit = typemax(Int),
         types = Float64,
@@ -3238,9 +3238,9 @@ module WaSiM
         df.date = Date.(string.(df.YY,"-",df.MM,"-",df.DD),"yyyy-mm-dd");
         df=df[:,Not(1:3)]
         metadata!(df, "filename", x, style=:note);
-        
+
         #s = (filter(x->!occursin(r"year|date",x),names(df)))
-        #renamer - remove char _   
+        #renamer - remove char _
         for x in names(df)
             if startswith(x,"_")
             #newname=replace(x,"_"=>"C")
@@ -3250,14 +3250,14 @@ module WaSiM
         end
         #names(df)
         #s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
-        return df 
+        return df
     end
 
     function readdf(x::AbstractString)
         """
         --- main reader ---
-        delim: if no argument is provided, 
-        parsing will try to detect the most consistent delimiter on the 
+        delim: if no argument is provided,
+        parsing will try to detect the most consistent delimiter on the
             first 10 rows of the file
         """
         ms=["-9999","lin","log"]
@@ -3271,7 +3271,7 @@ module WaSiM
         normalizenames=true,
         drop=(i, nm) -> i == 4) #|> dropmissing
         dropmissing!(df,1)
-        #df.DD  = map(x -> begin val = tryparse(Int, x); 
+        #df.DD  = map(x -> begin val = tryparse(Int, x);
         #ifelse(typeof(val) == Nothing, missing, val) end, df.DD )
         #map(x ->Int(x),df[!,1:3])
         #map(x ->round(x;digits=0),df.YY)
@@ -3284,7 +3284,7 @@ module WaSiM
         df=df[:,Not(1:3)]
         DataFrames.metadata!(df, "filename", x, style=:note);
             #s = (filter(x->!occursin(r"year|date",x),names(df)))
-        #renamer - remove char _   
+        #renamer - remove char _
         for x in names(df)
             if startswith(x,"_")
             #newname=replace(x,"_"=>"C")
@@ -3292,7 +3292,7 @@ module WaSiM
             rename!(df,Dict(x=>newname))
             end
         end
-        return df 
+        return df
     end
 
     function old_waread(x::AbstractString)
@@ -3320,7 +3320,7 @@ module WaSiM
         Read the text file, preserve line 1 as header column
         """
         ms=["-9999","lin","log","--"]
-        df = CSV.read(x, DataFrame, 
+        df = CSV.read(x, DataFrame,
             delim="\t",
             header=1,
             missingstring=ms,
@@ -3340,13 +3340,13 @@ module WaSiM
     """
     Read the text file, preserve line 1 as header column
     Instead of using CSV.read, we use CSV.File to create a lazy representation of the file.
-    This avoids reading the entire file into memory at once, 
+    This avoids reading the entire file into memory at once,
     which can be more memory-efficient for large datasets.
     kwargs are passed to CSV.read
     """
     function waread2(x::String;kwargs...)
         ms = ["-9999","-9999.0","lin", "log", "--"]
-        df = CSV.File(x; delim="\t", header=1, normalizenames=true, 
+        df = CSV.File(x; delim="\t", header=1, normalizenames=true,
             missingstring=ms, types=Float64, kwargs...) |> DataFrame
         dropmissing!(df,1)
         dt2 = [Date(Int(row[1]), Int(row[2]), Int(row[3])) for row in eachrow(df)]
@@ -3370,7 +3370,7 @@ module WaSiM
             yc = fl[3,5:end]|>collect
             no = fl[4,5:end]|>collect
             pts = ArchGDAL.IGeometry[]
-            
+
             #for i in 1:length(xc)
             for i in 1:lastindex(xc)
                 pt = ArchGDAL.createpoint([xc[i],yc[i]])
@@ -3379,8 +3379,8 @@ module WaSiM
                 end
                 push!(pts,pt)
             end
-            
-            nd = DataFrame(geometry=pts, 
+
+            nd = DataFrame(geometry=pts,
                 name=names(fl)[5:end],
                 ez = ez, no = no,
                 xc=xc, yc=yc)
@@ -3390,9 +3390,9 @@ module WaSiM
             end
         end
 
-        df = CSV.read(x, DataFrame; 
-            delim="\t", header=1, 
-            missingstring=ms, 
+        df = CSV.read(x, DataFrame;
+            delim="\t", header=1,
+            missingstring=ms,
             maxwarnings = 1, #silencewarnings = true,
             normalizenames=true, types=Float64)
         df = dropmissing(df, 1)
@@ -3406,7 +3406,7 @@ module WaSiM
                 rename!(df,Dict(x=>newname))
             end
         end
-            
+
         if (pts_and_data && !station)
             fl = CSV.read(x, DataFrame; limit=4)
             ez, xc, yc, no = [fl[i, 5:end] |> collect for i in 1:4]
@@ -3421,7 +3421,7 @@ module WaSiM
         else
             return df
         end
-        
+
     end
 
     """
@@ -3443,7 +3443,7 @@ module WaSiM
             rename!(df,Dict(x=>newname))
             end
         end
-        return df 
+        return df
     end
 
     function loadalldfs(path::AbstractString)
@@ -3565,13 +3565,13 @@ module WaSiM
         s = names(df)[1:2]
         t2 = string.(ti,"\n",s[1],"|",s[2],ti)
         l = @layout([a b;c])
-        
-        #p1 = StatsPlots.plot( 
+
+        #p1 = StatsPlots.plot(
         a = qqplot(df[!,1],df[!,2], qqline = :fit,title = "fit")
         b = qqplot(Cauchy,df[!,2],title = "Cauchy")
         c = qqnorm(df[!,2], qqline = :R,
             xlabel = s[1], ylabel = s[2],title = "R")
-            
+
         Plots.plot(a, b, c, layout=l)#,title = t2)
     end
 
@@ -3585,9 +3585,9 @@ module WaSiM
         end
         s = names(df)[1:2]
         t2 = string.(ti,"\n",s[1],"|",s[2],ti)
-        StatsPlots.plot( 
-        qqplot(df[!,1],df[!,2], qqline = :fit), 
-        qqplot(Cauchy,df[!,2]), 
+        StatsPlots.plot(
+        qqplot(df[!,1],df[!,2], qqline = :fit),
+        qqplot(Cauchy,df[!,2]),
         qqnorm(df[!,2], qqline = :R),
         title = t2)
     end
@@ -3612,7 +3612,7 @@ module WaSiM
     end
 
     """
-    vioplot wasim timeseries 
+    vioplot wasim timeseries
     """
     function vio(mm::Regex)
         df = readdf(mm)
@@ -3622,7 +3622,7 @@ module WaSiM
         catch
         @warn "No basename in metadata!"
         ti = raw""
-        end    
+        end
         if (any(x->occursin("year",x),names(df)))
             #s = Symbol.(filter(x->!occursin("year",x),names(df)))
             df = df[!,Not("year")]
@@ -3630,7 +3630,7 @@ module WaSiM
             @df df StatsPlots.violin(str,cols(s),linewidth=0.1)
             #@df df StatsPlots.boxplot!(str,cols(s),fillalpha=0.75, linewidth=0.25,legend=false);
             title!(ti)
-        else    
+        else
         s = Symbol.(filter(x->!occursin("date",x),names(df)))
         @df df StatsPlots.violin(str,cols(s),linewidth=0.1)
         #@df df StatsPlots.boxplot!(str,cols(s),fillalpha=0.75, linewidth=0.25,legend=false);
@@ -3646,7 +3646,7 @@ module WaSiM
         catch
         @warn "No basename in metadata!"
         ti = raw""
-        end    
+        end
         if (any(x->occursin("year",x),names(df)))
             #s = Symbol.(filter(x->!occursin("year",x),names(df)))
             df = df[!,Not("year")]
@@ -3654,7 +3654,7 @@ module WaSiM
             @df df StatsPlots.violin(str,cols(s),linewidth=0.1)
             #@df df StatsPlots.boxplot!(str,cols(s),fillalpha=0.75, linewidth=0.25,legend=false);
             title!(ti)
-        else    
+        else
         s = Symbol.(filter(x->!occursin("date",x),names(df)))
         @df df StatsPlots.violin(str,cols(s),linewidth=0.1)
         #@df df StatsPlots.boxplot!(str,cols(s),fillalpha=0.75, linewidth=0.25,legend=false);
@@ -3672,7 +3672,7 @@ module WaSiM
             catch
             @warn "No basename in metadata!"
             ti = raw""
-            end    
+            end
             if (any(x->occursin("year",x),names(df)))
                 #s = Symbol.(filter(x->!occursin("year",x),names(df)))
                 df = df[!,Not("year")]
@@ -3680,7 +3680,7 @@ module WaSiM
                 @df df StatsPlots.violin(str,cols(s),linewidth=0.1)
                 #@df df StatsPlots.boxplot!(str,cols(s),fillalpha=0.75, linewidth=0.25,legend=false);
                 title!(ti)
-            else    
+            else
             s = Symbol.(filter(x->!occursin("date",x),names(df)))
             @df df StatsPlots.violin(str,cols(s),linewidth=0.1)
             #@df df StatsPlots.boxplot!(str,cols(s),fillalpha=0.75, linewidth=0.25,legend=false);
@@ -3792,7 +3792,7 @@ module WaSiM
         else
             return kge
         end
-        
+
     end
 
     function lplot(x::Regex)
@@ -3801,7 +3801,7 @@ module WaSiM
             DataFrames.metadata(df)|>only|>last|>basename
         catch
             @warn "No basename in metadata!"
-        ti = raw"" 
+        ti = raw""
         end
         #o = collect(DataFrames.metadata(df))[1][2] |>basename
         ln = Symbol.(filter(x->!occursin("date",x),names(df)))
@@ -3816,9 +3816,9 @@ module WaSiM
         #     DataFrames.metadata(df)|>only|>last|>basename
         # catch
         #     @warn "No basename in metadata!"
-        #     raw"" 
+        #     raw""
         # end
-        
+
         # try
         #     dfinfo = readdlm(ti, '\t',String, '\n')[2]
         #     sz = size(df)
@@ -3834,19 +3834,19 @@ module WaSiM
             @info "$dfinfo $ti $sz"
         catch
             @warn "No df info!"
-            raw"" 
+            raw""
         end
-                
+
 
         if (any(x->occursin("year",x),names(df)))
             s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
-            plt = try 
+            plt = try
                 @df df Plots.plot(:year,cols(s),yaxis=:log,legend = leg, title=ti);
             catch
                 @warn "log on yaxis not possible !"
                 @df df Plots.plot(:year,cols(s),yaxis=:lin,legend = leg, title=ti);
             end
-        else   
+        else
             s = Symbol.(filter(x->!occursin("date",x),names(df)))
             plt =  try
                 @df df Plots.plot(:date,cols(s),yaxis=:log, legend = leg, title=ti);
@@ -3854,7 +3854,7 @@ module WaSiM
                 @warn "log on yaxis not possible !"
                 @df df Plots.plot(:date,cols(s),yaxis=:lin, legend = leg, title=ti);
             end
-            
+
             end
         return plt
     end
@@ -3866,14 +3866,14 @@ module WaSiM
             DataFrames.metadata(df)|>only|>last|>basename
         catch
             @warn "No basename in metadata!"
-        ti = raw"" 
+        ti = raw""
         end
         println("adding $ti")
         if (any(x->occursin("year",x),names(df)))
             s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
             @df df Plots.plot!(:year,cols(s),yaxis=:log,legend = :topright)
             Plots.annotate!([(20,5,text(ti, 12, :left, :top, :green))])
-        else   
+        else
             s = Symbol.(filter(x->!occursin("date",x),names(df)))
             @df df Plots.plot!(:date,cols(s),yaxis=:log, legend = :topright)
             Plots.annotate!([(20,5,text(ti, 12, :left, :top, :green))])
@@ -3898,7 +3898,7 @@ module WaSiM
         ti = "AndrewsPlot of "*basename(o[1][2])
         @df df andrewsplot(:year, cols(s), legend = :topleft,title=ti)
     end
-    
+
     function ll()
         readdir()
     end
@@ -3928,21 +3928,21 @@ module WaSiM
         nm = propertynames(df)[1:end-1];
         o = DataFrames.metadata(df)|>collect
         ti = basename(o[1][2])
-        @df df plot(:date,cols(nm[1:end-1]),yaxis=:log,title=ti)     
+        @df df plot(:date,cols(nm[1:end-1]),yaxis=:log,title=ti)
     end
 
     function lplot(df::String)
         df=readdf(df)
         nm = propertynames(df)[1:end-1];
         o = collect(DataFrames.metadata(df))[1][2] |>basename
-        @df df plot(:date,cols(nm[1:end-1]),yaxis=:log,title=o)     
+        @df df plot(:date,cols(nm[1:end-1]),yaxis=:log,title=o)
     end
 
     function lplotf(df::String)
         df=readdf(df)
         nm = propertynames(df)[1:end-1];
         o = collect(DataFrames.metadata(df))[1][2] |>basename
-        @df df plot(:date,cols(nm[1:end-1]),yaxis=:log,title=o)     
+        @df df plot(:date,cols(nm[1:end-1]),yaxis=:log,title=o)
     end
 
     function getnames(ncs::Vector{Raster})
@@ -3952,7 +3952,7 @@ module WaSiM
 
     function getnames(dfs::Vector)
         nms = [];
-        for i in dfs;	
+        for i in dfs;
             x=collect(DataFrames.metadata(i))[1][2]|>basename
             push!(nms, x)
         end
@@ -3961,7 +3961,7 @@ module WaSiM
 
     function getnames(rg::String,dfs::Vector)
         nms = [];
-        for i in dfs;	
+        for i in dfs;
             x=collect(DataFrames.metadata(i))[1][2]|>basename
             push!(nms, x)
         end
@@ -4048,10 +4048,10 @@ module WaSiM
     """
     function regand(v::Vector{String},x1::AbstractString,y1::AbstractString)
         needle=join([x1,y1],"+.*");
-        z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))] 
+        z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
     return(z)
     end
-    
+
     function regand(v::Vector{String},xv::Tuple{String, String})
         needle=join([xv[1],xv[2]],"+.*");
         z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
@@ -4086,7 +4086,7 @@ module WaSiM
     """
     function regand(v::Vector{Any},a::String, b::String)
         needle=Regex(join([a,b],"+.*"),"i")
-        z = v[(broadcast(x->occursin(needle,x),v))] 
+        z = v[(broadcast(x->occursin(needle,x),v))]
         if length(z)==1
             return(only(z))
         else
@@ -4100,7 +4100,7 @@ module WaSiM
     like regand(getnames(dfs),r"tem")
     """
     function regand(v::Vector{Any},xv::Regex)
-        z = v[(broadcast(x->occursin(xv,x),v))] 
+        z = v[(broadcast(x->occursin(xv,x),v))]
     return(z)
     end
 
@@ -4110,36 +4110,36 @@ module WaSiM
         else
             v = rglob(x1)
         end
-        
+
         z = v[broadcast(x->!endswith(x,r"nc|png|svg|jpg|txt|log"i),v)];
         return(z)
     end
-    
+
     function dfonly(x1::Regex)
-        z = filter(file -> occursin(x1,file), 
-        readdir()[broadcast(x->!occursin(r"^wq|xml|nc|png|zip|7z|svg|jpg",x),readdir())]);       
-        # readdir()[broadcast(x->!endswith(x,"nc"),readdir())]);       
+        z = filter(file -> occursin(x1,file),
+        readdir()[broadcast(x->!occursin(r"^wq|xml|nc|png|zip|7z|svg|jpg",x),readdir())]);
+        # readdir()[broadcast(x->!endswith(x,"nc"),readdir())]);
         return(z)
     end
 
     function dfon(x1::AbstractString)
-        z = filter(file -> occursin(Regex(x1,"i"),file), 
+        z = filter(file -> occursin(Regex(x1,"i"),file),
         readdir()[broadcast(x->!endswith(x,"nc"),readdir())]);
         return(z)
     end
 
-   
+
     # function nconly(x1::Union{AbstractString,Regex})
     #     v::Vector{String} = readdir();
     #     v = v[broadcast(x->endswith(x,"nc"),v)];
     #     if x1 isa Regex
-    #         z = v[(broadcast(x->occursin(x1,x),v))] 
+    #         z = v[(broadcast(x->occursin(x1,x),v))]
     #     else
-    #         z = v[(broadcast(x->occursin(Regex(x1,"i"),x),v))] 
+    #         z = v[(broadcast(x->occursin(Regex(x1,"i"),x),v))]
     #     end
     #     return(z)
     # end
-    
+
 
     function denseplot(df::String)
         df=readdf(df)
@@ -4148,14 +4148,14 @@ module WaSiM
     end
 
 
-    
+
     """
     plots wasim timeseries
     kwargs... passed to plot
     """
     function dfp(mm::Union{Regex,String};leg = :outertopright, kwargs...)
         if mm isa(String)
-            try 
+            try
                 df = readdf(mm)
             catch
                 df = readdf(first(dfonly(mm)))
@@ -4163,9 +4163,9 @@ module WaSiM
         else
             df = readdf(mm)
         end
-        
+
         o = DataFrames.metadata(df)|>collect
-        ti = basename(o[1][2]) 
+        ti = basename(o[1][2])
 
         # ti = CSV.read(mm,DataFrame,limit=2,
         #     select=[1],ntasks=1) |> z->z[1,1]
@@ -4173,11 +4173,11 @@ module WaSiM
         dfinfo = readdlm(ti, '\t',String, '\n')[2]
         sz = size(df)
         @info "$dfinfo $ti $sz"
-        
+
         if (any(x->occursin("year",x),names(df)))
             s = Symbol.(filter(x->!occursin("year",x),names(df)))
             @df df Plots.plot(:year,cols(s),legend = leg, title=ti)
-        else    
+        else
         s = Symbol.(filter(x->!occursin("date",x),names(df)))
         @df df Plots.plot(:date,cols(s),legend = leg, title=ti;kwargs...)
         end
@@ -4189,7 +4189,7 @@ module WaSiM
     """
     function dfp(df::DataFrame;leg = :outertopright, kwargs...)
         #drawlegend::Union(Bool,Symbol) = :topright
-        #ti = DataFrames.metadata(df)|>only|>last|>basename 
+        #ti = DataFrames.metadata(df)|>only|>last|>basename
         ti = try
                 DataFrames.metadata(df)|>only|>last|>basename
             catch
@@ -4199,7 +4199,7 @@ module WaSiM
         if (any(x->occursin("year",x),names(df)))
             s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
             @df df Plots.plot(:year,cols(s),legend = leg, title=ti;kwargs...)
-        else    
+        else
             s = Symbol.(filter(x->!occursin(r"date|year",x),names(df)))
             @df df Plots.plot(:date,cols(s),legend = leg, title=ti;kwargs...)
         end
@@ -4218,7 +4218,7 @@ module WaSiM
         if (any(x->occursin("year",x),names(df)))
             s = Symbol.(filter(x->!occursin("year",x),names(df)))
             @df df Plots.plot(:year,cols(s),legend = :topright, title=ti;kwargs...)
-        else    
+        else
         s = Symbol.(filter(x->!occursin("date",x),names(df)))
         @df df Plots.plot(:date,cols(s),legend = :topright, title=ti;kwargs...)
         end
@@ -4237,7 +4237,7 @@ module WaSiM
         if (any(x->occursin("year",x),names(df)))
             s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
             @df df Plots.plot!(:year,cols(s),legend = :topright, title=ti;kwargs...)
-        else    
+        else
         s = Symbol.(filter(x->!occursin(r"date|year",x),names(df)))
         @df df Plots.plot!(:date,cols(s),legend = :topright, title=ti; kwargs...)
         end
@@ -4255,7 +4255,7 @@ module WaSiM
         if (any(x->occursin("year",x),names(df)))
             s = Symbol.(filter(x->!occursin("year",x),names(df)))
             @df df Plots.plot!(:year,cols(s),legend = :topright, title=ti;kwargs...)
-        else    
+        else
         s = Symbol.(filter(x->!occursin("date",x),names(df)))
         @df df Plots.plot!(:date,cols(s),legend = :topright, title=ti;kwargs...)
         end
@@ -4277,7 +4277,7 @@ module WaSiM
         if (any(x->occursin("year",x),names(df)))
             s = Symbol.(filter(x->!occursin("year",x),names(df)))
             @df df Plots.plot!(:year,cols(s),legend = :topright, title=ti;kwargs...)
-        else    
+        else
         s = Symbol.(filter(x->!occursin("date",x),names(df)))
         @df df Plots.plot!(:date,cols(s),legend = :topright, title=ti;kwargs...)
         end
@@ -4293,7 +4293,7 @@ module WaSiM
         if (any(x->occursin("year",x),names(df)))
             s = Symbol.(filter(x->!occursin("year",x),names(df)))
             @df df Plots.plot!(:year,cols(s),legend = :topright, title=ti;kwargs...)
-        else    
+        else
         s = Symbol.(filter(x->!occursin("date",x),names(df)))
         @df df Plots.plot!(:date,cols(s),legend = :topright, title=ti;kwargs...)
         end
@@ -4301,7 +4301,7 @@ module WaSiM
 
 
     function getf(ext::AbstractString)
-        cwd = pwd() 
+        cwd = pwd()
         m = []
         for (root, dirs, files) in walkdir(cwd)
         for file in files
@@ -4309,13 +4309,13 @@ module WaSiM
         nm=joinpath(root, file)
         push!(m,(nm))
         end
-        end 
-        end 
+        end
+        end
         return(m)
-    end 
+    end
 
     function getdf(ext::AbstractString)
-        cwd = pwd() 
+        cwd = pwd()
         m = []
         for (root, dirs, files) in walkdir(cwd)
         for file in files
@@ -4323,14 +4323,14 @@ module WaSiM
         nm=joinpath(root, file)
         push!(m,(nm))
         end
-        end 
-        end 
+        end
+        end
         return(m)
-    end 
+    end
 
 
     function getf(ext::AbstractString)
-        cwd = pwd() 
+        cwd = pwd()
         m = []
         for (root, dirs, files) in walkdir(cwd)
         for file in files
@@ -4338,20 +4338,20 @@ module WaSiM
         nm=joinpath(root, file)
         push!(m,(nm))
         end
-        end 
-        end 
+        end
+        end
         return(m)
-    end 
+    end
 
-    # getf(".*(^th)+.*(nc)+.*")  
+    # getf(".*(^th)+.*(nc)+.*")
     # #SAME
     # getf("^th+.*nc")
-    # ###lookbehind	
-    # #getf("stack?+.*nc") 
-    # #getf("!stack?+.*nc") 
+    # ###lookbehind
+    # #getf("stack?+.*nc")
+    # #getf("!stack?+.*nc")
 
     function plotf(ext::AbstractString)
-        cwd = pwd() 
+        cwd = pwd()
         m = []
         for (root, dirs, files) in walkdir(cwd)
         for file in files
@@ -4359,21 +4359,21 @@ module WaSiM
         nm=joinpath(root, file)
         push!(m,(nm))
         end
-        end 
-        end 
+        end
+        end
         return(
         dfp(readdf(m[1])))
-    end 
+    end
 
     function plotf(ext::String)
         dfp(readdf(ext))
         plot!(title=basename(ext))
-    end 
+    end
 
     function plotf(ext::DataFrame)
     dfp(ext)
-    end 
-    
+    end
+
     function homes()
         pt="D:/temp/saale/output/"
         cd(pt)
@@ -4424,8 +4424,8 @@ module WaSiM
         #dout = dout[!,Cols([:YY,:MM,:HH,:DD],1:end-4)]
         dout = dout[!,Cols([:YY,:MM,:DD,:HH],Not(Cols(r"date")))]
         #cls = propertynames(df)|>sort|>reverse
-        #df = df[!,cls[2:end]] 
-        CSV.write(file, dout, transform = (col, val) -> something(val, missing),delim="\t")  
+        #df = df[!,cls[2:end]]
+        CSV.write(file, dout, transform = (col, val) -> something(val, missing),delim="\t")
         nothing
     end
 
@@ -4436,8 +4436,8 @@ module WaSiM
         dout = copy(df)
         if in("year",names(dout))
             @warn "yearcol found!"
-            CSV.write(file, dout, 
-            transform = (col, val) -> something(val, missing), delim="\t")  
+            CSV.write(file, dout,
+            transform = (col, val) -> something(val, missing), delim="\t")
             return
         end
         dout.YY = map(x ->year(x),dout.date)
@@ -4445,8 +4445,8 @@ module WaSiM
         dout.DD = map(x ->day(x),dout.date)
         dout[!, "HH"] .= HH
         dout = dout[!,Cols([:YY,:MM,:DD,:HH],Not(Cols(r"date")))]
-        CSV.write(file, dout, 
-        transform = (col, val) -> something(val, missing), delim="\t")  
+        CSV.write(file, dout,
+        transform = (col, val) -> something(val, missing), delim="\t")
         nothing
     end
 
@@ -4454,9 +4454,9 @@ module WaSiM
     writes df to file, no date conversion
     """
     function writedf(df,file)
-        CSV.write(file, df, 
+        CSV.write(file, df,
         transform = (col, val) -> something(val, missing),
-            delim="\t")  
+            delim="\t")
         nothing
     end
 
@@ -4464,7 +4464,7 @@ module WaSiM
     writes describe(df) to file, no date conversion
     """
     function writedesc(table,file)
-        CSV.write(file, describe(table), transform = (col, val) -> something(val, missing),delim="\t")  
+        CSV.write(file, describe(table), transform = (col, val) -> something(val, missing),delim="\t")
         nothing
     end
 
@@ -4516,9 +4516,9 @@ module WaSiM
                     #if occursin(Regex(regex), line)
                     if Base.contains(line,snippet)
     #                    println("$file: $counter:\t $line")
-                        printstyled("$counter:\t",color=:light_red) 
-                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled("$line\n",color=:green,bold=true) 
+                        printstyled("$counter:\t",color=:light_red)
+                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true)
+                        printstyled("$line\n",color=:green,bold=true)
                     end
                 end
             end
@@ -4528,19 +4528,19 @@ module WaSiM
     function vgjl(snippet::AbstractString)
         owd = abspath(pwd())
         platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-        
+
         if platform == "windows"
-            script_dir = "C:/Users/Public/Documents/Python_Scripts/julia"
+            script_dir = dirname(pathof(WaSiM))
         else
             # Assuming you want to use a different path for Linux/WSL, adjust as needed
-            script_dir = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
+            script_dir = dirname(pathof(WaSiM))
         end
-        
+
         cd(script_dir)
-        
+
         # files = []
         files = filter(file -> endswith(file, ".jl"), readdir())
-        fwin = filter(file -> endswith(file, ".jl"), 
+        fwin = filter(file -> endswith(file, ".jl"),
             readdir(script_dir*"/win", join=true))
         files = vcat(files,fwin)
         #files = rglob(r"[.]jl$")
@@ -4550,11 +4550,11 @@ module WaSiM
         # for (looproot, dirs, filenames) in walkdir(rootdir)
         #     for filename in filenames
         #         if (occursin(suffix,filename))
-        #             push!(files, joinpath(looproot, filename)) 
+        #             push!(files, joinpath(looproot, filename))
         #         end
         #     end
         # end
-        
+
         for file in files
             open(file) do f
                 counter = 0 # Initialize the counter
@@ -4568,16 +4568,16 @@ module WaSiM
                 end
             end
         end
-        
+
         cd(owd)
     end
-    
+
 
 
 
     # for (root, dirs, files) in walkdir(owd)
     #     z = filter(file -> (endswith(file, ".jl")) && isfile(file), files)
-    #     println(z)   
+    #     println(z)
     # end
 
     """
@@ -4586,7 +4586,7 @@ module WaSiM
     function vgjlrec(snippet::AbstractString)
         owd=src_path
         for (root, dirs, files) in walkdir(owd)
-            for file in files 
+            for file in files
                 if (endswith(file, ".jl"))
                     pt=(joinpath(root, file))
                     open(pt) do f
@@ -4594,9 +4594,9 @@ module WaSiM
                         for line in eachline(f)
                             counter += 1 # Zähler erhöhen
                             if contains(line,snippet)
-                                printstyled("$counter:\t",color=:light_red) 
-                                printstyled("$pt:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                                printstyled("$line\n",color=:green,bold=true) 
+                                printstyled("$counter:\t",color=:light_red)
+                                printstyled("$pt:\t",color=:light_magenta,underline = true,blink = false,bold=true)
+                                printstyled("$line\n",color=:green,bold=true)
                             end
                         end
                     end
@@ -4617,9 +4617,9 @@ module WaSiM
                 for line in eachline(f)
                     counter += 1 # Zähler erhöhen
                     if contains(line,snippet)
-                        printstyled("$counter:\t",color=:light_red) 
-                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled("$line\n",color=:green,bold=true) 
+                        printstyled("$counter:\t",color=:light_red)
+                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true)
+                        printstyled("$line\n",color=:green,bold=true)
                     end
                 end
             end
@@ -4630,14 +4630,14 @@ module WaSiM
     function vgr(snippet::AbstractString)
         #owd = abspath(pwd())
         platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-        
+
         if platform == "windows"
             script_dir = "D:/Fernerkundungsdaten/Klassifikation/R-Sessions"
         else
             # Assuming you want to use a different path for Linux/WSL, adjust as needed
             script_dir = "/mnt/d/Fernerkundungsdaten/Klassifikation/R-Sessions"
         end
-    
+
         files = filter(file -> endswith(file, ".R"), readdir(script_dir,join=true))
         for file in files
             open(file) do f
@@ -4645,31 +4645,31 @@ module WaSiM
                 for line in eachline(f)
                     counter += 1 # Zähler erhöhen
                     if contains(line,snippet)
-                        printstyled("$counter:\t",color=:light_red) 
+                        printstyled("$counter:\t",color=:light_red)
                         printstyled(rpad("$file:",50),color=:light_magenta)
-                        #printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
+                        #printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true)
                         printstyled(lpad("$line\n",30),color=:green,bold=true)
-                        #underline = true 
+                        #underline = true
                     end
                 end
             end
         end
     end
-    
+
     function vgpyo(snippet::AbstractString)
         owd = abspath(pwd())
         # platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-        
+
         # if platform == "windows"
         #     script_dir = "src_path/Public/Documents/Python_Scripts"
         # else
         #     # Assuming you want to use a different path for Linux/WSL, adjust as needed
         #     script_dir = "/mnt/c/Users/Public/Documents/Python_Scripts"
         # end
-        
-        cd(src_path) #from global x 
-    
-    
+
+        cd(src_path) #from global x
+
+
         files = filter(file -> endswith(file, ".py"), readdir())
         for file in files
             open(file) do f
@@ -4677,20 +4677,20 @@ module WaSiM
                 for line in eachline(f)
                     counter += 1 # Zähler erhöhen
                     if contains(line,snippet)
-                        printstyled("$counter:\t",color=:light_red) 
-                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled("$line\n",color=:green,bold=true) 
+                        printstyled("$counter:\t",color=:light_red)
+                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true)
+                        printstyled("$line\n",color=:green,bold=true)
                     end
                 end
             end
         end
         cd(owd)
     end
-    
+
     function vgpy(snippet::AbstractString)
         #owd = abspath(pwd())
         # platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-        
+
         # if platform == "windows"
         #     script_dir = "src_path/Public/Documents/Python_Scripts"
         # else
@@ -4699,7 +4699,7 @@ module WaSiM
         # end
 
         script_dir = dirname(src_path)
-        
+
         files = filter(file -> endswith(file, ".py"), readdir(script_dir,join=true))
         for file in files
             open(file) do f
@@ -4707,11 +4707,11 @@ module WaSiM
                 for line in eachline(f)
                     counter += 1 # Zähler erhöhen
                     if contains(line,snippet)
-                        printstyled("$counter:\t",color=:light_red) 
+                        printstyled("$counter:\t",color=:light_red)
                         printstyled(rpad("$file:",50),color=:light_magenta)
-                        #printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
+                        #printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true)
                         printstyled(lpad("$line\n",30),color=:green,bold=true)
-                        #underline = true 
+                        #underline = true
                     end
                 end
             end
@@ -4725,7 +4725,7 @@ module WaSiM
     function vgctl(snippet::AbstractString)
         owd = pwd()
         platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-    
+
         if platform == "windows"
             nwd = "D:/Wasim/regio/control/"
             nwd2 = "D:/temp/saale/control/"
@@ -4740,9 +4740,9 @@ module WaSiM
             nwd4 = "/mnt/d/Wasim/Goldbach/revision/control/"
             nwd5 = "/mnt/d/Wasim/streu/control/"
         end
-    
+
         paths = [nwd, nwd2, nwd3, nwd4, nwd5]
-    
+
         for path in paths
             cd(path)
             println("Searching in directory: $path")
@@ -4761,10 +4761,10 @@ module WaSiM
                 end
             end
         end
-    
+
         cd(owd)
     end
-    
+
     function glob(x::AbstractString)
         """
         greps from current dir iRegex
@@ -4787,7 +4787,7 @@ module WaSiM
     #             for filename in filenames
     #                 #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
     #                 if (occursin(Regex(prefix,"i"),filename))
-    #                     push!(results, joinpath(looproot, filename)) 
+    #                     push!(results, joinpath(looproot, filename))
     #                 end
     #             end
     #         end
@@ -4796,20 +4796,20 @@ module WaSiM
     #         for filename in (filter(x->isfile(x),readdir(;join=false)))
     #             #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
     #             if (occursin(Regex(prefix,"i"),filename))
-    #                 push!(results, filename) 
+    #                 push!(results, filename)
     #             end
     #         end
     #     end
     #     return results
     # end
-    
+
     # function rglob(prefix::Regex)
     #     rootdir="."
     #     results = []
     #     for (looproot, dirs, filenames) in walkdir(rootdir)
     #         for filename in filenames
     #             if (occursin(prefix,filename))
-    #                 push!(results, joinpath(looproot, filename)) 
+    #                 push!(results, joinpath(looproot, filename))
     #             end
     #         end
     #     end
@@ -4821,7 +4821,7 @@ module WaSiM
     """
     function rglob(pattern::Union{AbstractString, Regex}, rootdir::AbstractString=pwd())
         #check it rootdir is a dir
-        rootdir = isdir(rootdir) ? rootdir : throw(ArgumentError("rootdir is not a directory!"))    
+        rootdir = isdir(rootdir) ? rootdir : throw(ArgumentError("rootdir is not a directory!"))
         results = []
         # checks if all items in rootdir are directories
         if (any(x->isdir(joinpath(rootdir, x)), readdir(rootdir)))
@@ -4829,11 +4829,11 @@ module WaSiM
                 for filename in filenames
                     if pattern isa AbstractString
                         if (occursin(Regex("$(pattern)", "i"), filename))
-                            push!(results, joinpath(looproot, filename)) 
+                            push!(results, joinpath(looproot, filename))
                         end
                     else
                         if (occursin(pattern, filename))
-                            push!(results, joinpath(looproot, filename)) 
+                            push!(results, joinpath(looproot, filename))
                         end
                     end
                 end
@@ -4843,11 +4843,11 @@ module WaSiM
             for filename in (filter(x->isfile(x), readdir(rootdir; join=true)))
                 if pattern isa AbstractString
                     if (occursin(Regex("$(pattern)", "i"), filename))
-                        push!(results, filename) 
+                        push!(results, filename)
                     end
                 else
                     if (occursin(pattern, filename))
-                        push!(results, filename) 
+                        push!(results, filename)
                     end
                 end
             end
@@ -4867,19 +4867,19 @@ module WaSiM
     #like jdd to vector of strings.
     function fdd(;cwd=pwd())
         dirs = readdir(cwd)
-        
-        if length(dirs) == 0 
+
+        if length(dirs) == 0
             println("$cwd is empty!")
             return
         end
-        
+
         if filter(x -> (isdir(x)),dirs) == []
             bn = basename(cwd)
             @info "no dirs in $bn !"
             dd()
             return
         end
-        
+
         s = []
         for dir in dirs
             if isdir(dir)
@@ -4905,7 +4905,7 @@ module WaSiM
                 #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
                 #if (occursin(Regex(prefix,"i"),filename))
                 if (endswith(filename, file_ending))
-                    push!(files, joinpath(looproot, filename)) 
+                    push!(files, joinpath(looproot, filename))
                 end
             end
         end
@@ -4985,8 +4985,8 @@ module WaSiM
         push!(dfs, p1)
             end
         end
-        df = reduce((left, right) -> 
-        innerjoin(left, right, on = :date,makeunique=true), 
+        df = reduce((left, right) ->
+        innerjoin(left, right, on = :date,makeunique=true),
         dfs)
         y = filter(x->!occursin("date",x), names(df))
         s = map(y -> Symbol(y),y)
@@ -5026,7 +5026,7 @@ module WaSiM
     #convert(DataFrame,dfs[5]|>DataFrames.metadata|>only)
 
     function freaddf(ext::AbstractString)
-        cwd = pwd() 
+        cwd = pwd()
         m = DataFrame[]
         for (root, dirs, files) in walkdir(cwd)
         for file in files
@@ -5035,10 +5035,10 @@ module WaSiM
         nm=joinpath(root, file)
         push!(m,readdf(nm))
         end
-        end 
-        end 
+        end
+        end
         return(m)
-    end 
+    end
 
     """
     reads, reduces + merges by date and plots
@@ -5054,11 +5054,11 @@ module WaSiM
             push!(dfs, p1)
             end
         end
-        # df = reduce((left, right) -> 
-        # innerjoin(left, right, on = :date,makeunique=true), 
+        # df = reduce((left, right) ->
+        # innerjoin(left, right, on = :date,makeunique=true),
         # dfs)
         df = innerjoin(unique.(dfs, xcol)..., on = xcol, makeunique=true)
-        
+
         y = filter(x->!occursin("date",x), names(df))
         s = map(y -> Symbol(y),y)
         @df df Plots.plot(:date,
@@ -5072,11 +5072,11 @@ module WaSiM
     reduces + merges by date and plots
     """
     function dfpall(dfs::Vector{DataFrame})
-        # df = reduce((left, right) -> 
-        # innerjoin(left, right, on = :date,makeunique=true), 
+        # df = reduce((left, right) ->
+        # innerjoin(left, right, on = :date,makeunique=true),
         # dfs)
         df = innerjoin(unique.(dfs, xcol)..., on = xcol, makeunique=true)
-        
+
         y = filter(x->!occursin("date",x), names(df))
         s = map(y -> Symbol(y),y)
         @df df Plots.plot(:date,
@@ -5084,7 +5084,7 @@ module WaSiM
                 #yaxis = :log,
                 legend = :bottom)
     end
-    
+
     """
     reads, reduces + merges by date
     ds = innerjoin(unique.(dfs, xcol)..., on = xcol, makeunique=true)
@@ -5102,8 +5102,8 @@ module WaSiM
             push!(dfs, p1)
             end
         end
-        # df = reduce((left, right) -> 
-        # innerjoin(left, right, on = xcol,makeunique=true), 
+        # df = reduce((left, right) ->
+        # innerjoin(left, right, on = xcol,makeunique=true),
         # dfs)
         df = innerjoin(unique.(dfs, xcol)..., on = xcol, makeunique=true)
         #xcol = string(xcol)
@@ -5117,29 +5117,29 @@ module WaSiM
     files::Vector{DataFrame};xcol=:date
     """
     function mall(files::Vector{DataFrame};xcol=:date)
-        # df = reduce((left, right) -> 
+        # df = reduce((left, right) ->
         # innerjoin(left, right, on = xcol,
         #     makeunique=true), files)
-        df = innerjoin(unique.(files, xcol)..., 
+        df = innerjoin(unique.(files, xcol)...,
             on = xcol, makeunique=true)
         df = hcat(df[!,Not(Cols(xcol))],df[:,Cols(xcol)])
         return(df)
     end
-    
+
     """
     reduces + merges by date
     files::Vector{Any};xcol=:date
     """
     function mall(files::Vector{Any};xcol=:date)
-        # df = reduce((left, right) -> 
-        # innerjoin(left, right, on = xcol,makeunique=true), 
+        # df = reduce((left, right) ->
+        # innerjoin(left, right, on = xcol,makeunique=true),
         # files)
-        df = innerjoin(unique.(files, xcol)..., 
+        df = innerjoin(unique.(files, xcol)...,
             on = xcol, makeunique=true)
         df = hcat(df[!,Not(Cols(xcol))],df[:,Cols(xcol)])
         return(df)
     end
-    
+
     function getdf(regex::AbstractString,dfs::Vector{DataFrame})
         "selects first match..."
         df = dfs[map(n->occursin(Regex(regex,"i"),n),
@@ -5157,13 +5157,13 @@ module WaSiM
     function getdf(regex::AbstractString,dfs::Vector{Any})
         "selects by regex.."
         #df = getindex(dfs,index)
-        
+
         #y = filter(x->!occursin("date",x),names(df))
         al = filter(x->occursin(Regex(regex,"i"),x),dfs)
-        
+
         df = filter(x->!occursin(r"txt|yrly|nc|png|svg|ftz_0|ftz",x),al)|>
         first |>readdf
-            
+
         return(df)
     end
 
@@ -5178,9 +5178,9 @@ module WaSiM
         :lightrainbow		,
         :lighttest];
 
-       
 
-    
+
+
     """
     resample by date
     `DataFrames.combine(groupby(df, :year), y .=> sum .=> y)`
@@ -5275,7 +5275,7 @@ module WaSiM
         return(df_yearsum)
     end
 
-    
+
 
     function bardf(x::String)
         "with String"
@@ -5293,7 +5293,7 @@ module WaSiM
         df_yearsum = DataFrames.combine(groupby(df, :year), y .=> sum .=> y);
         @df df_yearsum Plots.plot(:year,
             cols(s),
-            legend = :topright, 
+            legend = :topright,
             title=ti,
             seriestype=:bar)
     end
@@ -5314,7 +5314,7 @@ module WaSiM
         df_yearsum = DataFrames.combine(groupby(df, :year), y .=> sum .=> y);
         @df df_yearsum Plots.plot(:year,
             cols(s),
-            legend = :topright, 
+            legend = :topright,
             title=ti,
             seriestype=:bar)
     end
@@ -5334,7 +5334,7 @@ module WaSiM
             df_yearsum = DataFrames.combine(groupby(df, :year), y .=> sum .=> y);
             @df df_yearsum Plots.plot(:year,
                 cols(s),
-                legend = :topright, 
+                legend = :topright,
                 title=ti,
                 seriestype=:bar)
     end
@@ -5354,7 +5354,7 @@ module WaSiM
         meandf = DataFrames.combine(groupby(df, :year), y .=> mean .=> y);
         @df meandf Plots.plot(:year,
             cols(s),
-            legend = :topright, 
+            legend = :topright,
             title=ti,
             seriestype=:bar)
     end
@@ -5374,7 +5374,7 @@ module WaSiM
         df_yearsum = DataFrames.combine(groupby(df, :year), y .=> mean .=> y);
         @df df_yearsum Plots.plot(:year,
             cols(s),
-            legend = :topright, 
+            legend = :topright,
             title=ti,
             seriestype=:bar)
     end
@@ -5394,7 +5394,7 @@ module WaSiM
             df_yearsum = DataFrames.combine(groupby(df, :year), y .=> mean .=> y);
             @df df_yearsum Plots.plot(:year,
                 cols(s),
-                legend = :topright, 
+                legend = :topright,
                 title=ti,
                 seriestype=:bar)
     end
@@ -5414,7 +5414,7 @@ module WaSiM
             df_yearsum = DataFrames.combine(groupby(df, :year), y .=> mean .=> y);
             @df df_yearsum Plots.plot!(:year,
                 cols(s),
-                legend = :topright, 
+                legend = :topright,
                 title=ti,
                 seriestype=:bar)
     end
@@ -5437,7 +5437,7 @@ module WaSiM
          for dir in dirs
             printstyled("check dir: $dir\n",color=:light_red)
          end
-        end 
+        end
         println("$(n) files in directory")
         @printf("%-40s %15.2f MB\n","$(cwd):",osize/1024^2)
     end
@@ -5449,8 +5449,8 @@ module WaSiM
         )] |> first
         f(df)
 
-        #like: fdf("win",dfs,yrsum) 
-        #like: fdf("win",dfs,describe) 
+        #like: fdf("win",dfs,yrsum)
+        #like: fdf("win",dfs,describe)
         #indexin(1:length(dfs),
         #map(x->basename(only(DataFrames.metadata(x))[2]),dfs))
     end
@@ -5488,12 +5488,12 @@ module WaSiM
         selects df from dfvector...
         same as getdf
         example:
-        filterdf("clou",dfs)|>bardfm 
+        filterdf("clou",dfs)|>bardfm
         """
         df = dfs[map(n->occursin(Regex(str,"i"),n),
             map(x->basename(only(DataFrames.metadata(x))[2]),
             dfs))] |> first
-        
+
         # filter(n->occursin(Regex(regex,"i"),n),
         # map(x->basename(only(DataFrames.metadata(x))[2]),
         # dfs)
@@ -5519,10 +5519,10 @@ module WaSiM
             return(v)
         end
     end
-            
+
     #repl location
     #C:\Users\chs72fw\.julia\logs\repl_history.jl
-    
+
     #filter(x->occursin(r"^R",x,),keys(ENV))
     # filter(x->occursin(r"R",x.second),(ENV))
     # split(ENV["Path"],";")|>z->map(x->basename(x),z)|>println
@@ -5536,7 +5536,7 @@ module WaSiM
     simulated = dd[:,6]
     """
     function kge_df(ext::Union{String,Regex};path=pwd())
-        
+
         if ext isa Regex
             files = filter(file -> occursin(ext,file), readdir())
         else
@@ -5580,10 +5580,10 @@ module WaSiM
         v = []
         for (looproot, dirs, filenames) in walkdir(path)
             for filename in filenames
-                #if (endswith(filename, ext)) 
-                if (occursin(Regex(ext,"i"),filename)) && 
+                #if (endswith(filename, ext))
+                if (occursin(Regex(ext,"i"),filename)) &&
                     (!occursin(r"output|yrly|nc|png|svg|jpg|xml|ctl",filename))
-                    push!(results, joinpath(looproot, filename)) 
+                    push!(results, joinpath(looproot, filename))
                 end
             end
         end
@@ -5646,7 +5646,7 @@ module WaSiM
     """
     running monthly mean...
     rmm(x::DataFrame;fun=mean)
-    can also be sum. 
+    can also be sum.
     dfr(r"qbas")|>i->rmm(i;fun=sum)|>cmk.dfp
     """
     function rmm(x::DataFrame;fun=mean)
@@ -5658,12 +5658,12 @@ module WaSiM
 
         # Group by year and month and calculate the mean
         aggdat = DataFrames.combine(groupby(
-            df, [:year, :month]), 
+            df, [:year, :month]),
             names(df, Not([:date, :year, :month])) .=> fun;
             renamecols=false)
 
         # Recombine year and month to a date column
-        aggdat.date = Date.(aggdat.year, 
+        aggdat.date = Date.(aggdat.year,
             aggdat.month)
 
         # Remove the year and month columns
@@ -5685,29 +5685,29 @@ module WaSiM
                 ln = Symbol.(filter(x->!occursin("year",x),names(df)))
                 @df df Plots.plot(:year,
                     cols(ln),
-                    legend = :topright, 
+                    legend = :topright,
                     title=ti,
                     seriestype=:bar) #color=:lightrainbow
             elseif any(x->occursin("month",x),names(df))
                 ln = Symbol.(filter(x->!occursin("month",x),names(df)))
                 @df df Plots.plot(:month,
                     cols(ln),
-                    legend = :topright, 
+                    legend = :topright,
                     title=ti,
                     seriestype=:bar)
             elseif (
-                any(x->occursin("month",x),names(df)) & 
-                any(x->occursin("year",x),names(df))            
+                any(x->occursin("month",x),names(df)) &
+                any(x->occursin("year",x),names(df))
                 )
                 ln = (filter(x->!occursin("month",x),names(df)))
                 ln = Symbol.(filter(x->!occursin("year",x),ln))
                 @df df Plots.plot(:month,
                     cols(ln),
-                    legend = :topright, 
+                    legend = :topright,
                     title=ti,
                     seriestype=:bar)
             else
-                dfp(df)        
+                dfp(df)
             end
     end
 
@@ -5750,7 +5750,7 @@ module WaSiM
         2=>Int64,
         3=>Int64,
         4=>Int64,
-        5=>Int64), 
+        5=>Int64),
         skipto = 6,
         delim=" ",
         ignorerepeated=true,
@@ -5767,7 +5767,7 @@ module WaSiM
         df.MM=map(x ->Int(x),df.MM);
         df.DD=map(x ->Int(x),df.DD);
         df.date = Date.(string.(df.YY,"-",df.MM,"-",df.DD),"yyyy-mm-dd");
-        df=df[:,Not(1:3)]    
+        df=df[:,Not(1:3)]
     end
 
     function dfsplog(dfs::Vector{DataFrame};save="")
@@ -5790,7 +5790,7 @@ module WaSiM
             # Plots.annotate!(0.5, 0.5, text(nm, 14))
         end
         return p
-        if !isempty(save) 
+        if !isempty(save)
             Plots.savefig(p,save*".png")
             printstyled("$save saved as $save*.png! \n",color=:green)
         end
@@ -5811,7 +5811,7 @@ module WaSiM
             label="$nm") #geht, wenn oben legend true ist.
         end
         return p
-        if !isempty(save) 
+        if !isempty(save)
             Plots.savefig(p,save*".png")
             printstyled("$save saved as $save*.png! \n",color=:green)
         end
@@ -5830,9 +5830,9 @@ module WaSiM
                 for line in eachline(f)
                     counter += 1 # Zähler erhöhen
                     if contains(line,snippet)
-                        printstyled("$counter:\t",color=:light_red) 
-                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled("$line\n",color=:green,bold=true) 
+                        printstyled("$counter:\t",color=:light_red)
+                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true)
+                        printstyled("$line\n",color=:green,bold=true)
                     end
                 end
             end
@@ -5840,8 +5840,8 @@ module WaSiM
         #cd(owd)
     end
 
-    
-    
+
+
     """
     date to last/first position
     df = select(df, Not(:date), :)
@@ -5897,7 +5897,7 @@ module WaSiM
         #run(`cmd /c tree /f`)
         run(`cmd /c tree`)
     end
-    
+
     function qall_num()
         files = glob("qgko")
         for file in files
@@ -5905,11 +5905,11 @@ module WaSiM
             #x = "qgkofab.m6.2010"
             x = file
             try
-                df = DataFrame(CSV.File(x, header=false, 
+                df = DataFrame(CSV.File(x, header=false,
                                     delim="\t",
                                     ignorerepeated=true,
                                     types = String
-                                    )) 
+                                    ))
                                     #types=[String, String, String])                                )
                 println(x)
                 pattern = r"^[LIN. R]|^[LOG. R]|^CO"
@@ -5927,7 +5927,7 @@ module WaSiM
                 mask = [occursin(pattern, df[i, 1]) for i in 1:nrow(df)]
                 dx = df[mask, :]
                 dx = permutedims(dx) |>dropmissing
-                
+
                 #mapcols!(x -> parse(Float64, x), dx)
                 #mapcols(x -> x.^2, dx)
 
@@ -5948,8 +5948,8 @@ module WaSiM
                 dout = dx[3:end,:]
                 for col in names(dout)[1:end-1]
                     dout[!, col] = parse.(Float64, replace.(dout[!, col], "," => ""))
-                end          
-                
+                end
+
                 #mapcols!(x -> parse(Float64, x), dout)
                 #dout = hcat(dx[!,Cols(r"bas")],dx[:,Not(Cols(r"bas"))])
                 dout.basin = map(x -> parse(Int, x), dout.basin)
@@ -5976,7 +5976,7 @@ module WaSiM
             #x = "qgkofab.m6.2010"
             x = file
             try
-                df = DataFrame(CSV.File(x, header=1, 
+                df = DataFrame(CSV.File(x, header=1,
                                     delim="\t",
                                     skipto=366,
                                     ntasks=1,
@@ -5985,14 +5985,14 @@ module WaSiM
                                     ignorerepeated=true,
                                     ignoreemptyrows=true,
                                     stripwhitespace=true))
-                                    
+
                 #df = CSV.read(x,DataFrame;ntasks=1)
                 println(x)
                 pattern = r"^[LIN. R]|^[LOG. R]|^CO"
                 mask = [occursin(pattern, df[i, 1]) for i in 1:nrow(df)]
                 dx = df[mask, :]
                 dx = permutedims(dx) |>dropmissing
-                
+
                 #mapcols!(x -> parse(Float64, x), dx)
                 #mapcols(x -> x.^2, dx)
 
@@ -6013,7 +6013,7 @@ module WaSiM
                 dout = dx[3:end,:]
                 for col in names(dout)[1:end-1]
                     dout[!, col] = parse.(Float64, replace.(dout[!, col], "," => ""))
-                end          
+                end
                 #mapcols!(x -> parse(Float64, x), dout)
                 #dout = hcat(dx[!,Cols(r"bas")],dx[:,Not(Cols(r"bas"))])
                 dout = hcat(dout[:,Cols("basin")],dout[:,Not(Cols(r"bas"))])
@@ -6044,11 +6044,11 @@ module WaSiM
         kge_score = kge1(ndf[!, :Simulated],ndf[!, :Observed])
         ve = round(vef(ndf[!, :Simulated],ndf[!, :Observed]), digits=2)
         subs = "RSQ: $(round(r2, digits=2))\nNSE: $(round(nse_score, digits=2))\nKGE: $(round(kge_score, digits=2))\nVE: $ve"
-        
+
         #subs = "Pearson r: $(round(overall_pearson_r, digits=2))\nPearson R²: $(round(r2, digits=2))\nNSE: $(round(nse_score, digits=2))\nKGE: $(round(kge_score, digits=2))"
         #ti = "Time Series of $(uppercase(first(split(basename(x), '-'))))"
         ti = first(split(basename(x),"_"))
-        
+
         #p = plot(title=[ti, subs], ylabel="[unit/day]", xlabel="modeled time", yscale=:log, legend=:topleft)
         p = Plots.plot(title=ti, ylabel="[mm/day]", xlabel="modeled time", yscale=:log, legend=:topleft)
         Plots.plot!(p, ndf[!, :Date], ndf[!, :Simulated], line=:dash, color=:blue, label="Modeled")
@@ -6075,7 +6075,7 @@ module WaSiM
         catch
             @warn "No basename in metadata!"
             raw""
-        end 
+        end
 
         p = Plots.plot(title=ti, ylabel="[mm/day]", xlabel="modeled time", yscale=:log, legend=:topleft)
         Plots.plot!(p, ndf[!, :Date], ndf[!, :Simulated], line=:dash, color=:blue, label="Modeled")
@@ -6153,12 +6153,12 @@ module WaSiM
         catch
         @info "No basename in metadata!"
             raw""
-        end 
-        
-        p = plot(ndf[!, :Date], ndf[!, :Simulated], 
-        title=ti, 
+        end
+
+        p = plot(ndf[!, :Date], ndf[!, :Simulated],
+        title=ti,
         line=:dash, color=:blue, label="Modeled",
-        ylabel="[mm/day]", xlabel="modeled time", 
+        ylabel="[mm/day]", xlabel="modeled time",
         yscale=:log2, legend=:topleft)
         plot!(p, ndf[!, :Date], ndf[!, :Observed], color=:red, label="Observed")
         annotate!(
@@ -6227,7 +6227,7 @@ module WaSiM
             if !isempty(match)
                 fn = first(split(file,"_qout"))
                 for line in match
-                    line = strip(line) 
+                    line = strip(line)
                     line = join(split(line), " ")  ##remove inner whitespaces
                     printstyled(rpad("$fn:",30),lpad("$line\n",10),color=:green)
                 end
@@ -6254,18 +6254,18 @@ module WaSiM
 
     """
     --- reader with fewer constrains ---
-    no |> dropmissing 
-    df[!,Cols(r"^Col|date")] |>dfp  
+    no |> dropmissing
+    df[!,Cols(r"^Col|date")] |>dfp
     """
     function odfr(x::AbstractString)
         ms=["-9999","lin","log"]
-        df::DataFrame = CSV.read(x,    
-        DataFrame,    
+        df::DataFrame = CSV.read(x,
+        DataFrame,
         missingstring=ms,
-        #delim="\t",    
+        #delim="\t",
         normalizenames=true,
         types=Float64,
-        drop=(i, nm) -> i == 4) 
+        drop=(i, nm) -> i == 4)
         df.YY=map(x ->Int(x),df.YY);
         df.MM=map(x ->Int(x),df.MM);
         df.DD=map(x ->Int(x),df.DD);
@@ -6279,18 +6279,18 @@ module WaSiM
         """
         --- reader with fewer constrains ---
         with |> dropmissing on 2nd col
-        df[!,Cols(r"^Col|date")] |>dfp  
+        df[!,Cols(r"^Col|date")] |>dfp
         """
         x=globdf(x)|>first
         println("reading $x ...")
         ms=["-9999","lin","log","--","A-z"]
-        df = CSV.read(x,    
-        DataFrame,    
+        df = CSV.read(x,
+        DataFrame,
         missingstring=ms,
-        #delim="\t",    
+        #delim="\t",
         types = Float64,
         normalizenames=true,
-        drop=(i, nm) -> i == 4) 
+        drop=(i, nm) -> i == 4)
         dropmissing!(df , 2) #2nd column
         df.YY=map(x ->Int(x),df.YY);
         df.MM=map(x ->Int(x),df.MM);
@@ -6340,19 +6340,19 @@ module WaSiM
                         printstyled(rpad("$fn:",30),lpad("$line\n",10),color=:green)
                     end
                 end
-            end    
+            end
         catch
             @error "no files present!"
             return
         end
-        
+
     end
 
     function globdf(x::Regex)
         """
         greps ts from current dir Regex
         """
-        filter(file -> (occursin(x,file) & 
+        filter(file -> (occursin(x,file) &
         (!occursin(r"xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg",file))
         ), readdir())
     end
@@ -6365,7 +6365,7 @@ module WaSiM
         #regex = Regex(x * "(?!\\.(xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg))","i")
         #regex = Regex(x * "(?!\\.(xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg))")
         filter(file -> (occursin(
-            Regex(x,"i"),file) & 
+            Regex(x,"i"),file) &
         (!occursin(r"xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg",file))
         ), readdir())
         #regex = Regex("\\Q$x*?!\\.(xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg)","i")
@@ -6391,10 +6391,10 @@ module WaSiM
         push!(dfs, p1)
             end
         end
-        df = reduce((left, right) -> 
+        df = reduce((left, right) ->
         innerjoin(left, right, on = :date,makeunique=true),dfs)
         ##to preserve column order and names (date at last position)
-        #df = hcat(df[!,Not(Cols(r"date"))],df[:,Cols(r"date")])  
+        #df = hcat(df[!,Not(Cols(r"date"))],df[:,Cols(r"date")])
         y = filter(x->!occursin("date",x), names(df))
         s = map(y -> Symbol(y),y)
         @df df Plots.plot(:date,
@@ -6409,18 +6409,18 @@ module WaSiM
             DataFrames.metadata(df)|>only|>last|>basename
         catch
         @warn "No basename in metadata!"
-        ti = raw"" 
+        ti = raw""
         end
         if (any(x->occursin("year",x),names(df)))
             s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
             @df df Plots.plot(:year,cols(s),yaxis=:log,legend = :topright, title=ti)
-        else   
+        else
             s = Symbol.(filter(x->!occursin("date",x),names(df)))
-            @df df Plots.plot(:date,cols(s),yaxis=:log10, 
+            @df df Plots.plot(:date,cols(s),yaxis=:log10,
             legend = :topright, title=ti)
             end
     end
-    
+
     """
     rglob qgko
     return a vector of DFs
@@ -6431,8 +6431,8 @@ module WaSiM
         for file in files
             x = file
             try
-                df = DataFrame(CSV.File(x, 
-                                header=false, 
+                df = DataFrame(CSV.File(x,
+                                header=false,
                                 delim="\t",
                                 ntasks = 1,
                                 limit=5000,
@@ -6461,7 +6461,7 @@ module WaSiM
                 DataFrames.metadata!(dout, "filename", file, style=:note);
                 dout.nm .= file
                 push!(dfs,dout)
-                
+
             catch
                 @warn("error! file $x can not be loaded as a DataFrame! ")
                 # Skip files that can't be loaded as a DataFrame
@@ -6488,7 +6488,7 @@ module WaSiM
         # for i in 5:size(df,2)
         #     #replace!(df[!,i],-9999.0 => missing)
         #     df[!,i]=replace(df[!,i],-9999.0 => missing)
-        # end 
+        # end
         for i in 5:size(df,2)
             replace!(df[!,i],-9999.0 => missing)
         end
@@ -6555,14 +6555,14 @@ module WaSiM
             end
         end
     end
-    
+
     function process_file2(input_file::String)
         """
         removes " inside textfile
         """
         lines = readlines(input_file)
         output_file = input_file * ".tmp"
-        
+
         open(output_file, "w") do file
             for line in lines
                 line = replace(line, "\"" => "")
@@ -6571,7 +6571,7 @@ module WaSiM
                 end
             end
         end
-        
+
         # Rename the temporary file to replace the original file
         mv(output_file, input_file; force=true)
     end
@@ -6602,7 +6602,7 @@ module WaSiM
             ref=row[end]
             ref=round((ref/365)*100; digits=2)
         #printstyled("Tdiff for 100 days in $year is $ref [mm]\t|\t",color=:magenta)
-        printstyled(rpad("Tdiff for 100 days in $year is $ref [mm]", 45)        
+        printstyled(rpad("Tdiff for 100 days in $year is $ref [mm]", 45)
         ,color=:magenta)
         if ref <= 0
             println("\n")
@@ -6640,7 +6640,7 @@ module WaSiM
             year=row[1]
             ref=row[end]
             ref=round((ref/365)*100; digits=2)
-        printstyled(rpad("Tdiff for 100 days in $year is $ref [mm]", 45)        
+        printstyled(rpad("Tdiff for 100 days in $year is $ref [mm]", 45)
         ,color=:magenta)
         if ref <= 0
             println("\n")
@@ -6701,7 +6701,7 @@ module WaSiM
         list_files_sorted_by_last_change
         """
         directory = pwd()
-        files = readdir(directory)  
+        files = readdir(directory)
         file_times = Dict{String, Dates.DateTime}()
         for file in files
             file_path = joinpath(directory, file)
@@ -6709,9 +6709,9 @@ module WaSiM
             file_times[file] = Dates.unix2datetime(stat_info.mtime)
         end
         #xf = sort(file_times, by = x -> x[2], rev=true)
-        
+
         file_times = collect(file_times)
-        
+
         xf = sort(file_times, by = x -> x[2], rev=true)
         xf = first(xf,11)
         sz = []                 #::Vector{Float64}
@@ -6723,7 +6723,7 @@ module WaSiM
             datetime = Dates.format(dt, "yyyy-mm-dd HH:MM")
             printstyled(rpad(file,35),color=:yellow),
             printstyled("$datetime\t" ,color=:green),
-            printstyled(rpad(size,7)," MB\n",color=:yellow)    
+            printstyled(rpad(size,7)," MB\n",color=:yellow)
         end
     end
 
@@ -6733,13 +6733,13 @@ module WaSiM
         formerly lat()
         """
         directory = pwd()
-        files = readdir(directory)  
+        files = readdir(directory)
         file_times = Dict{String, Dates.DateTime}()
         for file in files
             file_path = joinpath(directory, file)
             stat_info = stat(file_path)
             file_times[file] = Dates.unix2datetime(stat_info.mtime)
-        end   
+        end
         file_times = collect(file_times)
         xf = sort(file_times, by = x -> x[2], rev=true)
         #xf = first(xf,11)
@@ -6754,32 +6754,32 @@ module WaSiM
             merged_item = (item1.first, item1.second,item2)
             push!(merged_vector, merged_item)
         end
-        
+
         # for (file,datetime,size) in merged_vector
         #     printstyled(rpad(file,35),color=:yellow),
         #     printstyled("$datetime\t" ,color=:green),
-        #     printstyled(rpad(size,7)," MB\n",color=:yellow)    
+        #     printstyled(rpad(size,7)," MB\n",color=:yellow)
         # end
         df = DataFrame(merged_vector);
         rename!(df,["latest_file","modified","size_in_mb"]);
         df.modified=map(x -> Dates.format(x, "yyyy-mm-dd HH:MM"),df.modified)
         return(df)
     end
-    
+
     function globf(x::Regex)
         """
         greps first match current dir Regex
         """
         first(filter(file -> occursin(x,file), readdir()))
     end
-    
+
     function globf(x::AbstractString)
         """
         greps first match current dir Regex
         """
         first(filter(file -> occursin(Regex(x,"i"),file), readdir()))
     end
-    
+
     #readall = loadalldfs
     dfread = readf
     readmeteo = waread
@@ -6839,7 +6839,7 @@ module WaSiM
         # ##subset DF by value (all positive vals..)
         # ndf = filter(nm => x -> x > 0, ndf)
         #filter([1]=> x -> !any(f -> f(x), (ismissing, isnothing, isnan)), ndf)
-        ndf = filter(:date=> x -> !any(f -> f(x), (ismissing, isnothing)), ndf)   
+        ndf = filter(:date=> x -> !any(f -> f(x), (ismissing, isnothing)), ndf)
         rename!(ndf, [:Simulated,:Observed,:Date])
         dropmissing!(ndf) ##hmm sketchy..
         overall_pearson_r = cor(ndf[!, :Simulated],ndf[!, :Observed])
@@ -6854,12 +6854,12 @@ module WaSiM
         catch
         @warn "No basename in metadata!"
             raw""
-        end 
-        
-        p = plot(ndf[!, :Date], ndf[!, :Simulated], 
-        title=ti, 
+        end
+
+        p = plot(ndf[!, :Date], ndf[!, :Simulated],
+        title=ti,
         line=:dash, color=:blue, label="Modeled",
-        ylabel="[mm/day]", xlabel="", 
+        ylabel="[mm/day]", xlabel="",
         legend=:topleft)
         plot!(p, ndf[!, :Date], ndf[!, :Observed], color=:red, label="Observed")
         annotate!(
@@ -6887,9 +6887,9 @@ module WaSiM
             )
 
         if any(v)
-            df = yrsum(df) 
+            df = yrsum(df)
         end
-        
+
         s = Symbol.(filter(x -> !(occursin(r"year|date", x)), names(df)))
         ti = try
             z=DataFrames.metadata(df)|>only|>last|>basename
@@ -6898,7 +6898,7 @@ module WaSiM
             @warn "No basename in metadata!"
             ti = "Series of "*basename(pwd())
         end
-        @df df groupedbar(df.year,cols(s), 
+        @df df groupedbar(df.year,cols(s),
         legend = leg,
         xticks = df.year,
         xrotation = 45,
@@ -6915,16 +6915,16 @@ module WaSiM
             )
 
         #v = map(x->occursin(r"date", x),(names(df)))
-        
+
         if any(v)
-            df = yrsum(df) 
+            df = yrsum(df)
             # inplace yrsum:
             # y = filter(x->!occursin("date",x),names(df))
             # df[!, :year] = year.(df[!,:date])
-            # df = DataFrames.combine(groupby(df, :year), 
+            # df = DataFrames.combine(groupby(df, :year),
             #     y .=> sum .=> y)
         end
-        
+
         s = Symbol.(filter(x -> !(occursin(r"year|date", x)), names(df)))
         ti = try
             z=DataFrames.metadata(df)|>only|>last|>basename
@@ -6933,7 +6933,7 @@ module WaSiM
             @warn "No basename in metadata!"
             ti = "Series of "*basename(pwd())
         end
-        @df df groupedbar(df.year,cols(s), 
+        @df df groupedbar(df.year,cols(s),
         legend = leg,
         xticks = df.year,
         xrotation = 45,
@@ -6947,8 +6947,8 @@ module WaSiM
             rename!(df, Dict(x => newname))
         end
         s = Symbol.(filter(x -> !(occursin(r"year|date", x)), names(df)))
-        # Create a grouped bar plot for each column    
-        # StatsPlots.groupedbar(df.year,[df[!, col] for col in s], 
+        # Create a grouped bar plot for each column
+        # StatsPlots.groupedbar(df.year,[df[!, col] for col in s],
         # #group = s,#repeat(s, outer = size(df, 1)),
         # xlabel = "Year", ylabel = "Value", title = "Grouped Bar Plot")
         ti = try
@@ -6958,7 +6958,7 @@ module WaSiM
             @warn "No basename in metadata!"
             ti = "Series of "*basename(pwd())
         end
-        @df df groupedbar(df.year,cols(s), 
+        @df df groupedbar(df.year,cols(s),
         #group = s,#repeat(s, outer = size(df, 1)),
         legend = :outertopright,
         xticks = df.year,
@@ -6976,7 +6976,7 @@ module WaSiM
         dropmissing!(df,1)
         for i in 5:size(df,2)
             df[!,i]=replace(df[!,i],-9999.0 => missing)
-        end 
+        end
         # map to int for dates
         for i in 1:3
             df[!,i]=map(x ->Int(x),df[!,i])
@@ -6992,7 +6992,7 @@ module WaSiM
     kwargs... passed to CSV.File
     Read the text file, preserve line 1 as header column
     Instead of using CSV.read, we use CSV.File to create a lazy representation of the file.
-    This avoids reading the entire file into memory at once, 
+    This avoids reading the entire file into memory at once,
     which can be more memory-efficient for large datasets.
     """
     function waread2(x::Regex;kwargs...)
@@ -7001,8 +7001,8 @@ module WaSiM
 
         #@time filter(file -> occursin(Regex(x,"i"),file), readdir()) #slower
         #@time filter(file -> occursin(r"sb",file), readdir()) #slower
-        
-        # @time Grep.grep(r"sb",readdir()) #0.000541 
+
+        # @time Grep.grep(r"sb",readdir()) #0.000541
         # x="sb"
         # @time glob(x) #faster
         # @time Grep.grep(Regex(x),readdir()) #equally fast.
@@ -7014,8 +7014,8 @@ module WaSiM
         inF = first(filter(x->!occursin(r"yrly|nc|png|svg|grd",x),Grep.grep(x,readdir())))
 
         ms = ["-9999", "lin", "log", "--"]
-        df = CSV.File(inF; delim="\t", header=1, 
-            normalizenames=true, missingstring=ms, 
+        df = CSV.File(inF; delim="\t", header=1,
+            normalizenames=true, missingstring=ms,
             types=Float64, kwargs...) |> DataFrame
         dropmissing!(df,1)
         dt2 = [Date(Int(row[1]), Int(row[2]), Int(row[3])) for row in eachrow(df)]
@@ -7033,7 +7033,7 @@ module WaSiM
         files = filter(file -> occursin(x1,file),
             readdir()[
                 broadcast(x->!endswith(x,
-                r"nc|pl|txt|svg|png|jpg|grd|ftz|ftz_0|list|xml|sh|yrly"), 
+                r"nc|pl|txt|svg|png|jpg|grd|ftz|ftz_0|list|xml|sh|yrly"),
                 readdir())])
         v = []
         for file_path in files
@@ -7063,8 +7063,8 @@ module WaSiM
     function dsbar(ds::DataFrame)
         ds.name=map(x->replace(x,r"-qoutjl*" => ""),ds.name)
         ann = map(x->string.(round(x;sigdigits=1)),ds.KGE)
-        bar(ds.name, ds.KGE, xlabel = "Name", ylabel = "KGE", legend = false, 
-            title = splitpath(pwd())|>last, xrotation = 45, fmt = :png, size = (800, 600), 
+        bar(ds.name, ds.KGE, xlabel = "Name", ylabel = "KGE", legend = false,
+            title = splitpath(pwd())|>last, xrotation = 45, fmt = :png, size = (800, 600),
             fillcolor = ifelse.(ds.KGE .> 0, "cornflowerblue", "coral2"),
             annotations = (ds.name,ds.KGE, ann, :top),
             bar_width = 0.6)
@@ -7095,11 +7095,11 @@ module WaSiM
         if propertynames(df)[end] != :date
             df = hcat(df[!,Not(Cols(r"date"i))],df[:,Cols(r"date"i)])
         end
-        
+
         v = (names(df[!,1:2]))
         a = reshape(v, 1, 2)|>reverse #sim,obs
-        Plots.plot(df.date,[df[!,2], df[!,1]], 
-        label=a, 
+        Plots.plot(df.date,[df[!,2], df[!,1]],
+        label=a,
         xlabel="Date", ylabel="[mm/day]",legend = :topleft)
         r2 = round(cor(df[!,2], df[!,1])^2, digits=2)
         # annotate!(last(df.date), 0.85*maximum(df[!,1]),
@@ -7110,7 +7110,7 @@ module WaSiM
         annotate!(
             last(df.date), 0.95*maximum(df[!,1]),
             #:topright,
-        text("KGE = $kge\nNSE = $nse_value\nR² = $r2\nVE = $ve\n", 
+        text("KGE = $kge\nNSE = $nse_value\nR² = $r2\nVE = $ve\n",
         10, :black, :right)
         )
     end
@@ -7124,8 +7124,8 @@ module WaSiM
         v = (names(df[!,1:2]))
         a = reshape(v, 1, 2)
         #sim,obs
-        Plots.plot(df.date,[df[!,2], df[!,1]], 
-        label=a, 
+        Plots.plot(df.date,[df[!,2], df[!,1]],
+        label=a,
         xlabel="Date", ylabel="[mm/day]",legend = :topleft)
         r2 = round(cor(df[!,2], df[!,1])^2, digits=2)
         #annotate!(last(df.date), 0.85*maximum(df[!,1]),
@@ -7136,7 +7136,7 @@ module WaSiM
         annotate!(
             #:topright,
             last(df.date), 0.95*maximum(df[!,1]),
-        text("KGE = $kge\nNSE = $nse_value\nR² = $r2\nVE = $ve\n", 
+        text("KGE = $kge\nNSE = $nse_value\nR² = $r2\nVE = $ve\n",
         10, :black, :right)
         )
     end
@@ -7145,7 +7145,7 @@ module WaSiM
         df = readdf(x)
         v = (names(df[!,1:2]))
         a = reshape(v, 1, 2)|>reverse #sim,obs
-        Plots.plot(df.date,[df[!,2], df[!,1]], 
+        Plots.plot(df.date,[df[!,2], df[!,1]],
         label=a, xlabel="Date", ylabel="[mm/day]",legend = :topleft)
         r2 = round(cor(df[!,2], df[!,1])^2, digits=2)
         # annotate!(last(df.date), 0.85*maximum(df[!,1]),
@@ -7155,7 +7155,7 @@ module WaSiM
         ve = round(vef(df[!,2], df[!,1]), digits=2)
         annotate!(
             last(df.date), 0.95*maximum(df[!,1]),
-        text("KGE = $kge\nNSE = $nse_value\nR² = $r2\nVE = $ve\n", 
+        text("KGE = $kge\nNSE = $nse_value\nR² = $r2\nVE = $ve\n",
         10, :black, :right)
         )
     end
@@ -7164,7 +7164,7 @@ module WaSiM
         df=readdf(x)
         v = (names(df[!,1:2]))
         a = reshape(v, 1, 2)|>reverse
-        Plots.plot(df.date,[df[!,2], df[!,1]], 
+        Plots.plot(df.date,[df[!,2], df[!,1]],
         label=a, xlabel="Date", ylabel="[mm/day]",legend = :topleft)
         r2 = round(cor(df[!,2], df[!,1])^2, digits=2)
         # annotate!(last(df.date), 0.85*maximum(df[!,1]),
@@ -7174,7 +7174,7 @@ module WaSiM
         ve = round(vef(df[!,2], df[!,1]), digits=2)
         annotate!(
             last(df.date), 0.95*maximum(df[!,1]),
-        text("KGE = $kge\nNSE = $nse_value\nR² = $r2\nVE = $ve\n", 
+        text("KGE = $kge\nNSE = $nse_value\nR² = $r2\nVE = $ve\n",
         10, :black, :right)
         )
     end
@@ -7187,21 +7187,21 @@ module WaSiM
         if any(map(x->occursin("year",x),names(df)))
             df = df[!,Not(:year)]
         end
-        
+
         if any(map(x->occursin("month",x),names(df)))
             df = df[!,Not(:month)]
         end
-        
+
         if propertynames(df)[end]!=:date
             df = hcat(df[!,Not(Cols(r"date"i))],df[:,Cols(r"date"i)])
         end
-        
+
         dropmissing!(df)
-        
+
         v = (names(df[!,1:2]))
         a = reshape(v, 1, 2)|>reverse #sim,obs
-        Plots.plot(df.date,[df[!,2], df[!,1]], 
-        label=a, 
+        Plots.plot(df.date,[df[!,2], df[!,1]],
+        label=a,
         xlabel="Date", ylabel="[mm/day]",legend = :topleft)
         dropmissing!(df)
         r2 = round(cor(df[!,2], df[!,1])^2, digits=2)
@@ -7215,7 +7215,7 @@ module WaSiM
 
         annotate!(
             last(df.date), 0.95*maximum(df[!,1]),
-        text("KGE = $kge\nNSE = $nse_value\nR² = $r2\nVE = $ve\n", 
+        text("KGE = $kge\nNSE = $nse_value\nR² = $r2\nVE = $ve\n",
         10, :black, :right)
         )
     end
@@ -7228,20 +7228,20 @@ module WaSiM
         if any(map(x->occursin("year",x),names(df)))
             df = df[!,Not(:year)]
         end
-        
+
         if any(map(x->occursin("month",x),names(df)))
             df = df[!,Not(:month)]
         end
-        
+
         if propertynames(df)[end]!=:date
             df = hcat(df[!,Not(Cols(r"date"i))],df[:,Cols(r"date"i)])
         end
-        
+
         dropmissing!(df)
-        
+
         v = (names(df[!,1:2]))
         a = reshape(v, 1, 2)|>reverse #sim,obs
-        Plots.plot(df.date,[df[!,2], df[!,1]], 
+        Plots.plot(df.date,[df[!,2], df[!,1]],
         label=a, xlabel="Date", ylabel="[mm/day]",legend = :topleft)
         r2 = round(cor(df[!,2], df[!,1])^2, digits=2)
         # annotate!(last(df.date), 0.85*maximum(df[!,1]),
@@ -7252,11 +7252,11 @@ module WaSiM
         ve = round(vef(df[!,2], df[!,1]), digits=2)
         annotate!(
             last(df.date), 0.95*maximum(df[!,1]),
-        text("KGE = $kge\nNSE = $nse_value\nR² = $r2\nVE = $ve\n", 
+        text("KGE = $kge\nNSE = $nse_value\nR² = $r2\nVE = $ve\n",
         10, :black, :right)
         )
     end
-    
+
     function dpr(a::Regex,b::Regex)
         """
         correlation plots on dataframe
@@ -7268,18 +7268,18 @@ module WaSiM
 
         # a = a[!,Cols(colA,:date)]
         # b = b[!,Cols(colB,:date)]
-        
+
         a = a[!,Cols(1,:date)]
-        b = b[!,Cols(1,:date)] 
+        b = b[!,Cols(1,:date)]
 
         df = mall(a,b)
         dropmissing!(df)
-        
+
         df = hcat(df[!,Not(Cols(r"date"i))],df[:,Cols(r"date"i)])
         v = (names(df[!,1:2]))
         a = reshape(v, 1, 2)
 
-        Plots.plot(df.date,[df[!,1], df[!,2]],  label=a, 
+        Plots.plot(df.date,[df[!,1], df[!,2]],  label=a,
         #    seriestype = :bar,
             xlabel="Date", ylabel="[mm/day]",
             legend = :topleft)
@@ -7291,7 +7291,7 @@ module WaSiM
 
         annotate!(
             last(df.date), 0.95*maximum(df[!,1]),
-        text("KGE = $kge\nNSE = $nse_value\nR² = $r2\nVE = $ve\n", 
+        text("KGE = $kge\nNSE = $nse_value\nR² = $r2\nVE = $ve\n",
         10, :black, :right)
         )
     end
@@ -7299,7 +7299,7 @@ module WaSiM
     function ftsp(x::AbstractString)
         nc = NCDatasets.NCDataset(x);
         #nc.attrib
-        dict = nc|>Dict   
+        dict = nc|>Dict
         mykeys = keys(dict)
         println(string.(mykeys))
         time = nc["time"][:]
@@ -7310,13 +7310,13 @@ module WaSiM
         ym = Int(round(median(1:ym);digits=0))
         plot(time, nc[v][xm,ym,:],
         label=nc[v].attrib["units"],
-        title=nc[v].attrib["long_name"])        
+        title=nc[v].attrib["long_name"])
     end
 
     function nctodfo(x::AbstractString)
         nc = NCDatasets.NCDataset(x);
         #nc.attrib
-        dict = nc|>Dict   
+        dict = nc|>Dict
         mykeys = keys(dict)
         #println(string.(mykeys))
         v = filter(x->!occursin(r"time|lon|lat|x|y",x),string.(mykeys))|>first
@@ -7333,11 +7333,11 @@ module WaSiM
         # df = DataFrame(
         #         v=>nc[v][end,end,:],      #x, y, indices
         #         "date"=>datetime_vector)
-        DataFrames.metadata!(df, "filename", x, style=:note);        
+        DataFrames.metadata!(df, "filename", x, style=:note);
         #df.date = Date.(string.(df.x2),"yyyy-mm-ddTHH:MM:SS") #not needed
             # plot(time, nc[v][end,end,:],
                 # label=nc[v].attrib["units"],
-        # title=nc[v].attrib["long_name"])        
+        # title=nc[v].attrib["long_name"])
     end
 
     function jlt(x::Vector{String})
@@ -7353,7 +7353,7 @@ module WaSiM
 
             open(filename) do file
                 first_line = true
-                
+
 
                 for (i, line) in enumerate(eachline(file))
                     fields = split(line)
@@ -7458,8 +7458,8 @@ module WaSiM
 
     function malldf(files::Vector{DataFrame},on::Symbol)
         "reduces + merges by date"
-        df = reduce((left, right) -> 
-        innerjoin(left, right, on = on,makeunique=true), 
+        df = reduce((left, right) ->
+        innerjoin(left, right, on = on,makeunique=true),
         files)
         df = hcat(df[!,Not(Cols(r"date"))],df[:,Cols(r"date")])
         return(df)
@@ -7632,7 +7632,7 @@ module WaSiM
     #     end
     #     close(output_file)
     # end
-    
+
     #umlauts(input_file, output_file)
 
     macro bash_str(s) open(`bash`,"w",stdout) do io; print(io, s); end;end
@@ -7647,7 +7647,7 @@ module WaSiM
         #open(`cmd.exe /c start . `,"w",stdout)
         #this wrks in wsl, too
         run(`cmd.exe /c start .`)
-    end 
+    end
 
     macro pwp_str(s) open(`powershell`,"w",stdout) do io; print(io, s); end;end
     #pwp""" fdm """
@@ -7696,7 +7696,7 @@ module WaSiM
     function rsq(x::AbstractVector, y::AbstractVector)
         cor(x, y)^2
     end
- 
+
     function baryrsum(df::Regex)
         """
         automatically sums if only datecolumn is available
@@ -7708,9 +7708,9 @@ module WaSiM
             )
 
         if any(v)
-            df = yrsum(df) 
+            df = yrsum(df)
         end
-        
+
         s = Symbol.(filter(x -> !(occursin(r"year|date", x)), names(df)))
         ti = try
             z=DataFrames.metadata(df)|>only|>last|>basename
@@ -7719,7 +7719,7 @@ module WaSiM
             @warn "No basename in metadata!"
             ti = "Series of "*basename(pwd())
         end
-        @df df groupedbar(df.year,cols(s), 
+        @df df groupedbar(df.year,cols(s),
         legend = :outertopright,
         xticks = df.year,
         xrotation = 45,
@@ -7739,7 +7739,7 @@ module WaSiM
         if any(v)
             df = yrmean(df)
         end
-        
+
         s = Symbol.(filter(x -> !(occursin(r"year|date", x)), names(df)))
         ti = try
             z=DataFrames.metadata(df)|>only|>last|>basename
@@ -7748,7 +7748,7 @@ module WaSiM
             @warn "No basename in metadata!"
             ti = "Series of "*basename(pwd())
         end
-        @df df groupedbar(df.year,cols(s), 
+        @df df groupedbar(df.year,cols(s),
         legend = :outertopright,
         xticks = df.year,
         xrotation = 45,
@@ -7771,7 +7771,7 @@ module WaSiM
         if any(v)
             df = yrmean(df)
         end
-        
+
         s = Symbol.(filter(x -> !(occursin(r"year|date", x)), names(df)))
         ti = try
             z=DataFrames.metadata(df)|>only|>last|>basename
@@ -7780,7 +7780,7 @@ module WaSiM
             @warn "No basename in metadata!"
             ti = "Series of "*basename(pwd())
         end
-        @df df groupedbar(df.year,cols(s), 
+        @df df groupedbar(df.year,cols(s),
         legend = leg,
         xticks = df.year,
         xrotation = 45,
@@ -7788,23 +7788,23 @@ module WaSiM
     end
 
     """
-    kge barplot 
+    kge barplot
     """
     function kgeval()
         ds = kge_df3()
         ds.name=map(x->replace(x,r"-qoutjl.*" =>"","_" => " "),ds.name)
         ann = map(x->string.(round(x;sigdigits=2)),ds.KGE)
-        p1 = Plots.bar(ds.name, ds.KGE, xlabel = "Name", ylabel = "KGE", legend = false, 
-            title = splitpath(pwd())|>last, 
-            xrotation = 45, 
+        p1 = Plots.bar(ds.name, ds.KGE, xlabel = "Name", ylabel = "KGE", legend = false,
+            title = splitpath(pwd())|>last,
+            xrotation = 45,
             #fmt = :png,
-            ylims = (extrema(ds.KGE) .+ [-1.0, 0.5]),  
-            size = (800, 600), 
+            ylims = (extrema(ds.KGE) .+ [-1.0, 0.5]),
+            size = (800, 600),
             fillcolor = ifelse.(ds.KGE .> 0, "cornflowerblue", "coral2"),
             #annotations = (ds.name,ds.KGE, ann, :top),
             xaxis = "",
             left_margin = 10mm,
-            bottom_margin = 15mm, 
+            bottom_margin = 15mm,
             bar_width = 0.6);
 
         for i in 1:length(ds.name)
@@ -7816,23 +7816,23 @@ module WaSiM
     end
 
     # """
-    # kge barplot 
+    # kge barplot
     # takes Vector{Any} as input from pout
     # """
     # function kgdf(ds::Vector{Any})
-        
+
     #     ds.name=map(x->replace(x,r"-qoutjl.*" =>"","_" => " "),ds.name)
     #     ann = map(x->string.(round(x;sigdigits=2)),ds.KGE)
-    #     p1 = Plots.bar(ds.name, ds.KGE, xlabel = "Name", ylabel = "KGE", legend = false, 
-    #     title = splitpath(pwd())|>last, 
-    #     xrotation = 45, 
-    #     fmt = :png, 
-    #     size = (800, 600), 
+    #     p1 = Plots.bar(ds.name, ds.KGE, xlabel = "Name", ylabel = "KGE", legend = false,
+    #     title = splitpath(pwd())|>last,
+    #     xrotation = 45,
+    #     fmt = :png,
+    #     size = (800, 600),
     #     fillcolor = ifelse.(ds.KGE .> 0, "cornflowerblue", "coral2"),
     #     #annotations = (ds.name,ds.KGE, ann, :top),
     #     xaxis = "",
     #     left_margin = 10mm,
-    #     bottom_margin = 15mm, 
+    #     bottom_margin = 15mm,
     #     bar_width = 0.6);
 
     #     for i in 1:length(ds.name)
@@ -7852,15 +7852,15 @@ module WaSiM
         ds.name=map(x->replace(x,r"-qoutjl.*" =>"","_" => " "),ds.name)
         dfi = filter(row -> row.NSE .> 0, ds)
         ann = map(x->string.(round(x;sigdigits=2)),dfi.NSE)
-        Plots.bar(dfi.name, dfi.NSE, 
+        Plots.bar(dfi.name, dfi.NSE,
         xlabel = "Name", ylabel = "NSE", legend = false,
-        title = splitpath(pwd())|>last, xrotation = 45, 
+        title = splitpath(pwd())|>last, xrotation = 45,
         #fmt = :png, size = (800, 600),
         fillcolor = ifelse.(dfi.NSE .> 0, "cornflowerblue", "coral2"),
         annotations = (dfi.name,dfi.NSE, ann, :top),
         left_margin = 10mm,
-        bottom_margin = 15mm, 
-        bar_width = 0.6)        
+        bottom_margin = 15mm,
+        bar_width = 0.6)
     end
 
     """
@@ -7870,43 +7870,43 @@ module WaSiM
         ds = kge_df3()
         ds.name=map(x->replace(x,r"-qoutjl.*" =>"","_" => " "),ds.name)
         ann = map(x->string.(round(x;sigdigits=2)),ds.NSE)
-        p1 = Plots.bar(ds.name, ds.NSE, 
-            xlabel = "Name", ylabel = "NSE", legend = false, 
-            title = splitpath(pwd())|>last, 
+        p1 = Plots.bar(ds.name, ds.NSE,
+            xlabel = "Name", ylabel = "NSE", legend = false,
+            title = splitpath(pwd())|>last,
             xrotation = 45,
-            ylims = (extrema(ds.NSE) .+ [-1.0, 0.5]), 
-            #fmt = :png, 
-            size = (800, 600), 
+            ylims = (extrema(ds.NSE) .+ [-1.0, 0.5]),
+            #fmt = :png,
+            size = (800, 600),
             fillcolor = ifelse.(ds.NSE .> 0, "cornflowerblue", "coral2"),
             xaxis = "",
             left_margin = 10mm,
-            bottom_margin = 15mm, 
+            bottom_margin = 15mm,
             bar_width = 0.6);
 
         for i in 1:length(ds.name)
             Plots.annotate!(ds.name[i],ds.NSE[i],
             (ann[i],11,
                 :center,:top,:black))
-            
+
         end
         return p1
-        
-        
+
+
         #ann = map(x->string.(round(x;sigdigits=2)),dfi.NSE)
         #fontfamily="Computer Modern",
         # dfi = ds
         # Plots.bar(
-        #     dfi.name, 
-        #     dfi.NSE, 
-        #     xlabel = "Name", ylabel = "NSE", 
-        #     legend = false, 
-        #     title = splitpath(pwd())|>last, xrotation = 45, 
-        #     #fmt = :png, size = (800, 600), 
+        #     dfi.name,
+        #     dfi.NSE,
+        #     xlabel = "Name", ylabel = "NSE",
+        #     legend = false,
+        #     title = splitpath(pwd())|>last, xrotation = 45,
+        #     #fmt = :png, size = (800, 600),
         #     fillcolor = ifelse.(dfi.NSE .> 0, "cornflowerblue", "coral2"),
         #     annotations = (dfi.name,dfi.NSE, ann, :top),
-        #     bar_width = 0.6)        
+        #     bar_width = 0.6)
     end
-   
+
 
     """
     calculates water balance externally
@@ -7932,20 +7932,20 @@ module WaSiM
                 error("match failed \n ... abort.\nno special output files present!")
                 return #exit(86)
             end
-        
+
             println("calculating yearly water balance of WaSiM special output data..\n
             bwvr = rain + snow + uprs - perc - qb - qd - qi - etr_ - ei_ - etrs_\n")
-        
+
             re = Regex("preci|snow_storage_tota|Capi|Perc|baseflo|directflo|interflo|real_evap|real_tran|interception_evaporatio|snow_evaporatio","i")
             my = filter(x -> occursin(re, x), af)
             printstyled("loading...\n $my\n",color=:green)
-        
+
             if (length(my) .!= 11)==true
                 lng=length(my)
                 printstyled("found only $lng files...\n $my\n",color=:yellow)
                 error("\nfiles are missing!\ncheck so files...")
             end
-        
+
             rain = filter(x -> occursin("precip", x), af)|>only|>so_read
             snow = filter(x -> occursin("snow_storage_total", x), af)|>only|>so_read
             uprs = filter(x -> occursin("Capil", x), af)|>only|>so_read
@@ -7957,24 +7957,24 @@ module WaSiM
             etrans = filter(x -> occursin("real_trans", x), af)|>only|>so_read
             ei = filter(x -> occursin("interception_evaporation", x), af)|>only|>so_read
             etrs = filter(x -> occursin("snow_evaporation",x), af)|>only|>so_read
-        
+
             l = [rain, snow, uprs, perc, qb, qd, qifl, etr, etrans, ei, etrs]
             #typeof(l)
             nm = [names(l[i])[1] for i in 1:size(l, 1)]
             #same:
             #map(x->names(x)[1],l)
             println("loaded dataframes:\n$nm")
-        
+
             if (length(l) .!= 11)==true
                 error("files are missing!\ncheck so files...")
             end
-        
+
             d = mall(l)
             xd=copy(d)
             writewa("waba-input.wa",xd)
-        
+
             #dyr = yrsum(d)
-        
+
             pos = d[!,Cols(r"date|^(prec)|^(snow_stora)|^(Capi)")]
             pos = yrsum(pos)
             # calculate the sum of each row
@@ -7982,18 +7982,18 @@ module WaSiM
                 possums = [sum(eachrow(pos)[i]) for i in 1:size(pos, 1)],
                 year=pos[!,:year]
             )
-        
-        
+
+
             neg = d[!,Not(Cols(r"^(prec)|^(snow_stora)|^(Capi)"))]
             neg = sum.(yrsum(neg))
-        
-        
+
+
             nsum = DataFrame(
                 negsums = [sum(eachrow(neg)[i]) for i in 1:size(neg, 1)],
                 year=neg[!,:year]
             )
-        
-        
+
+
             bw = innerjoin(psum, nsum, on=:year)
             bw.bw = bw[!,:possums] .- bw[!,:negsums]
         end
@@ -8003,11 +8003,11 @@ module WaSiM
         #Plots.theme(:dao)       #latex fonts.
         #theme(:mute)
         #theme(:sand)
-        
+
         fact=.60
         plotsize = (1600*fact,800*fact)
         #yrticks = nrow(bw) > 20 ? bw.year[bw.year .% 5 .== 0] : bw.year
-        
+
         if length(bw.year) > 20
             lentime = size(bw,1)
             slice_dates = range(1, lentime, step=lentime ÷ 8)
@@ -8015,19 +8015,19 @@ module WaSiM
         else
             yrticks = bw.year
         end
-        
-        
+
+
         p1 = @df bw Plots.plot(
             :year,:bw,
             #annotations =(bw.year, bw.bw, ann, :top),
             #annotations = (bw.year,bw.bw,(ann,10,:center,:top,:black)),
             #annotations = (bw.year, bw.bw, ann, 8, :left, :top, :black),
-            legend = false, 
+            legend = false,
             seriestype=:bar,
             #xticks = bw.year,
             # more than 20 years, every 5th year one tick
-            xticks = yrticks,            
-            #xticks = ifelse.(nrow(bw)>20, bw.year .% 5,bw.year),            
+            xticks = yrticks,
+            #xticks = ifelse.(nrow(bw)>20, bw.year .% 5,bw.year),
             xtickfont = 12,
             xlabel = "",
             ylabel = "[mm]",
@@ -8037,10 +8037,10 @@ module WaSiM
             size=plotsize,
             #xrotation = 60);
             left_margin = 10mm,
-            bottom_margin = 10mm, 
-            #bottom_margin = 10px, 
+            bottom_margin = 10mm,
+            #bottom_margin = 10px,
             xrotation = 45)
-            
+
         if ann
             annot = map(x->string.(round(x;sigdigits=3))*" [mm]",bw.bw)
             for i in 1:length(bw.year)
@@ -8120,7 +8120,7 @@ module WaSiM
         return output
     end
 
-    
+
     # function read_between_flags(file::IOStream, flag1::String, flag2::String)
     #     line1 = readuntil(file, flag1)
     #     line2 = readuntil(file, flag2)
@@ -8136,7 +8136,7 @@ module WaSiM
             a = readbetween(io, "soil_table", "substance_transport")
             return(a)
         end
-        data = broadcast(x -> replace(x,    
+        data = broadcast(x -> replace(x,
         r"^#.*" => "",
         r"^[[].*" => "",
         r"method" => "",
@@ -8150,42 +8150,42 @@ module WaSiM
         result = []
         # iterate over each line
         for line in lines
-            
+
             if isempty(line)
                 continue
             end
             line = strip(line)
-            
+
             # split the line into number and fields
             number, fields = split(line, " {", limit=2)
-            
+
             # convert the number to an integer
             number = parse(Int, number[1])
-            
+
             # split the fields into individual fields
             fields = split(fields, ';')
-            
+
             # initialize a dictionary to store the data for this line
             data = Dict{String, Any}()
-            
+
             # store the number in the dictionary
             data["number"] = number
-            
+
             # iterate over each field
-            
+
             for field in fields
                 #if field isa Vector #{Vector{SubString{String}}} # check if fields is a vector of vectors
                 if field isa Vector && length(field)!=1
                     field = filter(s -> length(s)>1, first(field))
                 end
-                
+
                 # check if the field contains the " = " substring
                 if occursin("=", field)
                     # split the field into key and value
                     key, value = split(field, "=")
                     key = strip(key)
                     value = strip(value)
-                    
+
                     # check if the key is "Name"
                     if key == "Name"
                         # keep the value as a string
@@ -8211,7 +8211,7 @@ module WaSiM
                         elseif occursin(r"^\d+\.\d+ \d+\.\d+", value)
 
                             value = parse.(Float64, split(value))
-                                                    
+
                         end
                     catch
                         @warn "could not parse $value"
@@ -8220,20 +8220,20 @@ module WaSiM
 
                     end
 
-                    
+
                     # store the key-value pair in the dictionary
                     data[key] = value
                 end
             end
 
-            
+
             # append the dictionary to the result array
             push!(result, data)
         end
-    
+
         return DataFrame(result)
     end
-        
+
 
     """
     skips first line after [soil_table] i.e. no of soil types
@@ -8244,7 +8244,7 @@ module WaSiM
             a = readbetween(io, "soil_table", "substance_transport")
             return(a)
         end
-        data = broadcast(x -> replace(x,    
+        data = broadcast(x -> replace(x,
         r"^#.*" => "",
         r"^[[].*" => "",
         r"method" => "",
@@ -8262,23 +8262,23 @@ module WaSiM
             if isempty(line)
                 continue
             end
-            
+
             # split the line into number and fields
             number, fields = split(line, " {", limit=2)
-            
+
             # convert the number to an integer
             number = parse(Int, number)
-            
+
             # split the fields into individual fields
             fields = split(fields, ';')
             fields = map(f->strip(f),fields)
-            
+
             # initialize a dictionary to store the data for this line
             data = Dict{String, Any}()
-            
+
             # store the number in the dictionary
             data["number"] = number
-            
+
             # iterate over each field
             try
             for field in fields
@@ -8286,12 +8286,12 @@ module WaSiM
                 if occursin("=", field)
                     # split the field into key and value
                     key, value = split(field, "=")
-                    
+
                     # check if the key is "Name"
                     if key == "Name"
                         # keep the value as a string
                     else
-                      
+
                         # check if the value is a number
                         if occursin(r"^-?\d+(\.\d+)?$", value)
                             # convert the value to a float
@@ -8310,11 +8310,11 @@ module WaSiM
 
                             # convert the value to an array of floats
                             value = parse.(Float64, split(value))
-                                                    
+
                         end
 
                     end
-                    
+
                     # store the key-value pair in the dictionary
                     data[key] = value
                 end
@@ -8323,14 +8323,14 @@ module WaSiM
             @warn "could not parse $value"
             continue
         end
-            
+
             # append the dictionary to the result array
             push!(result, data)
         end
         df = DataFrame(result)
         df.ksat = [parse.(Float64, split(string(x))) for x in df.ksat]
         return df
-    end  
+    end
 
     function fsize(m::String)
         """
@@ -8347,14 +8347,14 @@ module WaSiM
     function cntcols(x::String)
         # Get a list of all files in the directory
         #x = "."
-        files = filter(file -> (occursin(Regex(x, "i"), file) & 
+        files = filter(file -> (occursin(Regex(x, "i"), file) &
                             (!occursin(r"xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg|txt", file))
                             ), readdir())
 
         files = filter(inF->isfile(inF),files)
                             #if isfile(inF)
         file_columns = []
-        
+
         for file in files
             # Open the file for reading
             open(file, "r") do io
@@ -8368,10 +8368,10 @@ module WaSiM
                 push!(file_columns, (file, num_columns))
             end
         end
-        
+
         # Sort the file_columns array based on the number of columns in descending order
         sorted_files = sort(file_columns, by = x -> x[2], rev = true)
-        
+
         for (file, num_columns) in sorted_files
             #println("File: ", file, " | Columns: ", num_columns)
             #printstyled(rpad("$file:",50),color=:light_magenta)
@@ -8384,27 +8384,27 @@ module WaSiM
     # cntcols("qoutjl")
     # cntcols("v0")
     """
-    removes empty TS; 
+    removes empty TS;
     use with caution!
     """
     function rmeq()
         #x = pwd()
 
-        # files = filter(file -> (occursin(Regex(x, "i"), file) & 
+        # files = filter(file -> (occursin(Regex(x, "i"), file) &
         # (!occursin(r"xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg|txt", file))
         # ), readdir())
-        
-        files = filter(file -> 
+
+        files = filter(file ->
         !occursin(r"tex|pl|sh|csv|html|xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg|txt", file)
         , readdir())
-        
+
         ms = ["-9999", "lin", "log", "--"]
         for inF in files
             if isfile(inF)
                 df = CSV.File(inF; delim="\t", header=1,
-                silencewarnings=true, 
-                    normalizenames=false, 
-                    missingstring=ms, 
+                silencewarnings=true,
+                    normalizenames=false,
+                    missingstring=ms,
                     types=Float64) |> DataFrame
                 dropmissing!(df,ncol(df))
                 if nrow(df)==0
@@ -8416,7 +8416,7 @@ module WaSiM
     end
 
     function getnames(dfs::Vector{Any})
-        try 
+        try
             nms=[]
             for df in dfs
                 x=collect(DataFrames.metadata(df))[1][2]|>basename
@@ -8438,29 +8438,29 @@ module WaSiM
         #files = glob(r"_output.txt|_outputjl") #non-recurse
         files = glob(r"qoutjl") #non-recurse
         results = DataFrame(File = String[], KGE = Float64[])  # Create an empty DataFrame to store the results
-        
+
         for file in filter(file -> endswith(file, "_output.txt"), files)
             output = readdlm(file, '\t', String)
             match = Grep.grep(r"KGE", output)
-            
+
             if !isempty(match)
                 fn = first(split(file, "_qout"))
                 parsed_lines = Float64[]
-                
+
                 for line in match
                     line_parts = split(line)
                     kge_value = parse(Float64, line_parts[end])
                     push!(parsed_lines, kge_value)
                 end
-                
+
                 sort!(parsed_lines, rev = true)  # Sort the parsed KGE values in descending order
-                
+
                 for kge_value in parsed_lines
                     push!(results, (File = fn, KGE = kge_value))  # Add the result to the DataFrame
                 end
             end
         end
-        
+
         sort!(results, :KGE, rev = true)  # Sort the DataFrame by the 'KGE' column in descending order
         return results
     end
@@ -8471,12 +8471,12 @@ module WaSiM
         """
         dfi.name=map(x->replace(x,r"-qoutjl.*" => ""),dfi.name)
         ann = map(x->string.(round(x;sigdigits=3)),dfi.NSE)
-        Plots.bar(dfi.name, dfi.NSE, xlabel = "Name", ylabel = "NSE", legend = false, 
-            title = "x", xrotation = -25, fmt = :png, size = (800, 600), 
+        Plots.bar(dfi.name, dfi.NSE, xlabel = "Name", ylabel = "NSE", legend = false,
+            title = "x", xrotation = -25, fmt = :png, size = (800, 600),
             fillcolor = ifelse.(dfi.NSE .> 0, "cornflowerblue", "coral2"),
             annotations = (dfi.name,dfi.NSE, ann, :top),
-            xtickfont = font(6),    
-            bar_width = 0.77)        
+            xtickfont = font(6),
+            bar_width = 0.77)
     end
 
     macro sdjl() fx=src_path*"/sd2.jl";include(fx);end
@@ -8490,8 +8490,8 @@ module WaSiM
 
     #ctlg(pwd(),"txt","weiss")
 
-    """ 
-    renamer - remove beginning char _   
+    """
+    renamer - remove beginning char _
     and replace it with C
     """
     function renamer(df::DataFrame)
@@ -8501,7 +8501,7 @@ module WaSiM
             rename!(df,Dict(x=>newname))
             end
         end
-        return df 
+        return df
     end
 
     function read_until_flag(file::IOStream, flag::String)
@@ -8513,8 +8513,8 @@ module WaSiM
     like Grep.grep("x",df)
     """
     function findindf(df::DataFrame, x::Union{AbstractString,Regex})
-        filter(row -> any(occursin(x, 
-            string(value)) for value in row), 
+        filter(row -> any(occursin(x,
+            string(value)) for value in row),
                 eachrow(df))
     end
 
@@ -8551,7 +8551,7 @@ module WaSiM
     function cb(x)
         return clipboard(x)
     end
-   
+
     function wslp(winpt::AbstractString)
         """
         """
@@ -8575,7 +8575,7 @@ module WaSiM
     """
     function xread(filename::String)
         ms=["-9999","lin","log","--"]
-        df = CSV.read(filename,DataFrame, 
+        df = CSV.read(filename,DataFrame,
             delim="\t",
             missingstring=ms,
             header=1, limit=10^5)
@@ -8588,19 +8588,19 @@ module WaSiM
             #and parse dates...
             df.date = Date.(string.(df[!,1],"-",df[!,2],"-",df[!,3]),"yyyy-mm-dd");
             df=df[:,Not(1:4)]
-            metadata!(df, "filename", filename, style=:note); 
+            metadata!(df, "filename", filename, style=:note);
         else
             df.date = Date.(string.(df[!,1],"-",df[!,2],"-",df[!,3]),"yyyy-mm-dd");
             df=df[:,Not(1:4)]
-            metadata!(df, "filename", filename, style=:note);  
+            metadata!(df, "filename", filename, style=:note);
         end
-    end  
+    end
 
     """
     grabs methods
-    asin|>getm  
+    asin|>getm
     ?asin
-    @code_llvm readf|>getm|>first 
+    @code_llvm readf|>getm|>first
     """
     function getm(s::Any)
         methods(s);
@@ -8619,7 +8619,7 @@ module WaSiM
     end
 
     function sdf()
-    
+
         function calculate_folder_size(directory)
             size = 0
             count = 0
@@ -8631,25 +8631,25 @@ module WaSiM
             end
             return size, count
         end
-    
+
         function print_folder_size(directory, size, count)
             size_gb = round(size / 1024^3, digits=3)
             printstyled(rpad("$directory: $size_gb GB", 40), color=:green)
             printstyled(lpad("($count files)", 20), "\n", color=:green)
         end
-    
+
         printstyled("folder sizes on Julia...\n", color=:red)
-    
+
         cwd = pwd()
         dirs = readdir(cwd)
-    
+
         rs, rcnt = calculate_folder_size(cwd)
-    
+
         print_folder_size(cwd,rs,rcnt)
-    
+
         n = repeat(" - -", 10)
         printstyled(n * " subfolders of " * basename(cwd) * n, "\n", color=:yellow)
-    
+
         for dir in dirs
             if isdir(dir)
                 size, count = calculate_folder_size(joinpath(cwd, dir))
@@ -8672,7 +8672,7 @@ module WaSiM
         sort!(df,2,rev=true)
         return(df)
     end
-    
+
     """
     names and size in MB via readdir
     sorts and stores in df -> biggest files
@@ -8687,21 +8687,21 @@ module WaSiM
         return(df)
     end
 
-    function mvwasim2(;ta=pwd(),pt="C:/Users/chs72fw/Documents/EFRE_GIS/Hydrologie/WaSiM-ETH/wasimvzo64_10.06.05",kw...) 
-        
+    function mvwasim2(;ta=pwd(),pt="C:/Users/chs72fw/Documents/EFRE_GIS/Hydrologie/WaSiM-ETH/wasimvzo64_10.06.05",kw...)
+
         println("\nmoves all wq, xml and log files to from
         $pt  to current pwd")
-        
+
         println("target dir is $ta");
         #@vv "af"
-    
+
         af = filter(x -> occursin(r"wq", x), readdir(pt,join=true))
         for i in af
             mv(i,joinpath(ta,basename(i));kw...) #force=false
             println(basename(i)," --> ", ta)
         end
         #@rg "wq"
-    
+
         af = filter(x -> occursin(r"xml", x), readdir(pt,join=true))
         for i in af
             mv(i,joinpath(ta,basename(i));kw...)
@@ -8712,9 +8712,9 @@ module WaSiM
             mv(i,joinpath(ta,basename(i));kw...)
             println(basename(i)," --> ", ta)
         end
-    
+
     end
-    
+
     """
     takes first two cols of df and plots r2 QQ
     """
@@ -8729,7 +8729,7 @@ module WaSiM
             df = df[!,1:2]
         end
         r2 = round(cor(df[!,1], df[!,2])^2, digits=3)
-        p = df |> x -> qqplot(x[!,1],x[!,2], 
+        p = df |> x -> qqplot(x[!,1],x[!,2],
             #title = "R² = "*string(ti),
             qqline = :fit)
             #color = :grays) # erstellt ein QQ-Diagramm <- black
@@ -8755,10 +8755,10 @@ module WaSiM
             s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
             #@df df Plots.bar(:year,cols(s),legend = :topright, title=ti)
             @df df groupedbar(df.year,cols(s), legend = :outertopright, title=ti)
-        else    
+        else
         s = Symbol.(filter(x->!occursin(r"date|year",x),names(df)))
         #@df df Plots.bar(:date,cols(s),legend = :topright, title=ti)
-        @df df groupedbar(df.date,cols(s), 
+        @df df groupedbar(df.date,cols(s),
             xrotation = 45,
             legend = :outertopright, title=ti;kwargs...)
         end
@@ -8771,13 +8771,13 @@ module WaSiM
         x = first(glob("qgko"))
         println("loading $x ...")
             try
-                df = DataFrame(CSV.File(x, header=false, 
+                df = DataFrame(CSV.File(x, header=false,
                                     delim="\t",
                                     ignorerepeated=true,
                                     silencewarnings=true,
                                     limit=10^4,
                                     types = String))
-                
+
                 pattern = r"^[LIN. R]|^[LOG. R]|^CO"
                 mask = [occursin(pattern, df[i, 1]) for i in 1:nrow(df)]
                 dx = df[mask, :]
@@ -8803,7 +8803,7 @@ module WaSiM
     end
 
     """
-    Read wasim ts with DelimitedFiles.readdlm, skipto line 3 
+    Read wasim ts with DelimitedFiles.readdlm, skipto line 3
     no header column
     """
     function wread(x::String;skip=3)
@@ -8812,7 +8812,7 @@ module WaSiM
         df = DataFrame(df,:auto)
         for i in 5:size(df,2)
             df[!,i]=replace(df[!,i],-9999.0 => missing)
-        end 
+        end
         for i in 5:size(df,2)
             replace!(df[!,i],-9999.0 => missing)
         end
@@ -8826,7 +8826,7 @@ module WaSiM
     end
 
     """
-    Read wasim ts with DelimitedFiles.readdlm, skipto line 3 
+    Read wasim ts with DelimitedFiles.readdlm, skipto line 3
     no header column
     """
     function wread(x::Regex;skip=3)
@@ -8837,7 +8837,7 @@ module WaSiM
         df = DataFrame(df,:auto)
         for i in 5:size(df,2)
             df[!,i]=replace(df[!,i],-9999.0 => missing)
-        end 
+        end
         for i in 5:size(df,2)
             replace!(df[!,i],-9999.0 => missing)
         end
@@ -8849,7 +8849,7 @@ module WaSiM
         df=df[:,Not(1:4)]
         metadata!(df, "filename", x, style=:note);
     end
-    
+
 
     """
     grep recursive and looks for matches in files \n
@@ -8881,14 +8881,14 @@ module WaSiM
 
     """
     with mon abbr. see ovio for numbered months
-    """   
+    """
     function vio(df::DataFrame)
             ti = try
                 DataFrames.metadata(df)|>only|>last|>basename
             catch
             @warn "No basename in metadata!"
             ti = raw""
-            end    
+            end
             str = [ @sprintf("%02i", x) for x in (month.(df.date)) ];
             month_abbr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
             if (any(x->occursin("year",x),names(df)))
@@ -8897,14 +8897,14 @@ module WaSiM
                 @df df StatsPlots.violin(str,cols(s),linewidth=0.1)
                 xticks!(0.5:11.5 , month_abbr)
                 title!(ti)
-            else    
+            else
             s = Symbol.(filter(x->!occursin("date",x),names(df)))
             @df df StatsPlots.violin(str,cols(s),linewidth=0.1)
             xticks!(0.5:11.5 , month_abbr)
             title!(ti)
         end
     end
-    
+
 
     """
     returns different colors for each month
@@ -8934,7 +8934,7 @@ module WaSiM
     function mbx(df::DataFrame;fun=mean)
         df.Month = month.(df.date)
         str = [ @sprintf("%02i", x) for x in (df.Month) ];
-        
+
         month_abbr = ["Jan", "Feb", "Mar", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"]
 
         ln = Symbol.(filter(x->!occursin(r"date|year|month"i,x),names(df)))
@@ -8945,7 +8945,7 @@ module WaSiM
 
         p = @df df StatsPlots.boxplot(
             str , cols(ln),
-            fillalpha=0.75, 
+            fillalpha=0.75,
             linewidth=0.25,
             # seriescolor=:heat,
             # color = colors,
@@ -8954,10 +8954,10 @@ module WaSiM
             legend=false)
         xticks!(0.5:11.5 , month_abbr)
         means = DataFrames.combine(groupby(df,:Month), ln[1] => fun)
-        
+
         for i in eachrow(means)
             m = i[2]
-            annotate!(i.Month - 0.5, m, #+ 1 
+            annotate!(i.Month - 0.5, m, #+ 1
             text(round(m; digits=2), 6, :center, :top))
         end
         return p
@@ -8974,21 +8974,21 @@ module WaSiM
         if any(map(x->occursin("year",x),names(df)))
             df = df[!,Not(:year)]
         end
-        
+
         if any(map(x->occursin("month",x),names(df)))
             df = df[!,Not(:month)]
         end
-        
+
         if propertynames(df)[end]!=:date
             df = hcat(df[!,Not(Cols(r"date"i))],df[:,Cols(r"date"i)])
         end
-        
+
         dropmissing!(df)
 
         v = (names(df[!,1:2]))
         a = reshape(v, 1, 2)|>reverse #sim,obs
-        Plots.plot(df.date,[df[!,2], df[!,1]], 
-        label=a, 
+        Plots.plot(df.date,[df[!,2], df[!,1]],
+        label=a,
         xlabel="Date", ylabel="[mm/day]",
         legend = :topleft,
         size=(1200,800)
@@ -9011,7 +9011,7 @@ module WaSiM
         df = hcat(df[!,Not(Cols(r"date"i))],df[:,Cols(r"date"i)])
         v = (names(df[!,1:2]))
         a = reshape(v, 1, 2)|>reverse #sim,obs
-        Plots.plot(df.date,[df[!,2], df[!,1]], 
+        Plots.plot(df.date,[df[!,2], df[!,1]],
         xlabel="Date", ylabel="[mm/day]",
         legend = :topleft,
         size=(1200,800)
@@ -9031,22 +9031,22 @@ module WaSiM
         x, y = map(x -> collect(skipmissing(x)), [x,y])
         r2 = round(cor(x, y)^2, digits=3)
         p = qqplot(x, y, qqline = :fit)
-        annotate!(p,:bottomright, 
+        annotate!(p,:bottomright,
             text("R² = "*string(r2), :black, :right, 14))
     end
 
- 
+
     """
     DataFrames.combine(df, names(df) .=> sum)
     """
     function rowsums(df::DataFrame)
         return DataFrames.combine(df, names(df) .=> sum)
     end
-    
+
     function rowmeans(df::DataFrame)
         return DataFrames.combine(df, names(df) .=> mean)
     end
-    
+
     #all to one mean: df[!,:mean] = mean.(eachrow(df[!,Not(:year)]))
 
     """
@@ -9064,7 +9064,7 @@ module WaSiM
         df.name=map(x->replace(x,r"_>.*" => ""),df.name)
         sort!(df, :sim)
     end
-    
+
     addname(indf,df)
     select(indf,Not(Cols(r"^[0-9]")))|>dfp
 
@@ -9083,15 +9083,15 @@ module WaSiM
     end
 
     """
-    recursively removes duplicates 
+    recursively removes duplicates
     uses SHA
     """
     function rmdub(;directory=pwd())
-        
+
         # Create a dictionary to store file hashes as keys and file paths as values
         #hash_dict = Dict{String, String}()
         hash_dict = Dict{Vector{UInt8}, String}()
-    
+
         # Get a list of all files in the directory
         #files = readdir(directory)
         for (root, dirs, files) in walkdir(directory)
@@ -9106,7 +9106,7 @@ module WaSiM
                     filehash = sha256(io)
                     #println(filehash)
                     close(io)
-    
+
                     # If the hash is not already in the dictionary, add it
                     if !haskey(hash_dict, filehash)
                         hash_dict[filehash] = filepath
@@ -9130,35 +9130,35 @@ module WaSiM
     function extract_duration_from_xml(xml_file::AbstractString;tocb=true)
         finished_timestamp = raw""
         start_timestamp = raw""
-    
+
         # Read the content of the XML file
         content = readlines(xml_file)
-    
+
         # Find the lines containing "WaSiM finished" and "WaSiM start"
         finished_lines = filter(x -> occursin(r"WaSiM finished", x), content)
         start_lines = filter(x -> occursin(r"WaSiM start", x), content)
-    
+
         # Extract the timestamps from the lines if found
         if !isempty(finished_lines)
             finished_line = first(finished_lines)
             finished_timestamp = match(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", finished_line).match
         end
-    
+
         if !isempty(start_lines)
             start_line = first(start_lines)
             start_timestamp = match(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", start_line).match
         end
-    
+
         # Calculate the duration in hours and minutes
         if !isempty(finished_timestamp) && !isempty(start_timestamp)
             finished_time = DateTime(finished_timestamp)
             start_time = DateTime(start_timestamp)
             duration_milliseconds = Dates.value(finished_time - start_time)
-    
+
             # Convert duration to hours and minutes
             duration_hours = div(duration_milliseconds, 3_600_000)  # 1 hour = 3,600,000 milliseconds
             duration_minutes = div(rem(duration_milliseconds, 3_600_000), 60_000)  # 1 minute = 60,000 milliseconds
-    
+
             hrs,min = (duration_hours, duration_minutes)
 
             if tocb
@@ -9170,7 +9170,7 @@ module WaSiM
             else
                 return hrs, min
             end
-                        
+
         else
             return nothing
         end
@@ -9183,7 +9183,7 @@ module WaSiM
                     if occursin(r"xml", filename)
                         entry = joinpath(looproot, filename)
                         result = extract_duration_from_xml(entry)
-    
+
                         if result !== nothing
                             folder_name = dirname(entry)
                             println(io, "XML File: $entry")
@@ -9200,7 +9200,7 @@ module WaSiM
     function read_log_file(log_file::AbstractString)
         timestamps = []
         durations = []
-    
+
         open(log_file) do io
             while !eof(io)
                 line = readline(io)
@@ -9216,23 +9216,23 @@ module WaSiM
                 end
             end
         end
-    
+
         return timestamps, durations
     end
-    
+
     function plot_duration_graph(log_file::AbstractString)
         timestamps, durations = read_log_file(log_file)
-    
-    
+
+
         # Sort data by timestamps
         sorted_indices = sortperm(timestamps)
         sorted_timestamps = timestamps[sorted_indices]
         sorted_durations = durations[sorted_indices]
 
         sorted_timestamps = map(x->
-            replace(basename(x), "xml" => splitdir(dirname(x))[2]), 
+            replace(basename(x), "xml" => splitdir(dirname(x))[2]),
                 sorted_timestamps)
-    
+
         # Create bar plot
         p = plot(
             sorted_timestamps,
@@ -9248,17 +9248,17 @@ module WaSiM
             right_margin = 10mm,
             left_margin = 5mm,
             top_margin = 5mm,
-            bottom_margin = 15mm, 
+            bottom_margin = 15mm,
             bar_width = 0.6);
-        
-    
+
+
         # Add annotations for duration time in minutes
         for (x, y) in zip(sorted_timestamps, sorted_durations)
             annotate!(x, y, Plots.text("$y min",7,:black,:bottom,
-            rotation=0            
+            rotation=0
             ))
         end
-    
+
         return p
     end
 
@@ -9270,9 +9270,9 @@ module WaSiM
         sorted_durations = durations[sorted_indices]
 
         sorted_timestamps = map(x->
-            replace(basename(x), "xml" => splitdir(dirname(x))[2]), 
+            replace(basename(x), "xml" => splitdir(dirname(x))[2]),
                 sorted_timestamps)
-    
+
         # Create bar plot
         p = plot(
             sorted_timestamps,
@@ -9288,17 +9288,17 @@ module WaSiM
             right_margin = 10mm,
             left_margin = 5mm,
             top_margin = 5mm,
-            bottom_margin = 15mm, 
+            bottom_margin = 15mm,
             bar_width = 0.6);
-        
-    
+
+
         # Add annotations for duration time in minutes
         for (x, y) in zip(sorted_timestamps, sorted_durations)
             annotate!(x, y, Plots.text("$y min",7,:black,:bottom,
-            rotation=0            
+            rotation=0
             ))
         end
-    
+
         return p
     end
 
@@ -9306,10 +9306,10 @@ module WaSiM
     function kgewrite(;output_file="kge-table.txt")
         path = pwd()
         files = glob(r"_output.txt|_outputjl") #non-recurse
-        
+
         # Create an empty vector to store the matched lines
         matched_lines = Vector{String}()
-        
+
         for file in filter(file -> endswith(file, "_output.txt"), files)
             output = readdlm(file, '\t', String)
             match = Grep.grep(r"KGE", output)
@@ -9322,7 +9322,7 @@ module WaSiM
                 end
             end
         end
-        
+
         #output_file = "matched_results.csv"
         writedlm(output_file, matched_lines, '\t')
         println("Matched results saved to $output_file")
@@ -9343,17 +9343,17 @@ module WaSiM
     function getmoduleorder(file1::AbstractString)
         # Run the awk command and capture the STDOUT
         result = read(`awk '$0 ~ /^[[]/{c=1} c&&c--' $file1`, String)
-    
+
         # Split the result into lines and strip \r and \t characters
         lines = replace(split(result, "\n"), r"[\r\t]" => "")
-    
+
         # Extract the names inside square brackets using regular expressions
         pattern = r"\[(.*?)\]"
         names_inside_brackets = [match(pattern, line) === nothing ? "" : match(pattern, line).captures[1] for line in lines]
-    
+
         # Create a DataFrame with the extracted names inside the square brackets
         df = DataFrame(Line = names_inside_brackets)
-    
+
         return df
     end
 
@@ -9397,7 +9397,7 @@ module WaSiM
             @warn "No basenames in metadata!"
             raw""
             end
-    
+
         try
             for i in 1:length(files)
                 s = Symbol.(filter(x->!occursin(r"year|date",x),names(files[i])))
@@ -9417,22 +9417,22 @@ module WaSiM
             end
             #@warn "error in renaming!"
         end
-    
+
         if toyr==true
             dfs = broadcast(x->yrsum(x),files)
-            df = reduce((left, right) -> 
+            df = reduce((left, right) ->
             innerjoin(left, right, on = :year,
             makeunique=true
             ),dfs)
         else
-            df = reduce((left, right) -> 
+            df = reduce((left, right) ->
             innerjoin(left, right, on = :date,
             makeunique=true
             #renamecols = lowercase => uppercase
             ),files)
         end
-        
-        
+
+
         if draw_title
             ti = try
                 #DataFrames.metadata(df)|>only|>last|>basename
@@ -9447,23 +9447,23 @@ module WaSiM
                 @warn "No basenames for title"
             ti = raw""
                 end
-        
+
             if length(ti)>30
                 ti = ti[1:30]*"..."
             end
         else
             ti = raw""
         end
-    
+
         if all_values_equal(df[!,Not(Cols(r"date|year|month|day"))])==true
             @error "all values are equal!"
             return
         end
-    
+
         if (any(x->occursin("year",x),names(df)))
             s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
             p = @df df Plots.plot(:year,cols(s),legend = leg, title=ti)
-        else    
+        else
             s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
             p = @df df Plots.plot(:date,cols(s),legend = leg, title=ti)
         end
@@ -9499,15 +9499,15 @@ module WaSiM
         prec = monsum(prec)
         precvec = vec(Matrix(select(prec, col)))
         precvec = precvec ./ yrs
-        
+
         temp = waread(temp)|>monmean
         tempvec = vec(Matrix(select(temp, col)))
         month_abbr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        p1 = Plots.bar(prec.month, precvec, color=:cornflowerblue, 
-            xlabel="", 
-            #xlabel="Months", 
+        p1 = Plots.bar(prec.month, precvec, color=:cornflowerblue,
+            xlabel="",
+            #xlabel="Months",
             xflip=false,
-            ylabel="Precipitation [mm]", 
+            ylabel="Precipitation [mm]",
             legend=false, yflip=true);
         xticks!(1:12, month_abbr)
         for i in prec.month
@@ -9517,14 +9517,14 @@ module WaSiM
 
         # val = round(maximum(tempvec); sigdigits=2)
         # i = findmax(tempvec)[2]
-        # Plots.annotate!(i, tempvec[i], 
+        # Plots.annotate!(i, tempvec[i],
         #             text("max: $(val) °C",10,:top))
         p2 = twinx();
         # Add annotations for temperature values
         #twinx()
         # for i in 1:length(tempvec)
         #     val = round(tempvec[i]; sigdigits=1)
-        #     Plots.annotate!(i, tempvec[i], 
+        #     Plots.annotate!(i, tempvec[i],
         #     text("$(val)",7, :center))
         # end
         #ann2 = map(x->string.(round(x;digits=0)),tempvec)
@@ -9533,21 +9533,21 @@ module WaSiM
         string.(round(x; digits=1)), 7,:left, :red
         )        ,tempvec)
         # # Add annotation for  max temperature
-        
-        plot!(p2, tempvec, xlabel="", 
+
+        plot!(p2, tempvec, xlabel="",
             ylabel="Temperature [°C]", color=:coral2,
-            annotations = (temp.month .+ 0.125, 
+            annotations = (temp.month .+ 0.125,
                 tempvec .+ 0.1, ann2, :center),
-            label=false, 
+            label=false,
             linestyle = :dashdot,
-            linewidth=3);      
+            linewidth=3);
 
         return p1
     end
 
     """
     rework okt 2023
-    col::String name of 
+    col::String name of
     twinx() dreht komplett alles.
     """
     function climateplot(temp::Union{DataFrame,String},prec::Union{DataFrame,String},col::Union{Symbol,Int,String} = 1)
@@ -9562,21 +9562,21 @@ module WaSiM
         precvec = vec(Matrix(select(prec, col)))
         #precvec = vec(Matrix(select(prec, Not(:month))))
         precvec = precvec ./ yrs
-        
+
         temp = (temp)|>monmean
         tempvec = vec(Matrix(select(temp, col)))
         month_abbr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        p1 = Plots.bar(prec.month, precvec, color=:cornflowerblue, 
-            xlabel="", 
-            #xlabel="Months", 
+        p1 = Plots.bar(prec.month, precvec, color=:cornflowerblue,
+            xlabel="",
+            #xlabel="Months",
             xflip=false,
-            ylabel="Precipitation [mm]", 
+            ylabel="Precipitation [mm]",
             #ylims = (0, Int64(ceil(maximum(precvec) + 20))),
             ylims = (0, Int64(ceil(maximum(precvec)*1.1))),
             legend=false, yflip=true);
 
         #ylims!(0, Int64(ceil(maximum(tempvec) + 20)))
-        
+
         xticks!(1:12, month_abbr)
         for i in prec.month
             val = round(precvec[i]; digits=1)
@@ -9587,12 +9587,12 @@ module WaSiM
         text(
         string.(round(x; digits=1)) , 7 ,:center, :red
         )        ,tempvec)
-        plot!(p2, tempvec, xlabel="", 
+        plot!(p2, tempvec, xlabel="",
             ylabel="Temperature [°C]", color=:coral2,
             annotations = (temp.month,tempvec, ann2),
             #fontsize=7,
             label=false, linewidth=3);
-            
+
         # # # Add annotations for temperature values
         # for i in 1:length(tempvec)
         #     val = round(tempvec[i]; sigdigits=3)
@@ -9603,13 +9603,13 @@ module WaSiM
 
     """
     ws. prc and temp tauschen un opacitiy einstellen....
-    ,col::String name of 
+    ,col::String name of
     twinx() dreht komplett alles.
     """
     function climateplot_dfold(temp::DataFrame,prec::DataFrame;col::AbstractString)
         #col = propertynames(temp)[col]
         #temp = t
-        
+
         #col = first(Symbol.(filter(x->occursin(r"$col"i,x),names(temp))))
         #prec = pr
         yrs = year.(prec.date)|>unique|>length
@@ -9617,12 +9617,12 @@ module WaSiM
         precvec = vec(Matrix(select(prec, col)))
         #precvec = vec(Matrix(select(prec, Not(:month))))
         precvec = precvec ./ yrs
-        
+
         temp = (temp)|>monmean
         tempvec = vec(Matrix(select(temp, col)))
         #tempvec = vec(Matrix(select(temp, Not(:month))))
         month_abbr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        p1 = Plots.plot(temp.month,tempvec, xlabel="", 
+        p1 = Plots.plot(temp.month,tempvec, xlabel="",
             ylabel="Temperature [°C]", color=:coral2,
             yflip = false,
             label=false, linewidth=3)
@@ -9631,13 +9631,13 @@ module WaSiM
             val = round(tempvec[i]; sigdigits=1)
             annotate!(i, tempvec[i], text("$(val)",7, :center))
         end
-        
+
         #twinx()
-        #prec.month, 
-        Plots.bar!(precvec, color=:cornflowerblue, 
-        xlabel="",     #xlabel="Months", 
+        #prec.month,
+        Plots.bar!(precvec, color=:cornflowerblue,
+        xlabel="",     #xlabel="Months",
         xflip=false,
-        ylabel="Precipitation [mm]", 
+        ylabel="Precipitation [mm]",
         legend=false    #, yflip=true
         )
         xticks!(1:12, month_abbr)
@@ -9651,14 +9651,14 @@ module WaSiM
     function cntcolv(x::String)
         # Get a list of all files in the directory
         #x = "."
-        files = filter(file -> (occursin(Regex(x, "i"), file) & 
+        files = filter(file -> (occursin(Regex(x, "i"), file) &
                             (!occursin(r"xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg|txt", file))
                             ), readdir())
 
         files = filter(inF->isfile(inF),files)
                             #if isfile(inF)
         file_columns = []
-        
+
         for file in files
             # Open the file for reading
             open(file, "r") do io
@@ -9671,10 +9671,10 @@ module WaSiM
                 push!(file_columns, (file, num_columns))
             end
         end
-        
+
         # Sort the file_columns array based on the number of columns in descending order
         sorted_files = sort(file_columns, by = x -> x[2], rev = true)
-        
+
         for (file, num_columns) in sorted_files
             printstyled(
                 rpad("File: $file",45),
@@ -9695,7 +9695,7 @@ module WaSiM
     end
 
     """
-    Get the last column of a DataFrame 
+    Get the last column of a DataFrame
     Column to a Vector
     """
     function lastcol(x::DataFrame)
@@ -9703,7 +9703,7 @@ module WaSiM
         println(names(df))
         return vec(Matrix(df))
     end
-    
+
 
     # """
     # prints out the function definition
@@ -9722,16 +9722,16 @@ module WaSiM
 
     function print_lines_between_patterns(filename::AbstractString, start_pattern::AbstractString, end_pattern::AbstractString)
         in_range = false
-        
+
         for line in eachline(filename)
             if occursin(start_pattern, line)
                 in_range = true
             end
-            
+
             if in_range
                 println(line)
             end
-            
+
             if occursin(end_pattern, line)
                 in_range = false
             end
@@ -9753,10 +9753,10 @@ module WaSiM
             a = readbetween(io, "soil_table", "special_output")
             return(a)
         end
-        
+
         #output = readdlm(filename,';', String)
         data = Grep.grep(r"^th.*|^[0-9]",data)
-        data = broadcast(x -> replace(x,    
+        data = broadcast(x -> replace(x,
                 r"^#.*" => "",
                 r"[[]].*" => "",
                 r"[{].*" => "",
@@ -9767,24 +9767,24 @@ module WaSiM
         nos = broadcast(x -> if length(x)==2 x[1] end, bks)
         nos = filter(x -> !isnothing(x),nos)
         nos = broadcast(x -> parse.(Int, x),nos)
-        
+
         #tck = broadcast(x -> if (length(x)==3  & startswith(x[1],"thickness")) x[3] end, bks)
         tck = broadcast(x -> if (startswith(x[1],"thickness")) x[3] end, bks)
         filter!(x -> !isnothing(x),tck)
         tck = broadcast(x -> split(x),tck)
-        
+
         #foreach(x -> parse.(Int, x[1]),tck)
-        
+
         #collect(tck)
-        
+
         Z=[]
         for m in (tck)
             i = [parse(Float64, x) for x in m]
             push!(Z,i)
         end
-        
+
         #[cumsum(arr) for arr in Z]
-        
+
         #zd = DataFrame(permutedims(Z),:auto)
         zd = DataFrame((Z),:auto)
         for x in 1:length(nos)
@@ -9793,8 +9793,8 @@ module WaSiM
         end
         # col_sums = sum.(eachcol(zd))
         # hcat(col_sums*.1, nos)
-       
-    
+
+
         return zd
     end
 
@@ -9807,7 +9807,7 @@ module WaSiM
 
         data = readdlm(filename,';', String)
         data = Grep.grep(r"^th.*|^[0-9]",data)
-        data = broadcast(x -> replace(x,    
+        data = broadcast(x -> replace(x,
                 r"^#.*" => "",
                 r"[[]].*" => "",
                 r"[{].*" => "",
@@ -9818,24 +9818,24 @@ module WaSiM
         nos = broadcast(x -> if length(x)==2 x[1] end, bks)
         nos = filter(x -> !isnothing(x),nos)
         nos = broadcast(x -> parse.(Int, x),nos)
-        
+
         #tck = broadcast(x -> if (length(x)==3  & startswith(x[1],"thickness")) x[3] end, bks)
         tck = broadcast(x -> if (startswith(x[1],"thickness")) x[3] end, bks)
         filter!(x -> !isnothing(x),tck)
         tck = broadcast(x -> split(x),tck)
-        
+
         #foreach(x -> parse.(Int, x[1]),tck)
-        
+
         #collect(tck)
-        
+
         Z=[]
         for m in (tck)
             i = [parse(Float64, x) for x in m]
             push!(Z,i)
         end
-        
+
         #[cumsum(arr) for arr in Z]
-        
+
         #zd = DataFrame(permutedims(Z),:auto)
         zd = DataFrame((Z),:auto)
         for x in 1:length(nos)
@@ -9844,8 +9844,8 @@ module WaSiM
         end
         # col_sums = sum.(eachcol(zd))
         # hcat(col_sums*.1, nos)
-       
-    
+
+
         return zd
     end
 
@@ -9864,7 +9864,7 @@ module WaSiM
         filter!(x->length(x)>3,data)
         return data
     end
-    
+
     import InteractiveUtils: clipboard
     function mywd()
         wd = pwd()
@@ -9887,10 +9887,10 @@ module WaSiM
         a = waread(a)
         b = waread(b)
         col = ncol(a)-1
-    
+
         a = a[!,Cols(col,:date)]
-        b = b[!,Cols(col,:date)]  
-    
+        b = b[!,Cols(col,:date)]
+
         df = mall(a,b)
         #qplot(x::Vector{Float64},y::Vector{Float64})
         return qplot(df)
@@ -9899,11 +9899,11 @@ module WaSiM
     function cntcolread(x::Vector{Any})
         # Get a list of all files in the directory
         files = x
-    
+
         files = filter(inF->isfile(inF),files)
                             #if isfile(inF)
         file_columns = []
-        
+
         for file in files
             # Open the file for reading
             open(file, "r") do io
@@ -9916,10 +9916,10 @@ module WaSiM
                 push!(file_columns, (file, num_columns))
             end
         end
-        
+
         # Sort the file_columns array based on the number of columns in descending order
         sorted_files = sort(file_columns, by = x -> x[2], rev = true)
-        
+
         for (file, num_columns) in sorted_files
             printstyled(
                 rpad("File: $file",45),
@@ -9983,7 +9983,7 @@ module WaSiM
         col_names = CSV.File(file_path,skipto=21,limit=2,
         maxwarnings=2,ignorerepeated=true,delim=" ",header=21) |> DataFrame
         rename!(data, propertynames(col_names))
-        return data    
+        return data
     end
 
     function wqplot(file_path::AbstractString)
@@ -10004,16 +10004,16 @@ module WaSiM
         for (looproot, dirs, filenames) in walkdir(rootdir)
             for filename in filenames
                 if (occursin(needle,filename)
-                    && 
-                    !occursin(r"yr|mon|grid|scn"i,filename) && 
+                    &&
+                    !occursin(r"yr|mon|grid|scn"i,filename) &&
                     !occursin(r"\.(log|png|svg|txt|html|ftz|ftz_0|list|nc|zip|7z|xml|sh|grd|yrly|eps)$", filename)
                     )
-                    push!(results, joinpath(looproot, filename)) 
+                    push!(results, joinpath(looproot, filename))
                 end
             end
         end
-        # results = filter(x -> isfile(x) && 
-        # !occursin(r"yr|mon|grid|scn"i,x) && 
+        # results = filter(x -> isfile(x) &&
+        # !occursin(r"yr|mon|grid|scn"i,x) &&
         # !occursin(r"\.(log|png|svg|txt|html|ftz|ftz_0|list|nc|zip|7z|xml|sh|grd|yrly|eps)$", x), results)
         out = []
         for x in results
@@ -10030,8 +10030,8 @@ module WaSiM
                 @warn("$x can't be loaded as a DataFrame, skipping ...")
                 continue
             end
-            
-            
+
+
         end
         df = DataFrame(out)
         df.KGE .= replace(df.KGE, NaN => missing)
@@ -10040,7 +10040,7 @@ module WaSiM
     end
 
     function grep_with_context(pattern, filename, context)
-        lines = readlines(filename)   
+        lines = readlines(filename)
         for (i, line) in enumerate(lines)
             if occursin(pattern, line)
                     #println("$(filename):$(i): $(line)")
@@ -10053,7 +10053,7 @@ module WaSiM
             end
         end
     end
-        
+
     #grep_with_context("routing_model", file_paths[1], 2)
 
     """
@@ -10066,28 +10066,28 @@ module WaSiM
             grep_with_context(pattern, file_path, context)
         end
     end
-    
+
     function dfonly(x::Union{Vector{Any},Vector{String}})
-        
+
         z = try filter(f->!occursin(r"^wq|xml|nc|png|zip|7z|svg|jpg",f),x)
         catch
             @warn "vector should be of type string.."
             return
         end
-        # z = filter(file -> occursin(x,file), 
+        # z = filter(file -> occursin(x,file),
         # readdir()[broadcast(x->!occursin(r"^wq|xml|nc|png|zip|7z|svg|jpg",x),readdir())]);
         return(z)
     end
 
     """
-    removes empty TS recursively; 
+    removes empty TS recursively;
     use with caution!
     """
     function rmeq_rec(; rootdir = ".")
-        
+
         ext_regex = r".R|.py|.jl|.tex|.pl|.sh|.csv|.html|.xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg|txt"i
         ms = ["-9999", "lin", "log", "--"]
-        
+
         files::Vector{String} = []       #String[]
         for (looproot, dirs, filenames) in walkdir(rootdir)
             for filename in filenames
@@ -10096,16 +10096,16 @@ module WaSiM
                 end
             end
         end
-        
+
         for inF in files
             if isfile(inF)
                 println("reading ", inF, "...")
                 df = CSV.File(inF; delim = "\t", header = 1,
-                              silencewarnings = true, 
-                              normalizenames = false, 
-                              missingstring = ms, 
+                              silencewarnings = true,
+                              normalizenames = false,
+                              missingstring = ms,
                               types = Float64) |> DataFrame
-                if (isempty(df) || nrow(dropmissing(df,ncol(df)))==0 || ncol(df)==0) 
+                if (isempty(df) || nrow(dropmissing(df,ncol(df)))==0 || ncol(df)==0)
                     rm(inF)
                     println(basename(inF), " removed!")
                 end
@@ -10127,8 +10127,8 @@ module WaSiM
     end
 
     """
-    usage: 
-    
+    usage:
+
     nd = ctsum("thickness",infile)
     nd = ctsum("ksat",infile)
     nd = ctsum("Par_n",infile)
@@ -10159,7 +10159,7 @@ module WaSiM
             ts = parse.(Float64,ts)
             push!(lck,sum(ts))
         end
-    
+
         df = DataFrame(bfid=no,res=lck)
         # Print the control file information and the extracted values
         println(controlfile_info)
@@ -10170,14 +10170,14 @@ module WaSiM
         # Load the DataFrames
         df_A = (a |> dfonly |> first |> readdf)
         df_B = (b |> dfonly |> first |> readdf)
-    
+
         nma = DataFrames.metadata(df_A)|>only|>last|>basename
         nmb = DataFrames.metadata(df_B)|>only|>last|>basename
-    
+
         # Remove last column from df_B
         select!(df_B, Not(ncol(df_B)))
-        select!(df_A, propertynames(df_B)) 
-    
+        select!(df_A, propertynames(df_B))
+
         # Calculate correlations and replace NaN with 0
         #correlations = cor.(eachcol(df_A_subset), eachcol(df_B)).^2
         correlations = Vector{Float64}(undef, size(df_A, 2))
@@ -10185,11 +10185,11 @@ module WaSiM
             correlations[i] = cor(df_A[:, i], df_B[:, i])^2
         end
         replace!(correlations, NaN => 0)
-    
+
         p0 = Plots.bar(1:size(df_A, 2), correlations,
             legend = false,
             title = "$nma vs $nmb",
-            fillcolor = ifelse.(correlations .> 0.35, 
+            fillcolor = ifelse.(correlations .> 0.35,
                 "cornflowerblue", "coral2"),
             xticks = (1:size(df_A, 2), propertynames(df_A)),
             xrotation = 45,
@@ -10198,15 +10198,15 @@ module WaSiM
             fontfamily="JuliaMono",
             left_margin = 10mm,
             bottom_margin = 2mm);
-    
+
         ann = map(x->string.(round(x;sigdigits=2)),correlations)
-    
+
         for i in 1:size(df_A, 2)
             Plots.annotate!(i,correlations[i],
             Plots.text(ann[i],9,:center,:top,:black))
             println("R² "*ann[i]*" of Basin "*names(df_A)[i]*" added")
         end
-    
+
        return p0
     end
 
@@ -10214,21 +10214,21 @@ module WaSiM
         # Load the DataFrames
         df_A = a
         df_B = b
-        ti = try 
+        ti = try
             nma = DataFrames.metadata(df_A)|>only|>last|>basename
             nmb = DataFrames.metadata(df_B)|>only|>last|>basename
             ti = "$nma vs $nmb"
-            
+
         catch
             @info    "no metadata in $a or $b !"
             ti = "$a vs $b"
-            
+
         end
-    
+
         # Remove last column from df_B
         select!(df_B, Not(ncol(df_B)))
-        select!(df_A, propertynames(df_B)) 
-    
+        select!(df_A, propertynames(df_B))
+
         # Calculate correlations and replace NaN with 0
         #correlations = cor.(eachcol(df_A_subset), eachcol(df_B)).^2
         correlations = Vector{Float64}(undef, size(df_A, 2))
@@ -10236,11 +10236,11 @@ module WaSiM
             correlations[i] = cor(df_A[:, i], df_B[:, i])^2
         end
         replace!(correlations, NaN => 0)
-    
+
         p0 = Plots.bar(1:size(df_A, 2), correlations,
             legend = false,
             title = ti,
-            fillcolor = ifelse.(correlations .> 0.35, 
+            fillcolor = ifelse.(correlations .> 0.35,
                 "cornflowerblue", "coral2"),
             xticks = (1:size(df_A, 2), propertynames(df_A)),
             xrotation = 45,
@@ -10249,16 +10249,16 @@ module WaSiM
             fontfamily="JuliaMono", #would break otherwise
             left_margin = 10mm,
             bottom_margin = 2mm);
-    
+
         ann = map(x->string.(round(x;sigdigits=2)),correlations)
-    
+
         for i in 1:size(df_A, 2)
             Plots.annotate!(i,correlations[i],
             Plots.text(ann[i],9,:center,:top,:black))
             println("R² "*ann[i]*" of Basin "*names(df_A)[i])
             #show("R² "*ann[i]*" of Basin "*names(df_A)[i]*" added")
         end
-    
+
        return p0
     end
 
@@ -10269,7 +10269,7 @@ module WaSiM
         observed, simulated = df[:,6],df[:,5]
         return (1 - (sum((simulated .- observed).^2) / sum((observed .- mean(observed)).^2)))
     end
-    
+
     """
     reads recursively
     """
@@ -10281,11 +10281,11 @@ module WaSiM
         for (looproot, dirs, filenames) in walkdir(rootdir)
             for filename in filenames
                 if (occursin(needle,filename)
-                    && 
-                    !occursin(r"yr|mon|grid|scn"i,filename) && 
+                    &&
+                    !occursin(r"yr|mon|grid|scn"i,filename) &&
                     !occursin(r"\.(log|png|svg|txt|html|ftz|ftz_0|list|nc|zip|7z|xml|sh|grd|yrly|eps)$", filename)
                     )
-                    push!(results, joinpath(looproot, filename)) 
+                    push!(results, joinpath(looproot, filename))
                 end
             end
         end
@@ -10304,8 +10304,8 @@ module WaSiM
                 @warn("$x can't be loaded as a DataFrame, skipping ...")
                 continue
             end
-            
-            
+
+
         end
         df = DataFrame(out)
         df.NSE .= replace(df.NSE, NaN => missing)
@@ -10322,10 +10322,10 @@ module WaSiM
         # dims(rr)|>collect
         # rr.dims|>collect
         # rr[Dim{:t}(Rasters.Between(2,end))] |>contourf
-        
+
         mt = split(string.(rr[:,:,1].refdims)[1],",")|>first
         #occursin("Dim{:t}",)
-    
+
         #if last(dims(rr))=="Dim{:t}"
         if mt=="Dim{:t"
             ti = Rasters.lookup(rr, Dim{:t})
@@ -10335,28 +10335,28 @@ module WaSiM
             catch
                 @error "no time dimension found!"
                 return
-            end 
+            end
         end
-        
+
         #map(x->mean(x),rr.dims)
         #dims(rr, (Dim{:t})) isa Vector{Float64}
-        
-        
+
+
         #ag = Rasters.aggregate(Rasters.Center(), rr, (Y(20), X(20));)
         #plot(ag)
         #x,y,z = map(x->round(x ./2;digits=0),size(rr))
         x,y = map(x->round(x ./2;digits=0),size(rr)[1:2])
         #x,y,z = map(x->parse.(Int,x ./2),size(rr))
         #length(rr[1,:,:])
-        
+
         df = DataFrame(rr[X=Int(x),Y=Int(y)]',:auto)|>permutedims
         df = hcat(df, parent(ti),makeunique=true)
         #rename!(df,1=>Rasters._maybename(rr),2=>"date")
         rename!(df,1=>Rasters._maybename(rr),2=>"layer")
-    
-        DataFrames.metadata!(df, "filename", str, style=:note);        
+
+        DataFrames.metadata!(df, "filename", str, style=:note);
         return df
-    
+
     end
 
     """
@@ -10379,11 +10379,11 @@ module WaSiM
         for (looproot, dirs, filenames) in walkdir(rootdir)
             for filename in filenames
                 if (occursin(needle,filename)
-                    && 
-                    !occursin(r"yr|mon|grid|scn"i,filename) && 
+                    &&
+                    !occursin(r"yr|mon|grid|scn"i,filename) &&
                     !occursin(r"\.(log|png|svg|txt|html|ftz|ftz_0|list|nc|zip|7z|xml|sh|grd|yrly|eps)$", filename)
                     )
-                    push!(results, joinpath(looproot, filename)) 
+                    push!(results, joinpath(looproot, filename))
                 end
             end
         end
@@ -10402,7 +10402,7 @@ module WaSiM
                 @warn("$x can't be loaded as a DataFrame, skipping ...")
                 continue
             end
-            
+
         end
         df = DataFrame(out)
         df.NSE .= replace(df.NSE, NaN => missing)
@@ -10429,9 +10429,9 @@ module WaSiM
                 #p1 = waread(file_path)
                 ##modified waread
                 ms = ["-9999","lin","log","--"]
-                df = CSV.read(file_path, DataFrame; 
-                    delim="\t", header=1, missingstring=ms, 
-                    #maxwarnings = 1, 
+                df = CSV.read(file_path, DataFrame;
+                    delim="\t", header=1, missingstring=ms,
+                    #maxwarnings = 1,
                     silencewarnings = true,
                     rows_to_check = 100, ignorerepeated = true,
                     normalizenames=true, types=Float64)
@@ -10446,13 +10446,13 @@ module WaSiM
                         rename!(df,Dict(x=>newname))
                     end
                 end
-                
+
                 push!(dfs, df)
             end
         end
         return(dfs)
     end
-    
+
     """
     tries to read all files in a directory as df
     """
@@ -10466,9 +10466,9 @@ module WaSiM
                 #p1 = waread(file_path)
                 ##modified waread
                 ms = ["-9999","lin","log","--"]
-                df = CSV.read(file_path, DataFrame; 
-                    delim="\t", header=1, missingstring=ms, 
-                    #maxwarnings = 1, 
+                df = CSV.read(file_path, DataFrame;
+                    delim="\t", header=1, missingstring=ms,
+                    #maxwarnings = 1,
                     silencewarnings = true,
                     rows_to_check = 100, ignorerepeated = true,
                     normalizenames=true, types=Float64)
@@ -10483,7 +10483,7 @@ module WaSiM
                         rename!(df,Dict(x=>newname))
                     end
                 end
-                
+
                 push!(dfs, df)
             end
         end
@@ -10526,7 +10526,7 @@ module WaSiM
             names(xd)))|>dropmissing|>Matrix|>vec
         obs = DataFrames.select(xd, map(z->!occursin(r"C*[0-9]",z),
         names(xd)))|>dropmissing|>Matrix|>vec
-        
+
         return (1 - ( sum( map(x->abs(x),(obs - sim) ) ) / sum( obs ) ))
     end
 
@@ -10542,9 +10542,9 @@ module WaSiM
         silencewarnings=true,
         normalizenames=true) |> dropmissing
         #drop=(i, nm) -> i == 4) |> dropmissing
-        
+
         obs, sim = df[:,6],df[:,5]
-        
+
         return (1 - ( sum( map(x->abs(x),(obs - sim) ) ) / sum( obs ) ))
     end
 
@@ -10555,7 +10555,7 @@ module WaSiM
         str  = join([str,"date"],"|")
         #filter(x->select(occursin(str,x)),dfs)
         return map(k -> k[!,Cols(Regex(str))],dfs)
-        
+
     end
 
     function monp(lk::String;doleg=true)
@@ -10567,74 +10567,74 @@ module WaSiM
         #str = [ @sprintf("%02i", x) for x in (df.month) ];
         #mn = [ monthname(x) for x in (df.month) ]
         mn = [ monthabbr(x) for x in (df.month) ]
-    
-        #linestyle dashdtriangle is unsupported with Plots.GRBackend(). 
+
+        #linestyle dashdtriangle is unsupported with Plots.GRBackend().
         #Choose from: [:auto, :dash, :dashdot, :dashdotdot, :dot, :solid]
-        
+
         # if ncol(df)>length(linestyles)
         #     linestyles = vcat(linestyles,linestyles)
         # end
-    
+
         #linestyles = :auto
-    
+
         ln = Symbol.(filter(x->!occursin(r"date|month|year",x),names(df)))
         # @df df StatsPlots.plot(str,cols(ln),
-        #     fillalpha=0.75, linewidth=1.25, legend=true)   
+        #     fillalpha=0.75, linewidth=1.25, legend=true)
         Plots.plot()
-    
+
         if doleg
             for (i, col) in enumerate(ln)
-                Plots.plot!(mn, df[!,col], fillalpha=0.75, 
-                #linestyle=linestyles[i], 
-                linestyle=:auto, 
-                linewidth=1.25, 
+                Plots.plot!(mn, df[!,col], fillalpha=0.75,
+                #linestyle=linestyles[i],
+                linestyle=:auto,
+                linewidth=1.25,
                 #label=[string(col)],
                 label=string(col),
                 legend=true)
             end
-    
-            return Plots.plot!() 
-        end 
-    
+
+            return Plots.plot!()
+        end
+
         for (i, col) in enumerate(ln)
-            Plots.plot!(mn, df[!,col], fillalpha=0.75, 
-            linestyle=:auto, 
-            linewidth=1.25, 
+            Plots.plot!(mn, df[!,col], fillalpha=0.75,
+            linestyle=:auto,
+            linewidth=1.25,
             legend=false)
         end
-        return Plots.plot!() 
+        return Plots.plot!()
     end
 
     function monp(lk::DataFrame;doleg=true)
-        
+
         df = monmean(lk)
         #str = [ @sprintf("%02i", x) for x in (df.month) ];
         #mn = [ monthname(x) for x in (df.month) ]
         mn = [ monthabbr(x) for x in (df.month) ]
         ln = Symbol.(filter(x->!occursin(r"date|month|year",x),names(df)))
         Plots.plot()
-    
+
         if doleg
             for (i, col) in enumerate(ln)
-                Plots.plot!(mn, df[!,col], fillalpha=0.75, 
-                #linestyle=linestyles[i], 
-                linestyle=:auto, 
-                linewidth=1.25, 
+                Plots.plot!(mn, df[!,col], fillalpha=0.75,
+                #linestyle=linestyles[i],
+                linestyle=:auto,
+                linewidth=1.25,
                 #label=[string(col)],
                 label=string(col),
                 legend=true)
             end
-    
-            return Plots.plot!() 
-        end 
-    
+
+            return Plots.plot!()
+        end
+
         for (i, col) in enumerate(ln)
-            Plots.plot!(mn, df[!,col], fillalpha=0.75, 
-            linestyle=:auto, 
-            linewidth=1.25, 
+            Plots.plot!(mn, df[!,col], fillalpha=0.75,
+            linestyle=:auto,
+            linewidth=1.25,
             legend=false)
         end
-        return Plots.plot!() 
+        return Plots.plot!()
     end
 
     function looks_like_number(str::AbstractString)
@@ -10663,8 +10663,8 @@ module WaSiM
         else
             df = waread(x)
         end
-            
-        
+
+
         #df = waread(mm)
         #DataFrames.metadata(df)|>collect|>only|>last
         ti = try
@@ -10673,9 +10673,9 @@ module WaSiM
         @warn "No basename in metadata!"
             ti = raw""
         end
-        
+
         if fun==false
-            #reorder           
+            #reorder
             dx = hcat(df[:,Cols(r"date")],df[!,Not(Cols(r"date"))])
             #printstyled("no function applied!\n", color=:red)
             @info "no function applied!\n"
@@ -10683,25 +10683,25 @@ module WaSiM
             @info "applying $fun ..."
             dx = fun(df)
         end
-                
+
         ln = Symbol.(filter(x->!occursin(r"date|month|year",x),names(dx)))
         #cols(ln)...,  # Use splatting to pass column names as separate arguments
-        
+
         p1 = @df dx Plots.plot(
             Vector(dx[!, 1]), # same as: #tovec(dx,1),
             cols(ln),
-            legend = leg, 
+            legend = leg,
             title = ti,
             seriestype = mode);
-        
+
         if names(dx)[1]=="month"
             Plots.xticks!(
                 1:12, monthabbr.(1:12))
         end
         return p1
     end
-    
-    
+
+
     """
     takes first two cols of df and plots r2 QQ
     """
@@ -10709,7 +10709,7 @@ module WaSiM
         df1,df2 = map(z->waread(z),[x,y])
         # df1 = waread(x)
         # df2 = waread(y)
-        
+
         # if any(map(x->contains(x,"date"),names(df2)))
         #     df2 = df2[!,Not(:date)]
         # end
@@ -10717,15 +10717,15 @@ module WaSiM
         df = mall(
             df1[!,Cols(1,ncol(df1))],
             df2[!,Cols(1,ncol(df2))])
-        
+
         if any(map(x->contains(x,"date"),names(df)))
             df = df[!,Not(:date)]
-        end       
+        end
         if ncol(df)>2
             df = df[!,1:2]
         end
         r2 = round(cor(df[!,1], df[!,2])^2, digits=3)
-        p = df |> x -> qqplot(x[!,1],x[!,2], 
+        p = df |> x -> qqplot(x[!,1],x[!,2],
             #title = "R² = "*string(ti),
             qqline = :fit)
             #color = :grays) # erstellt ein QQ-Diagramm <- black
@@ -10735,14 +10735,14 @@ module WaSiM
         #ve = round(vef(df), digits=3)
         ve = df |> x -> vef(x[!,1],x[!,2])
         ve = round(ve, digits=3)
-        Plots.annotate!(p,:topleft, 
+        Plots.annotate!(p,:topleft,
         Plots.text(
-            "R² = "*string(r2)*"\nVE = "*string(ve), 
+            "R² = "*string(r2)*"\nVE = "*string(ve),
         11,:black, halign=:left)
         )
         #
-        
-        #annotate!(j, i, Plots.text(string(value), 7, color, :center, 
+
+        #annotate!(j, i, Plots.text(string(value), 7, color, :center,
         #halign=:center, rotation=-35.0))
     end
 
@@ -10750,7 +10750,7 @@ module WaSiM
         rpath="/mnt/d/Fernerkundungsdaten/Klassifikation/R-Sessions"
         run(`wsl -d Ubuntu-18.04 -e Rscript "$rpath/plotly_rast.R" $R`)
     end
-    
+
     function oplat()
         files = filter(isfile, readdir())
         sorted_files = sort(files, by = mtime, rev = true)
@@ -10759,8 +10759,8 @@ module WaSiM
             println("opening: $lat ...")
             run(`cmd /c start $lat`)
         end
-    end   
-    
+    end
+
     """
     removes latest file
     """
@@ -10780,8 +10780,8 @@ module WaSiM
                 @error "abort...."
             end
         end
-    end    
-    
+    end
+
     function lat()
         files = filter(isfile, readdir(;sort=false))
         sf = sort(files, by = mtime, rev = true)
@@ -10810,28 +10810,28 @@ module WaSiM
     function findlog(;lb=.4)
         v = qall(;recursive=true)
         #map(x->DataFrames.subset(x,3 => ByRow(<(1))),v)
-        k = try 
+        k = try
             map(x->DataFrames.subset(x,3 => ByRow(>(lb))),v)
             catch
                 @error "no df on lowerbound! "
                 return
         end
-        df = try 
-            reduce(vcat,k) 
+        df = try
+            reduce(vcat,k)
             catch
                 @error "vcat failed! "
                 return
         end
-        
-        df = try 
+
+        df = try
             DataFrames.subset(df,3 => ByRow(<(1.0)))
             catch
                 println(first(k))
                 @error "no df on upperbound! "
                 return
         end
-        
-        
+
+
         return df
     end
 
@@ -10851,7 +10851,7 @@ module WaSiM
     end
 
 
-    
+
     """with DataFrame input"""
     function bardf(x::DataFrame;leg=:topright)
             df = copy(x)
@@ -10867,10 +10867,10 @@ module WaSiM
             #df_yearsum = DataFrames.combine(groupby(df, :year), y .=> sum .=> y);
         nm = filter(x->occursin(r"date|year|month",x),
             names(df))|>first
-        
+
         @df df Plots.plot(select(df,Symbol(nm))|>Matrix,
                 cols(s),
-                legend = leg, 
+                legend = leg,
                 title = ti,
                 seriestype=:bar)
     end
@@ -10899,7 +10899,7 @@ module WaSiM
     function fsz(;rec=false)
         total_size = 0
         files = readdir()  # Get a list of files in the current directory
-        
+
         for file in files
             filepath = joinpath(pwd(), file)  # Get the full path of the file
             if isfile(filepath)
@@ -10907,13 +10907,13 @@ module WaSiM
                 total_size += size
             end
         end
-        
+
         nr=length(files)
-    
+
         total_size_mb = total_size / (1024 * 1024)  # Convert size to megabytes
         total_size_mb = round(total_size_mb, digits=2)  # Round to 2 decimal places
         printstyled("Total size of $nr files in $(pwd()): $total_size_mb MB\n", color=:green)
-        
+
         if rec
             dirs = readdir()
             for dir in dirs
@@ -10947,7 +10947,7 @@ module WaSiM
 
     """
     Plots a DataFrame and applies a function.
-    
+
     Parameters:
     - x: Union{Regex, String, DataFrame} - Input data, can be a DataFrame or file path.
     - leg: Symbol - Legend position, default is :topright.
@@ -10959,19 +10959,19 @@ module WaSiM
     dfm(s; fun=yrsum, mode=:scatter, leg=false)
     wa.dfm(r"qbas";mode=:steppre,leg=:outertopright,ann=false)
     """
-    function dfm(x::Union{Regex, String, DataFrame}; 
-        ann = false, 
-        log = false, 
+    function dfm(x::Union{Regex, String, DataFrame};
+        ann = false,
+        log = false,
         title = true,
-        leg = false,  
-        fun = monmean, 
+        leg = false,
+        fun = monmean,
         mode=:line)
         if isa(x, DataFrame)
             df = x
         else
             df = waread(x)
         end
-        
+
         ti = try
             DataFrames.metadata(df)|>only|>last|>basename
         catch
@@ -10980,7 +10980,7 @@ module WaSiM
         end
 
         ln = Symbol.(filter(x -> !occursin(r"date|month|year", x), names(df)))
-        
+
         if fun == false
             # Reorder the DataFrame
             dx = hcat(df[:, Cols(r"date")], df[!, Not(Cols(r"date"))])
@@ -11007,13 +11007,13 @@ module WaSiM
             #xans = map(x->Plots.text(x, 8, -20.0, :top, :red), anns) #bottom
             fnt = Plots.font(
                 family="sans-serif",
-                pointsize=8, 
-                #halign=:hcenter, 
-                valign=:bottom, 
-                #valign=:top, #:vcenter, 
-                rotation= -10.0, 
+                pointsize=8,
+                #halign=:hcenter,
+                valign=:bottom,
+                #valign=:top, #:vcenter,
+                rotation= -10.0,
                 color=:red)
-            
+
             xans = map(x->Plots.text(x, fnt), anns)
             # y_offset = map(x->median(dx[!,x]),ln)
             # y_offset = map(x->minimum(dx[!,x]),ln)
@@ -11023,11 +11023,11 @@ module WaSiM
             #col_annotations = (median(Vector(dx[!, 1])), y_offset, xans) #middle of x-axis
             col_annotations = (median(Vector(dx[!, 1])), y_offset, xans) #middle of x-axis
             #col_annotations = (y_offset, y_offset, xans)
-            
+
             # annotations = [(
-            #     x_position, y_offset, 
-            # Plots.text(label, fnt)) 
-            # for (x_position, label) in 
+            #     x_position, y_offset,
+            # Plots.text(label, fnt))
+            # for (x_position, label) in
             # zip(y_offset, anns)]
 
 
@@ -11051,7 +11051,7 @@ module WaSiM
         # if names(dx)[1] == "date"
         #     col_annotations = nothing
         # end
-        
+
         if names(dx)[1] == "month"
             Plots.xticks!(
                 1:12, monthabbr.(1:12))
@@ -11086,22 +11086,22 @@ module WaSiM
         catch
             @error "col not found!"
             return
-        end       
+        end
 
         # if ncol(df)>2
         #     df = df[!,1:2]
         # end
 
         r2 = round(cor(df1[!,1], df2[!,1])^2, digits=3)
-        
-        p = qqplot(df1[!,1], df2[!,1], 
+
+        p = qqplot(df1[!,1], df2[!,1],
             #title = "R² = "*string(ti),
             qqline = :fit)
             #color = :grays) # erstellt ein QQ-Diagramm <- black
         xlabel!(p,names(df1)[1])
         ylabel!(p,names(df2)[1])
         annotate!(p,:bottomright, text("R² = "*string(r2), :black))
-                
+
     end
 
     """
@@ -11115,16 +11115,16 @@ module WaSiM
         println("abspath of $y in clipboard!")
         abspath(y)|>cb
     end
-    
+
     """
-    reads from wasim routing table 
+    reads from wasim routing table
     usually named "route.txt"
-    from ... 
+    from ...
     infile = ctl()|>first|>split|>last|>x->replace(x,r"ctl.*"=>"ctl")
     ofl = "route.txt"
     routeg(infile, ofl)
     df = readroute(ofl)
-    ...        
+    ...
     """
     function readroute(x::Union{String,AbstractString})
         df = CSV.read(x,DataFrame,header=false,
@@ -11175,23 +11175,23 @@ module WaSiM
         # Get the date column and column names for trendlines
         date_data = df[!, date_col]
         trendline_cols = setdiff(names(df), [string.(date_col)])
-    
+
         p = plot()
-    
+
         # Initialize an empty string to store the trendline equations
         trendline_equations = ""
-    
+
         for y_col in trendline_cols
             y_data = df[!, y_col]
-    
+
             # Perform linear regression to get the slope and intercept
             X = hcat(ones(length(date_data)), 1:length(date_data))
             y = y_data
             β = X \ y  # Linear regression
-    
+
             # Extract the intercept and slope
             intercept, slope = β[1], β[2]
-    
+
             # Generate the trendline using the linear equation
             trendline(x) = intercept + slope * x
             # Add the trendline equation to the trendline_equations string
@@ -11201,14 +11201,14 @@ module WaSiM
             else
                 trendline_equations = false
             end
-    
+
             # plot
-            plot!(p ,date_data, 
-                trendline.(1:length(date_data)), 
+            plot!(p ,date_data,
+                trendline.(1:length(date_data)),
                 label=trendline_equations,
                 linewidth=2, linestyle=:dash)
-    
-            
+
+
         end
         return p
     end
@@ -11222,21 +11222,21 @@ module WaSiM
         # Get the date column and column names for trendlines
         date_data = df[!, date_col]
         trendline_cols = setdiff(names(df), [string.(date_col)])
-    
+
         # get the last viewed plot # yes.wrks.
         p = current()
-        
+
         for y_col in trendline_cols
             y_data = df[!, y_col]
-    
+
             # Perform linear regression to get the slope and intercept
             X = hcat(ones(length(date_data)), 1:length(date_data))
             y = y_data
             β = X \ y  # Linear regression
-    
+
             # Extract the intercept and slope
             intercept, slope = β[1], β[2]
-    
+
             # Generate the trendline function using the linear equation
             trendline(x) = intercept + slope * x
             if lab
@@ -11245,16 +11245,16 @@ module WaSiM
                 trendline_equations = false
             end
 
-    
+
             # Add the trendline to the plot
-            p = Plots.plot!(date_data, 
-                trendline.(1:length(date_data)), 
-                label = trendline_equations, 
+            p = Plots.plot!(date_data,
+                trendline.(1:length(date_data)),
+                label = trendline_equations,
                 legend = :outertopright,
                 linewidth=2,
                 linestyle=:dash)
         end
-    
+
         return p
     end
 
@@ -11288,7 +11288,7 @@ module WaSiM
         d=pwd()
         println("current dir: $d")
     end
-    
+
 
     """
     reads a DataFrame from a file w dlm and tryparse subsetting
@@ -11303,11 +11303,11 @@ module WaSiM
         end
         for i in 5:size(df,2)
             df[!,i]=replace(df[!,i],-9999.0 => missing)
-        end 
+        end
         for i in 5:size(df,2)
             replace!(df[!,i],-9999.0 => missing)
         end
-        
+
         for i in 1:3
             df[!,i]=map(x ->Int(x),df[!,i])
         end
@@ -11330,7 +11330,7 @@ module WaSiM
             df.name=map(x->replace(x,r"#" => "",r" " => "",r"-" => "_"),df[:,3])
             df.name=map(x->replace(x,r"_>.*" => ""),df.name)
         end
-    
+
         #dsu = qbb()|>last #recursive
         dsu = qba()
         M = parse.(Float64,dsu[!,Cols(2,4)])|>y->subset(y,1=> ByRow(>(0.)))|>Matrix
@@ -11345,11 +11345,11 @@ module WaSiM
         nmn = dsu[msk[!,1],:]
         if ann
             nmn.basin=map(x->replace(x,r"_" => " "),nmn.basin)
-            Plots.annotate!([(M[i,1], M[i,2], 
+            Plots.annotate!([(M[i,1], M[i,2],
                 Plots.text(
-                nmn.basin[i], 
-                8, :left, 
-                halign=:center, 
+                nmn.basin[i],
+                8, :left,
+                halign=:center,
                 rotation=-15.0)) for i in 1:size(nmn, 1)])
             end
         Plots.plot!(legend=false)
@@ -11359,25 +11359,25 @@ module WaSiM
     for specific subsets of dfs....
     """
     function corrbar(a::Vector{Float64}, b::Vector{Float64})
-        
+
         df_A = a
         df_B = b
         #ti = "$a vs $b"
         ti = raw""
 
         #cor(df_A, df_B)^2
-    
+
         #Calculate correlations and replace NaN with 0
         correlations = Vector{Float64}(undef, size(df_A,1))
         for i in 1:size(df_A, 1)
             correlations[i] = cor(df_A, df_B)^2
         end
         replace!(correlations, NaN => 0)
-    
+
         p0 = Plots.bar(1:size(df_A, 1), correlations,
             legend = false,
             title = ti,
-            fillcolor = ifelse.(correlations .> 0.35, 
+            fillcolor = ifelse.(correlations .> 0.35,
                 "cornflowerblue", "coral2"),
             xticks = (1:size(df_A, 1), propertynames(df_A)),
             xrotation = 45,
@@ -11385,20 +11385,20 @@ module WaSiM
             ylabel = "Correlation R²",
             left_margin = 10mm,
             bottom_margin = 2mm);
-    
+
         ann = map(x->string.(round(x;sigdigits=2)),correlations)
-    
+
         for i in 1:size(df_A, 1)
             Plots.annotate!(i,correlations[i],
             (ann[i],9,:center,:top,:black))
-            # println("R² "*ann[i]*" of Basin 
+            # println("R² "*ann[i]*" of Basin
             # "*(df_A)[i]*" added")
         end
-    
+
        return p0
     end
-    
-    
+
+
     """
     selects first dfcol (for so)
     dt annotations
@@ -11416,7 +11416,7 @@ module WaSiM
         #eig. braucht man das col argument bei so_ input nicht.
 
         prec = waread2(prec;silencewarnings=true,limit=10^6)
-        
+
         yrs = year.(prec.date)|>unique|>length
         prec = monsum(prec)
         if ncol(prec) > 2
@@ -11426,11 +11426,11 @@ module WaSiM
         else
             precvec = vec(Matrix(select(prec, Not(:month))))
         end
-                
+
         precvec = precvec ./ yrs
-        
+
         temp = waread2(temp;
-            silencewarnings=true,    
+            silencewarnings=true,
             #maxwarnings=1,
             limit=10^6)|>monmean
         if ncol(temp) > 2
@@ -11440,14 +11440,14 @@ module WaSiM
         else
             tempvec = vec(Matrix(select(temp, Not(:month))))
         end
-        
-        month_abbr = ["Jan", "Feb", "Mär", "Apr", 
-            "Mai", "Jun", "Jul", "Aug", "Sep", 
+
+        month_abbr = ["Jan", "Feb", "Mär", "Apr",
+            "Mai", "Jun", "Jul", "Aug", "Sep",
                 "Okt", "Nov", "Dez"];
-        
+
         #Plots.showtheme(:dao)
-        
-               
+
+
          #;family="Computer Modern"
         #Plots.theme(:ggplot2) #passt.
         #Plots.theme(:dao) #gibt mir falsche twinx margin.
@@ -11456,15 +11456,15 @@ module WaSiM
         Plots.theme(:wong2)
         #Plots.showtheme(:dracula)
         #Plots.showtheme(:dracula)
-        
-        p1 = Plots.bar(prec.month, precvec, 
-            color=:cornflowerblue, 
+
+        p1 = Plots.bar(prec.month, precvec,
+            color=:cornflowerblue,
             guidefontfamily="Computer Modern",
             tickfontfamily="Computer Modern",
-            #xlabel="", 
+            #xlabel="",
             ylims = (0.0, maximum(precvec) + 5.0),
             xflip=false,
-            ylabel="Niederschlag [mm]", 
+            ylabel="Niederschlag [mm]",
             legend=false, yflip=true,
             tick_direction = :out
             );
@@ -11472,44 +11472,44 @@ module WaSiM
 
         for i in prec.month
             val = round(precvec[i]; digits=1)
-            annotate!(i, precvec[i], 
+            annotate!(i, precvec[i],
             Plots.text("$(val)",8,:bottom; family="Computer Modern"))
         end
-        
+
         #font(family="serif", halign=:center, rotation=45.0)
         # val = round(maximum(tempvec); sigdigits=2)
         # i = findmax(tempvec)[2]
-        # Plots.annotate!(i, tempvec[i], 
+        # Plots.annotate!(i, tempvec[i],
         #             text("max: $(val) °C",10,:top))
-        
+
         #p2 = twinx(); #s.u.
-        
+
         ann2 = map(x->
             Plots.text(
-            string.(round(x; digits=1))*"°", 
+            string.(round(x; digits=1))*"°",
                 8,
-                :left, 
+                :left,
                 #:red),
                 :black;
                 family="Computer Modern"),
                 #family="sans-serif"), #maby
                 tempvec)
-        
-        plot!(twinx(), tempvec, #xlabel="", 
-            ylabel="Temperatur [°C]", 
+
+        plot!(twinx(), tempvec, #xlabel="",
+            ylabel="Temperatur [°C]",
             guidefontfamily="Computer Modern",
             tickfontfamily="Computer Modern",
             color=:coral2,
-            ylims = (minimum(tempvec) - 1.0 , 
+            ylims = (minimum(tempvec) - 1.0 ,
                 maximum(tempvec) + 1.0),
-            annotations = (temp.month .+ 0.125, 
+            annotations = (temp.month .+ 0.125,
                 tempvec .+ 0.1, ann2, :center),
-            label=false, 
+            label=false,
             linestyle = :dashdot,
             linewidth = 2,
             right_margin = 5mm,
-            tick_direction = :out            
-            );      
+            tick_direction = :out
+            );
 
         #@show plotattr(:Axis)
 
@@ -11539,9 +11539,9 @@ module WaSiM
         #df = selt(df,4)
         s = Symbol.(filter(x -> !occursin(r"date|year|month"i, x), names(df)))
         years = unique(Dates.year.(df[!,:date]))
-        #Scale of the axis. 
+        #Scale of the axis.
         #Choose from [:identity, :ln, :log2, :log10, :asinh, :sqrt].
-        if logy 
+        if logy
             ylog = :log
         else
             ylog = :identity
@@ -11550,32 +11550,32 @@ module WaSiM
             su = @rsubset df year.(:date)==years[1]
             #unique(monthname.(su.date))
             tm_ticks = round.(su.date, Month(1)) |> unique
-    
+
             hp1 = @df su Plots.plot(:date,cols(s),
                 yaxis = ylog,
-                xticks=(tm_ticks, 
-                    #Dates.format.(tm_ticks, "uu/yyyy")), 
-                    Dates.format.(tm_ticks, "uu")), 
-                xrot=45, xminorticks=true, 
+                xticks=(tm_ticks,
+                    #Dates.format.(tm_ticks, "uu/yyyy")),
+                    Dates.format.(tm_ticks, "uu")),
+                xrot=45, xminorticks=true,
                 xlim=extrema(su.date),
                 label = (years[1]),  #first
                 title=ti,
                 formatter=:plain,
                 legend = leg
                 );
-    
-    
+
+
             for yr in years[2:end]
                 su = @rsubset df year.(:date)===yr
-                #tm_ticks = round.(su.date, Month(1)) |> unique; 
+                #tm_ticks = round.(su.date, Month(1)) |> unique;
                 hp1 = Plots.plot!(
                     vec(Matrix(su[!,Not(:date)])),
                     label = (yr),
                     formatter=:plain)
             end
-    
+
             return hp1
-        
+
     end
 
     """
@@ -11588,7 +11588,7 @@ module WaSiM
         else
             df = waread(x)
         end
-        
+
         ti = try
             DataFrames.metadata(df) |> only |> last |> basename
         catch
@@ -11600,7 +11600,7 @@ module WaSiM
             col = col + 1
             @info "date column is at position 1, skipping to col+1..."
         end
-        
+
 
         df = select(df,Cols(col,:date))
 
@@ -11609,12 +11609,12 @@ module WaSiM
         s = Symbol.(filter(x -> !occursin(r"date|year|month"i, x), names(df)))
         years = unique(Dates.year.(df[!, :date]))
         ylog = logy ? :log : :identity
-    
+
         begin
             su = @rsubset df year.(:date)==years[1]
             su = monmean(su)
             @df su Plots.plot(:month,cols(s),
-                label = years[1], 
+                label = years[1],
                 title=ti,
                 legendtitle=colname,
                 yaxis=ylog,
@@ -11627,8 +11627,8 @@ module WaSiM
                     yaxis = ylog,
                     label = yr)
             end
-            month_abbr = ["Jan", "Feb", "Mär", "Apr", 
-                        "Mai", "Jun", "Jul", "Aug", "Sep", 
+            month_abbr = ["Jan", "Feb", "Mär", "Apr",
+                        "Mai", "Jun", "Jul", "Aug", "Sep",
                             "Okt", "Nov", "Dez"];
             #xticks!(0.5:11.5 , month_abbr)
             xticks!(1:12, month_abbr)
@@ -11655,7 +11655,7 @@ module WaSiM
             @warn "No basename in metadata!"
             raw""
         end
-        
+
         if col isa Number && names(df)[col] == "date"
             if col + 1 >= ncol(df)
                 col = col - 1
@@ -11667,14 +11667,14 @@ module WaSiM
                 col = col + 1
                 @info "date column is at position $col, skipping to col + 1..."
             end
-        end       
+        end
 
-        
+
         # if isa(col,Regex)
         #     @info "grep first match of $col ..."
         #     col = filter(x->occursin(col,x),names(df))[1]
         # end
-        
+
         try
             select!(df,Cols(col,:date))
         catch
@@ -11696,13 +11696,13 @@ module WaSiM
         colname = names(df[!,Not(:date)])|>only
         #ti = colname*" - "*ti
 
-        s = filter(x -> !occursin(r"(?i)date|year|month", 
+        s = filter(x -> !occursin(r"(?i)date|year|month",
         string(x)), names(df))
         years = unique(year.(df.date))
         years_str = string.(years)
 
         ylog = logy ? :log : :identity
-        
+
         mn = [ monthabbr(x) for x in unique(month.(df.date)) ]
 
         hp1 = plot(#xticks = mn,
@@ -11748,7 +11748,7 @@ module WaSiM
         end
         od = DataFrame(geometry=pts, name=propertynames(fl)[5:end], xc=xc, yc=yc)
         return od
-        
+
     end
 
     function getnames(dfs::DataFrame,rg::String)
@@ -11785,7 +11785,7 @@ module WaSiM
             @error "only one column available!"
             return
         end
-        
+
         s = Symbol.(filter(x -> !(occursin(r"year|date|month"i, x)), names(df)))
         dt = first(Symbol.(filter(x -> (occursin(r"year|date|month"i, x)), names(df))))
 
@@ -11798,17 +11798,17 @@ module WaSiM
         xt = tovec(df,dt)
         mx = round(findmax(df[!,Not(Cols(dt))]|>Matrix|>collect)[1];digits=0)
         minx = round(findmin(df[!,Not(Cols(dt))]|>Matrix|>collect)[1];digits=0)
-        
+
         step = nrow(df) #.* 2
         lab = string.(minx:step:mx)
         lab = lab.*" [mm]"
-        @df df groupedbar(xt,cols(s), 
+        @df df groupedbar(xt,cols(s),
             legend = :outertopright,
             xticks = xt,
             xrotation = 45,
-            xlabel = "", 
-            ylabel = "[mm]", 
-            
+            xlabel = "",
+            ylabel = "[mm]",
+
             #yticks = (minx:step:mx,lab),
             # guidefonthalign = :right,
             # yguidefonthalign = :right,
@@ -11822,7 +11822,7 @@ module WaSiM
             margin = 0.5cm, #def 1mm
             legend_column = lcols,
             legend_font_pointsize = 6,
-            #legend_font = Plots.Font("sans-serif", 6, 
+            #legend_font = Plots.Font("sans-serif", 6,
             #    :hcenter, :vcenter, 0.0,colorant"black"),
             #legend_title_font_valign = :top,
             #legend_position = :outertopright, #`:best`
@@ -11861,9 +11861,9 @@ module WaSiM
                 push!(pts,pt)
             end
             od = DataFrame(geometry=pts, name=propertynames(fl)[5:end], xc=xc, yc=yc)
-            
+
         end
-        
+
         Plots.plot!(od.geometry;c=:black,shape = :x)
         for (i, pt) in enumerate(od.geometry)
             x = ArchGDAL.getx(od.geometry[i], 0)
@@ -11928,19 +11928,19 @@ module WaSiM
         if (!occursin("streu",fl) && occursin("streu",pwd()))
             fl = replace(fl,"control"=>"D:/Wasim/streu/control")
         end
-        
-        
+
+
         return(string(fl))
     end
 
     """
     checks state of wasim routing table
-    isroute(ctl3()) 
+    isroute(ctl3())
     isroute(filename::AbstractString;match=r"timeoffset")
     """
     function isroute(;filename::String=ctl3(),match=r"timeoffset")
         START = false
-    
+
         function process_line(line::AbstractString)
             m = strip(line)
             if occursin(match, line)
@@ -11952,7 +11952,7 @@ module WaSiM
         # if isnothing(filename)
         #     filename = ctl3()
         # end
-    
+
         for (i, line) in enumerate(eachline(filename))
             if i > 100 && occursin(r"^\[routing_model]", line)
                 START = true
@@ -11980,9 +11980,9 @@ module WaSiM
                 out = ArchGDAL.reproject(geom,
                     GeoFormatTypes.EPSG(25832),
                     GeoFormatTypes.EPSG(4326))
-                od = DataFrame(geometry=out, 
+                od = DataFrame(geometry=out,
                     name=propertynames(fl)[end])
-               return od 
+               return od
             else
                 fl = CSV.read(x,DataFrame;limit=4)
             end
@@ -12005,8 +12005,8 @@ module WaSiM
             push!(pts,pt)
         end
         od = DataFrame(geometry=pts, name=propertynames(fl)[5:end], xc=xc, yc=yc)
-    
-        return od    
+
+        return od
     end
 
     """
@@ -12016,14 +12016,14 @@ module WaSiM
         if isa(z,Regex)
             v = filter(file -> occursin(z,file), readdir());
             z = v[broadcast(x->!endswith(x,r"nc|png|svg|jpg|txt|log"i),v)]|>first
-        end 
-        println("loading $z ...")   
+        end
+        println("loading $z ...")
         m = map(x->(x=>Int64),[:YY,:MM,:DD,:HH])
         #df = CSV.read(z,DataFrame;types=Dict(m))|>f->dropmissing(f,:YY)
         ms = ["-9999","-9999.0","lin", "log", "--"]
         df = CSV.read(z,DataFrame;
-            delim="\t", header=1, 
-            normalizenames=true, 
+            delim="\t", header=1,
+            normalizenames=true,
             missingstring=ms,
             types=Dict(m),
             stripwhitespace=true)|>f->dropmissing(f,:YY)
@@ -12031,34 +12031,34 @@ module WaSiM
         select!(df,Not(1:4))
         DataFrames.metadata!(df, "filename", z, style=:note)
     end
-    
+
     function rsq(df::DataFrame;x1=1,x2=2)
         x=df[:,x1]
         y=df[:,x2]
         cor(x, y)^2
     end
-    
+
     """
     plots a dataframe with info on dublicated date vals
     """
     function dubplot(pt::Union{String,DataFrame})
-        
+
         if pt isa String
             df = waread2(pt)
         else
             df = pt
         end
-               
-        
+
+
         #v = nonunique(df,:date)
         yl = try
-            collect(DataFrames.metadata(df))[1][2]|>dirname|>splitpath|>last    
+            collect(DataFrames.metadata(df))[1][2]|>dirname|>splitpath|>last
         catch
             @info "No basename in metadata!"
             raw""
         end
-        
-        
+
+
         dubs = df[findall(x -> count(==(x), df.date) > 1, df.date),:]
         grp = groupby(dubs,:date)
         v = [size(yx,1) for yx in grp]|>unique
@@ -12069,26 +12069,26 @@ module WaSiM
         else
             println("unique counts: $(v)")
         end
-        
+
         StatsPlots.plot()
-        
+
         # i = 0;
         for group in grp
             # cntz = size(group,1)
             # i =+ 1
             @df group StatsPlots.violin!(
-                cols(propertynames(dubs)[1]), 
+                cols(propertynames(dubs)[1]),
                 # annotations = Plots.text("no: $cntz"),
                 # annotations = (i,
                 # maximum(group[!,1]),
                 # "no: $cntz", :top),
-                ylabel=yl, 
-                xlabel="Group", 
+                ylabel=yl,
+                xlabel="Group",
                 legend=false)
         end
         for i in 1:size(grp, 1)
             Plots.annotate!(i,
-            maximum(grp[i][!,1]),    
+            maximum(grp[i][!,1]),
             (size(grp[i],1),9,:center,:top,:black))
         end
         title!("Bandwith of duplicate values")
@@ -12100,17 +12100,17 @@ module WaSiM
     kwars are passed to pretty_table
     tblcb(kd;backend = Val(:latex))
     """
-    function tblcb(kd::DataFrame;kwargs...) 
+    function tblcb(kd::DataFrame;kwargs...)
         pretty_table(kd,header=uppercasefirst.(names(kd)); kwargs...)
         txt_str = sprint(io -> pretty_table(io, kd, header=uppercasefirst.(names(kd)); kwargs...))
-        return clipboard(txt_str) 
+        return clipboard(txt_str)
     end
 
     """
     applies to quarterly data
     qrtr(pt::Union{String,DataFrame},
         fun=sum;agg=quarterofyear)
-    example 
+    example
      qrtr(df;agg=year)|>dfp
      qrtr(df;fun=mean)|>dfp
      qrtr(skipyr(df);fun=mean)|>dfp
@@ -12122,12 +12122,12 @@ module WaSiM
         else
             x = pt
         end
-        
+
         df = copy(x)
         y = filter(x->!occursin("date",x), names(df))
         #s = map(y -> Symbol(y),y)
         df[!, :date] .= agg.(df[!,:date]);
-        df_agg = DataFrames.combine(groupby(df, :date), 
+        df_agg = DataFrames.combine(groupby(df, :date),
             y .=> fun .=> y);
         return(df_agg)
     end
@@ -12139,12 +12139,12 @@ module WaSiM
     function findctl(snippet::Union{String,Regex};recurse=false, dir="D:/Wasim/regio/control",suffix=".ctl")
         owd = abspath(pwd())
         platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-        
+
         if platform != "windows"
             wsl_cmd = `wslpath $(dir)`
             dir = readchomp(pipeline(wsl_cmd))
         end
-        
+
         cd(dir)
         if recurse
             #files = rglob(Regex(suffix,"i"))
@@ -12152,15 +12152,15 @@ module WaSiM
             for (looproot, dirs, filenames) in walkdir(dir)
                 for filename in filenames
                     if (occursin(snippet,filename) && endswith(filename, suffix))
-                        push!(res, joinpath(looproot, filename)) 
+                        push!(res, joinpath(looproot, filename))
                     end
                 end
             end
         else
             files = filter(file -> endswith(file, suffix), readdir(dir,join=true))
             res = filter(x->occursin(snippet,x),files)
-        end    
-        
+        end
+
         cd(owd)
         return res
     end
@@ -12181,7 +12181,7 @@ module WaSiM
          for dir in dirs
             printstyled("check dir: $dir\n",color=:light_red)
          end
-        end 
+        end
         println("$(n) files in directory")
         @printf("%-40s %15.2f GB\n","$(cwd):",osize/1024^3)
     end
@@ -12193,13 +12193,13 @@ module WaSiM
 
     for z in dfonly(r"qoutjl")
         byear(z)|>println
-    end    
+    end
     """
     function byear(x::Union{String,Regex,DataFrame};)
         if x isa String
             printstyled("reading $x\n",color=:light_red)
             df = waread2(x;silencewarnings=false)
-            dropmissing!(df)    
+            dropmissing!(df)
         elseif x isa Regex
             x = first(dfonly(x))
             printstyled("reading $x\n",color=:light_red)
@@ -12210,9 +12210,9 @@ module WaSiM
             df = reorder_df(x)
             dropmissing!(df)
         end
-        
+
         df[!, :year] = year.(df[!,:date]);
-        nm = try 
+        nm = try
             tmp = collect(DataFrames.metadata(df))[1][2]|>basename;
             replace.(tmp,
             r"_" => " ",
@@ -12225,7 +12225,7 @@ module WaSiM
 
 
         grouped_df = groupby(df, :year)
-        
+
         DataFrames.combine(grouped_df) do group
             #for i in names(group)
             #getproperty(group,))
@@ -12252,7 +12252,7 @@ module WaSiM
         if x isa String
             printstyled("reading $x\n",color=:light_red)
             df = waread2(x;silencewarnings=false)
-            dropmissing!(df)    
+            dropmissing!(df)
         elseif x isa Regex
             x = first(dfonly(x))
             printstyled("reading $x\n",color=:light_red)
@@ -12272,12 +12272,12 @@ module WaSiM
             @warn "more than 20 columns, heatmap will be unreadable!"
             return
         end
-        
+
         #df = df[!, [i for i in names(df) if occursin("_C",i)] ∪ [i for i in names(df) if !occursin("_C",i)]]
         #reorder columns: put all containig _C and following by Number in front
         select!(df, r"_C\d+", Not(r"_C\d+"))
 
-        
+
         #md = cor(Matrix(df[:, Not(:date)])).^2
         #md = Matrix(select(df, Not(Cols(r"date|year|month|day"))))
         md = cor(Matrix(select(df, Not(Cols(r"date|year|month|day"))))).^2
@@ -12286,19 +12286,19 @@ module WaSiM
         replace!(md, 1.0 => missing)
         replace!(md, 0.0 => missing)
         # l = @layout [a{0.95w} b{0.05w}]
-        # Bar = heatmap([NaN;;], framestyle=:none, 
-        # clims=extrema(md|>skipmissing), 
+        # Bar = heatmap([NaN;;], framestyle=:none,
+        # clims=extrema(md|>skipmissing),
         # cbar=true,title = "RSQ")
 
-        p = heatmap(md, 
-            #c=:balance, 
+        p = heatmap(md,
+            #c=:balance,
             #c=:lightrainbow, grep(r"gr",cs)
             #c=:grays,
             #c = Plots.colormap("RdBu",nrow(df);logscale=true),
             c = Plots.colormap("RdBu",
                 size(md, 1)*1000,
                 mid=0.25),
-            linewidth=0.8, 
+            linewidth=0.8,
             #cbar=false,
             cbar=true,
             #colorbar_title = "RSQ",
@@ -12307,7 +12307,7 @@ module WaSiM
             yticks =false,
             grid = :false,
             # legend = :outertopright,
-            # legendtext = string(names(df[:, Not(:date)])),#xlabel="", #ylabel="", 
+            # legendtext = string(names(df[:, Not(:date)])),#xlabel="", #ylabel="",
             title="RSQ Correlation Heatmap";kw...);
         if ann
             for i in 1:size(md, 1)
@@ -12315,11 +12315,11 @@ module WaSiM
                     value = round(md[i, j], digits=2)
                     color = ismissing(value) ? :transparent : :black
                     #color = value==1.0 ? :transparent : :black
-                    Plots.annotate!(j, i, 
-                        Plots.text(string(value), 9, color, :center, 
+                    Plots.annotate!(j, i,
+                        Plots.text(string(value), 9, color, :center,
                         halign=:center, rotation=-35.0,family="Computer Modern"))
                     # annotate!(j - 0.5, i,
-                    #     text(value, 
+                    #     text(value,
                     #         8, color, :center))
                 end
             end
@@ -12334,14 +12334,14 @@ module WaSiM
         Plots.xticks!(1:length(nm), nm) #reverse(nm)
         Plots.yticks!(1:length(nm), nm;rotation=-35)
         # Add a diagonal line
-        Plots.plot!(p, 
-            1:size(md, 1), 
-            1:size(md, 2), 
+        Plots.plot!(p,
+            1:size(md, 1),
+            1:size(md, 2),
             label = false,
             color=:black,
-            linestyle=:dash, 
+            linestyle=:dash,
             linewidth=0.75)
-            #ticks=false)        
+            #ticks=false)
 
         return(p)
         #return plot(p, Bar, layout=l)
@@ -12363,7 +12363,7 @@ module WaSiM
             @warn "No basename in metadata!"
             ti = raw""
         end
-    
+
 
         month_abbr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         if any(x->occursin("year",x),names(df))
@@ -12383,7 +12383,7 @@ module WaSiM
                 rotation=0.0,
                 color=:black
             )
-    
+
             dx = monmean(df)
             y_offset = dx[!,2]
             anns = map(x->string.(round(x,digits=2)), y_offset)
@@ -12391,13 +12391,13 @@ module WaSiM
             #col_annotations = (Vector(dx[!, 1]) .- 0.5, y_offset, xans) # x y val
             #col_annotations = (Vector(dx[!, 1]) .- 0.5, y_offset, xans) # x y val
             col_annotations = (Vector(dx[!, 1]) .+ 0.5, y_offset, xans) # x y val
-    
+
             # Create a colormap from the `monmean` values
             #k=colorfunction(dx[!,2])
             #k = cf2(dx[!,2])
             #mat = reshape(k, (1,nrow(dx)))
             #colors = colormap.(dx[!,2])
-    
+
             @df df StatsPlots.boxplot(
                 str,
                 cols(s),
@@ -12413,7 +12413,7 @@ module WaSiM
                 annotations = col_annotations,
                 legend=false,
             )
-    
+
             xticks!(0.5:1.4:16, month_abbr)
             #xticks!(0.5:1.5:12.5, month_abbr)
             title!(ti)
@@ -12430,17 +12430,17 @@ module WaSiM
             dk[!, :agg_date] .= timestep.(dk[!,:date])
         else
             dk[!, :agg_date] .= dk[!,:date]
-        end    
+        end
 
         # Grouping by the specified timestep and calculating the minimum and maximum values of tot_average
-        su = DataFrames.combine(groupby(dk, :agg_date), 
-            :tot_average .=> (minimum, maximum) .=> 
+        su = DataFrames.combine(groupby(dk, :agg_date),
+            :tot_average .=> (minimum, maximum) .=>
             [:min_moisture, :max_moisture])
 
             lab = uppercase(string(timestep))
         # Creating the plot with confidence bands
         plot(su.agg_date, [su.min_moisture su.max_moisture], ribbon=true, fillalpha=0.2,
-            xlabel=string(lab), 
+            xlabel=string(lab),
             ylabel="Total Average Moisture",
             title="Moisture Plot with Confidence Bands",
             label=["Min Moisture" "Max Moisture"]; kwargs...)
@@ -12451,22 +12451,22 @@ module WaSiM
         s = map(Symbol, filter(x -> !occursin("date", x), names(dmean)))
         dmean[!, :month] = month.(dmean[!,:date])
         select!(dmean, Not(:date))
-    
+
         # Calculate monthly mean and confidence interval using combine and groupby
         dmean = DataFrames.combine(DataFrames.groupby(dmean, :month),
-            s .=> (dmean -> (mean(dmean), 1.96 * std(dmean) / sqrt(length(dmean)))) 
+            s .=> (dmean -> (mean(dmean), 1.96 * std(dmean) / sqrt(length(dmean))))
             .=> s)
-    
+
         # Create separate columns for mean, lower bound, and upper bound
         for col in s
             dmean[!, string(col)*"_mean"]  .= [first(only(x)) for x in eachrow(dmean[!, col])]
             dmean[!, string(col)*"_lower"] .= [first(only(x)) - last(only(x)) for x in eachrow(dmean[!, col])]
             dmean[!, string(col)*"_upper"] .= [first(only(x)) + last(only(x)) for x in eachrow(dmean[!, col])]
         end
-    
+
         # # Drop the original columns representing the mean and standard deviation
         # select!(dmean, Not.(:month, s...))
-    
+
         return dmean
     end
 
@@ -12477,12 +12477,12 @@ module WaSiM
     function monc_f(df::DataFrame; confidence_level=0.95)
         # Make a copy of the input DataFrame
         dmean = copy(df)
-        
 
-        
+
+
         # Add a 'month' column based on the 'date' column
         dmean[!, :month] = month.(dmean[!, :date])
-        
+
         # Drop the 'date' column
         select!(dmean, Not(:date))
         # Extract the columns of interest
@@ -12491,12 +12491,12 @@ module WaSiM
         for col in columns
             values = dmean[!, col]
             mean_value = mean(values)
-            
+
             z_score = quantile(Normal(), 0.5 + confidence_level / 2) # Use 0.975 for 95% confidence level
             margin_of_error = z_score * std(values) / sqrt(length(values))
             lower_bound = mean_value - margin_of_error
             upper_bound = mean_value + margin_of_error
-            
+
             dmean[!, col * "_mean"] .= mean_value
             dmean[!, col * "_lower"] .= lower_bound
             dmean[!, col * "_upper"] .= upper_bound
@@ -12505,10 +12505,10 @@ module WaSiM
         # get new names
         y = filter(x -> !occursin(r"date|month", x), names(dmean))
         dmean = DataFrames.combine(
-            groupby(dmean, :month), 
+            groupby(dmean, :month),
             y .=> mean .=> y);
 
-    
+
         return dmean
     end
 
@@ -12519,13 +12519,13 @@ module WaSiM
     function monc(df::DataFrame; confidence_level=0.95)
         # Make a copy of the input DataFrame
         dmean = copy(df)
-        
+
         # Extract the columns of interest
         columns = filter(x -> !occursin("date", x), names(dmean))
-        
+
         # Add a 'month' column based on the 'date' column
         dmean[!, :month] = month.(dmean[!, :date])
-        
+
         # Drop the 'date' column
         select!(dmean, Not(:date))
 
@@ -12534,33 +12534,33 @@ module WaSiM
             for col in columns
                 values = group[!, col]
                 mean_value = mean(values)
-                
+
                 z_score = quantile(Normal(), 0.5 + confidence_level / 2) # Use 0.975 for 95% confidence level
                 margin_of_error = z_score * std(values) / sqrt(length(values))
                 lower_bound = mean_value - margin_of_error
                 upper_bound = mean_value + margin_of_error
-                
+
                 result[!, col * "_mean"] .= mean_value
                 result[!, col * "_lower"] .= lower_bound
                 result[!, col * "_upper"] .= upper_bound
             end
             return result
         end
-    
+
         return dmean
     end
 
     """
     monthly mean plot with ribbon
     x::Union{String,Regex,DataFrame};col::Any=1,confidence_level::Number=0.95)
-    dfrib(df;confidence_level=.999,col=:tot_average) 
+    dfrib(df;confidence_level=.999,col=:tot_average)
     """
     function dfrib(x::Union{String,Regex,DataFrame};
         col::Any=1,confidence_level::Number=0.95)
         if x isa String
             printstyled("reading $x\n",color=:light_red)
             df = waread2(x;silencewarnings=false)
-            dropmissing!(df)    
+            dropmissing!(df)
         elseif x isa Regex
             x = first(dfonly(x))
             printstyled("reading $x\n",color=:light_red)
@@ -12576,7 +12576,7 @@ module WaSiM
         catch
             @warn "No basename in metadata!"
             ti = raw""
-        end       
+        end
 
         if !("date" in names(df))
             @error "no :date column found in $x !"
@@ -12600,7 +12600,7 @@ module WaSiM
         #colname = string(names(df[!, Not(:date)]))
         ##has to be in this order...
         colname = only(names(select(df,Cols(col))))
-        
+
         if length(ti)>1
             lab = ti[1:4]*colname
         else
@@ -12612,7 +12612,7 @@ module WaSiM
 
         df = select(df,Cols(col,:date))
         @info "aggregation monthly mean of col: $col at confidence_level: $confidence_level"
-        
+
         # if startswith(colname,"_")
         #     colname = "basin"*colname
         # end
@@ -12622,27 +12622,27 @@ module WaSiM
         # s = map(Symbol, filter(x -> !occursin("date", x), names(dmean)))
         # dmean[!, :month] = month.(dmean[!,:date])
         # select!(dmean, Not(:date))
-        
+
         # # # Calculate monthly mean and confidence interval using combine and groupby
         # # dmean = DataFrames.combine(DataFrames.groupby(dmean, :month),
-        # #     s .=> (dmean -> (mean(dmean), 1.96 * std(dmean) / sqrt(length(dmean)))) 
+        # #     s .=> (dmean -> (mean(dmean), 1.96 * std(dmean) / sqrt(length(dmean))))
         # #     .=> s)
 
         # # Calculate monthly mean and narrower confidence interval using combine and groupby
         # dmean = DataFrames.combine(DataFrames.groupby(dmean, :month),
         #     s .=> (
-        #         dmean -> 
-        #         (mean(dmean), 1.1 * std(dmean) / sqrt(length(dmean)))) 
+        #         dmean ->
+        #         (mean(dmean), 1.1 * std(dmean) / sqrt(length(dmean))))
         #     .=> s)
-    
-    
+
+
         # # Create separate columns for mean, lower bound, and upper bound
         # for col in s
         #     dmean[!, string(col)*"_mean"]  .= [first(only(x)) for x in eachrow(dmean[!, col])]
         #     dmean[!, string(col)*"_lower"] .= [first(only(x)) - last(only(x)) for x in eachrow(dmean[!, col])]
         #     dmean[!, string(col)*"_upper"] .= [first(only(x)) + last(only(x)) for x in eachrow(dmean[!, col])]
         # end
-        
+
         dmean = monc(df;confidence_level = confidence_level) #s.o. confidence_interval 95%
         mean_col = propertynames(select(dmean, Cols(r"mean")))[1]
         lower_col = propertynames(select(dmean, Cols(r"lower")))[1]
@@ -12650,21 +12650,21 @@ module WaSiM
         lower_bounds = dmean[!, lower_col]|>unique
         upper_bounds = dmean[!, upper_col]|>unique
 
-        #plt = @df dmean plot(:month, Matrix(dmean[!,Cols(r"mean")]), 
-            #ribbon=(dmean.Lai_lower, dmean.Lai_upper), 
-            # ribbon=(Matrix(dmean[!,Cols(r"lower")]), 
-            #         Matrix(dmean[!,Cols(r"upper")])), 
-        plt = @df dmean plot(:month, cols(mean_col), 
+        #plt = @df dmean plot(:month, Matrix(dmean[!,Cols(r"mean")]),
+            #ribbon=(dmean.Lai_lower, dmean.Lai_upper),
+            # ribbon=(Matrix(dmean[!,Cols(r"lower")]),
+            #         Matrix(dmean[!,Cols(r"upper")])),
+        plt = @df dmean plot(:month, cols(mean_col),
                           ribbon=(lower_bounds, upper_bounds),
-            labels = lab, #see above at ti   # "Lai_mean", 
-            xlabel = "", #"Month", 
-            ylabel = "",  #"Lai", 
+            labels = lab, #see above at ti   # "Lai_mean",
+            xlabel = "", #"Month",
+            ylabel = "",  #"Lai",
             title = ti, #"Lai Mean with Ribbon",
             legend = :topleft,
-            xticks = (1:12, 
+            xticks = (1:12,
             [ monthabbr(x) for x in unique(dmean.month) ]),
             xrotation = 35
-            )    
+            )
         return plt
     end
 
@@ -12680,7 +12680,7 @@ module WaSiM
         DataFrames.metadata!(df, "filename", z, style=:note)
         return df
     end
-    
+
     """
     usage like: kernelplot("route.txt") but with linlog option
     reads with  qba() and names of df or (route.txt)
@@ -12688,7 +12688,7 @@ module WaSiM
     log: cols=Cols(3,5)
     """
     function klog(df::Union{String,DataFrame};lin=false,ann=true)
-        if lin 
+        if lin
             cols=Cols(2,4)
         else
             cols=Cols(3,5)
@@ -12707,21 +12707,21 @@ module WaSiM
         mns = names(dsu[!,cols])
         B = kde(M)
         Plots.plot(B,legend=false,xlabel=mns[1],ylabel=mns[2])
-        
+
         #dsu.basin  .= df.name
         rename!(dsu,:basin=>:sim)
         dsu = innerjoin(dsu,df,on=:sim)
         rename!(dsu,:name=>:basin)
-        
+
         msk = @rsubset(parse.(Float64,dsu[!,cols]) .> 0)
         nmn = dsu[msk[!,1],:]
         if ann
             nmn.basin=map(x->replace(x,r"_" => " "),nmn.basin)
-            Plots.annotate!([(M[i,1], M[i,2], 
+            Plots.annotate!([(M[i,1], M[i,2],
                 Plots.text(
-                nmn.basin[i], 
-                8, :left, 
-                halign=:center, 
+                nmn.basin[i],
+                8, :left,
+                halign=:center,
                 rotation=-15.0)) for i in 1:size(nmn, 1)])
             end
         Plots.plot!(legend=false)
@@ -12739,7 +12739,7 @@ module WaSiM
         data = data[3:end]
         numbers = extract_numbers(data)
         # Remove comments and unnecessary characters
-        data = broadcast(x -> replace(x,    
+        data = broadcast(x -> replace(x,
                 r"^#.*" => "",
                 r"^[[].*" => "",
                 r"method" => "",
@@ -12754,7 +12754,7 @@ module WaSiM
         sel = Grep.grep(r"^Name", data)
         # Split each string into "Name" and "Value"
         split_name_value = split.(sel, '=', limit=2)
-        
+
         ks = split.(Grep.grep(r"^ksat", data), '=', limit=2)
         ths = split.(Grep.grep(r"^theta_sat", data), '=', limit=2)
         thr = split.(Grep.grep(r"^theta_res", data), '=', limit=2)
@@ -12790,7 +12790,7 @@ module WaSiM
                             #r"^[[].*" => "",      #strip module names
                             #r"method" => "",     #startflag
                             #r"}" => "",          #this is needed for end flag
-                            
+
                             #r"[?*.{=;]" => "",      #problems
 
 
@@ -12832,18 +12832,18 @@ module WaSiM
             #value_str = strip.(value_str)
             vs = split.(value_str)
             z0 = [parse.(Float64, z) for z in vs]
-            cls = split(dfs[i][1, 1], r"\W")[2] 
+            cls = split(dfs[i][1, 1], r"\W")[2]
             scatter!(month_abbr, first(z0), label=cls,
                 yaxis=:identity) #log10
             #push!(plots, plot(month_abbr, only(z0), label=cls))
         end
         #title!("LAI in [m2/m2]")
         Plots.show(p1)
-        return p1    
+        return p1
     end
 
     """
-    heatmap of landusedata 
+    heatmap of landusedata
     dfs::Vector=dfs,x::String="LAI"
     """
     function luheat(dfs::Vector=dfs,x::String="LAI";colors=:grays)
@@ -12861,7 +12861,7 @@ module WaSiM
         a.nm = filter(x->length(x)>2,z)
         a = a[:, sort(names(a),rev=true)] #sort columns
         a.nm .= replace.(a.nm, r"_" => " ")
-        begin 
+        begin
             value_str = string.(a.Value)
             vs = split.(value_str)
             z0 = [parse.(Float64, z) for z in vs]
@@ -12873,7 +12873,7 @@ module WaSiM
             #heatmap(m,c=myc[5:end-1])
             xticks!(1:12,month_abbr)
             yticks!(1:size(m,1),a.nm)
-            
+
             title!("$ti")
 
             #add annotation for each field
@@ -12890,11 +12890,11 @@ module WaSiM
             return plot!()
         end
     end
-    
-    
+
+
 
     """
-    runs perl wsl \$bsp x x 4 5 or 
+    runs perl wsl \$bsp x x 4 5 or
     \$f1 \$f2 \$c1 \$c2 ∇
     pers(x::Union{String,Regex}=r"qoutjl";c1=4,c2=5,f2=nothing,tofile=false)
     """
@@ -12911,7 +12911,7 @@ module WaSiM
             else
                 run(`wsl $bsp $f1 $f2 $c1 $c2`)
             end
-        else   
+        else
         files = glob(x)
             for x in files
                 if tofile
@@ -12922,7 +12922,7 @@ module WaSiM
                 else
                     run(`wsl $bsp $x $x $c1 $c2`)
                 end
-                
+
             end
         end
     end
@@ -12963,7 +12963,7 @@ module WaSiM
                 # Plot each metric with a different color
                 plot!(year, kge, label="KGE $nam", marker=:circle)
                 plot!(year, nse, label="NSE $nam", marker=:square)
-                plot!(year, ve, label="VE $nam", 
+                plot!(year, ve, label="VE $nam",
                     marker=:diamond,
                     legend=:outertopright,
                     kw...)
@@ -12982,8 +12982,8 @@ module WaSiM
                 ti = select(df,col)|>names|>first|>uppercase
                 nam=collect(DataFrames.metadata(df))[1][2]|>basename
                 nam=replace(nam,r"-qoutjl"=>"",r"_" => " ",r"#" => "",r"qout" => "")
-                plot!(year, ve, label=nam, 
-                    title =ti, 
+                plot!(year, ve, label=nam,
+                    title =ti,
                     marker=:diamond,
                     legend=:outertopright,
                     kw...)
@@ -12992,7 +12992,7 @@ module WaSiM
         end
         # Customize the plot
         #xlabel!("Year")
-        
+
         xx = uppercase(string(col))
         ylabel!("Score $xx")
     end
@@ -13022,24 +13022,24 @@ module WaSiM
                 Plots.scatter!(year, kge, label="KGE $nam", marker=:circle)
                 for (x, y) in zip(year, kge)
                     if y > threshold
-                        Plots.annotate!([(x, y, 
-                        Plots.text("$(round(y, digits=2))", 8, 
+                        Plots.annotate!([(x, y,
+                        Plots.text("$(round(y, digits=2))", 8,
                         :black, :top))])
                     end
                 end
                 Plots.scatter!(year, nse, label="NSE $nam", marker=:square)
                 for (x, y) in zip(year, nse)
                     if y > threshold
-                        Plots.annotate!([(x, y, 
-                        Plots.text("$(round(y, digits=2))", 8, 
+                        Plots.annotate!([(x, y,
+                        Plots.text("$(round(y, digits=2))", 8,
                         :black, :top))])
                     end
                 end
                 Plots.scatter!(year, ve, label="VE $nam", marker=:diamond, legend=:outertopright, kw...)
                 for (x, y) in zip(year, nse)
                     if y > threshold
-                        Plots.annotate!([(x, y, 
-                        Plots.text("$(round(y, digits=2))", 8, 
+                        Plots.annotate!([(x, y,
+                        Plots.text("$(round(y, digits=2))", 8,
                         :black, :top))])
                     end
                 end
@@ -13050,28 +13050,28 @@ module WaSiM
                 if usethresold
                     yaxis!((threshold, 1))
                 end
-                
+
                 ve = select(df, col) |> Matrix |> vec
                 ti = select(df, col) |> names |> first |> uppercase
                 nam = collect(DataFrames.metadata(df))[1][2] |> basename
                 nam = replace(nam, r"-qoutjl" => "", r"_" => " ", r"#" => "", r"qout" => "")
-                
+
                 # Plotting with annotations
-                Plots.scatter!(year, ve, 
-                    #label=nam, 
+                Plots.scatter!(year, ve,
+                    #label=nam,
                     label=false,
-                    title=ti, 
+                    title=ti,
                     marker=:diamond, legend=:outertopright, kw...)
-                
+
                 # Adding annotations for values above threshold
                 for (x, y) in zip(year, ve)
                     if y > threshold
-                        Plots.annotate!([(x, y, 
-                        Plots.text("$(round(y, digits=2)) "*nam[1:3], 
+                        Plots.annotate!([(x, y,
+                        Plots.text("$(round(y, digits=2)) "*nam[1:3],
                         8, :black, :top))])
                     end
                 end
-                
+
                 Plots.xticks!(df[:, :year])
             end
             # xx = uppercase(string(col))
@@ -13083,18 +13083,18 @@ module WaSiM
     """
     takes DataFrame from:
     df = byear(some_merged_df)
-    annoated scatterplot of metrics    
+    annoated scatterplot of metrics
     """
     function pxm(df::DataFrame; col=:ve, ann=false, usethresold=true, threshold=-0.410, all=false, kw...)
         p1=Plots.plot(xrotation = 35)
             year = df.year
             if all
-                nam = try 
-                    replace(collect(DataFrames.metadata(df))[1][2] |> basename, 
+                nam = try
+                    replace(collect(DataFrames.metadata(df))[1][2] |> basename,
                         "-qoutjl" => "", r"_" => " ", r"#" => "", r"qout" => "")
                 catch
                     "no name"
-                end                    
+                end
                 if usethresold
                     yaxis!((threshold, 1))
                 end
@@ -13105,26 +13105,26 @@ module WaSiM
                 Plots.scatter!(year, kge, label="KGE $nam", marker=:circle)
                 for (x, y) in zip(year, kge)
                     if y > threshold
-                        
-                        Plots.annotate!([(x, y, 
-                        Plots.text("$(round(y, digits=2))", 8, 
+
+                        Plots.annotate!([(x, y,
+                        Plots.text("$(round(y, digits=2))", 8,
                         :black, :top))])
-                
+
                     end
                 end
                 Plots.scatter!(year, nse, label="NSE $nam", marker=:square)
                 for (x, y) in zip(year, nse)
                     if y > threshold
-                        Plots.annotate!([(x, y, 
-                        Plots.text("$(round(y, digits=2))", 8, 
+                        Plots.annotate!([(x, y,
+                        Plots.text("$(round(y, digits=2))", 8,
                         :black, :top))])
                     end
                 end
                 Plots.scatter!(year, ve, label="VE $nam", marker=:diamond, legend=:outertopright, kw...)
                 for (x, y) in zip(year, nse)
                     if y > threshold
-                        Plots.annotate!([(x, y, 
-                        Plots.text("$(round(y, digits=2))", 8, 
+                        Plots.annotate!([(x, y,
+                        Plots.text("$(round(y, digits=2))", 8,
                         :black, :top))])
                     end
                 end
@@ -13135,43 +13135,43 @@ module WaSiM
                 if usethresold
                     yaxis!((threshold, 1))
                 end
-                
+
                 ve = select(df, col) |> Matrix |> vec
                 ti = select(df, col) |> names |> first |> uppercase
-                nam = try 
-                    replace(collect(DataFrames.metadata(df))[1][2] |> basename, 
+                nam = try
+                    replace(collect(DataFrames.metadata(df))[1][2] |> basename,
                         "-qoutjl" => "", r"_" => " ", r"#" => "", r"qout" => "")
                 catch
                     "   no name" #[1:3]
-                end                    
-                
+                end
+
                 # Plotting with annotations
-                Plots.scatter!(year, ve, 
-                    #label=nam, 
+                Plots.scatter!(year, ve,
+                    #label=nam,
                     label=false,
-                    title=ti, 
+                    title=ti,
                     marker=:diamond, legend=:outertopright, kw...)
-                
+
                 # Adding annotations for values above threshold
                 for (x, y) in zip(year, ve)
                     if y > threshold
                         if ann
-                            Plots.annotate!([(x, y, 
-                            Plots.text("$(round(y, digits=2)) "*nam[1:3], 
+                            Plots.annotate!([(x, y,
+                            Plots.text("$(round(y, digits=2)) "*nam[1:3],
                             8, :black, :top))])
                         else
-                            Plots.annotate!([(x, y, 
+                            Plots.annotate!([(x, y,
                             Plots.text(round(y, digits=2),
                             8, :black, :top))])
                         end
                     end
                 end
-                
+
                 Plots.xticks!(df[:, :year])
             end
         return p1
     end
-    
+
 
 
     """
@@ -13196,7 +13196,7 @@ module WaSiM
             try
                 dm =innerjoin(
                     sim[!,Cols("C"*string(i[1]),end)],
-                    obs[!,Cols(Regex(i[3],"i"),end)],    
+                    obs[!,Cols(Regex(i[3],"i"),end)],
                     on=:date)
                 onam = i[3]*"-qoutjl"
                 wawrite(dm,onam)
@@ -13229,15 +13229,15 @@ module WaSiM
         rename!(df,1=>"sim",2=>"obs",3=>"name")
         df.name=map(x->replace(x,r"#" => "",r" " => "",r"_>.*" => "",r"-" => "_"),df[:,3])
         sort!(df, :sim)
-        return df    
+        return df
     end
 
     """
     The F1 Score ranges from 0 to 1, where a higher value indicates a better balance between precision and recall
-    F1= 2⋅(Precision⋅Recall) / Precision+Recall 
+    F1= 2⋅(Precision⋅Recall) / Precision+Recall
     """
-    function f1_score(data::DataFrame, 
-        sim_col::Union{Symbol,Int64} = 1, 
+    function f1_score(data::DataFrame,
+        sim_col::Union{Symbol,Int64} = 1,
         obs_col::Union{Symbol,Int64} = 2; threshold = 0.5, minobs=true)
         # Extracting simulation and observation columns
         #sim_values = data[:, sim_col]
@@ -13269,7 +13269,7 @@ module WaSiM
         # Precision, Recall, and F1 Score
         precision = tp / (tp + fp)
         recall = tp / (tp + fn)
-        
+
         # F1 Score is the harmonic mean of precision and recall
         f1_score = 2 * (precision * recall) / (precision + recall)
 
@@ -13288,15 +13288,15 @@ module WaSiM
         # Define the file extensions to keep
         keep_exts = [".ipynb", ".py", ".R", ".Rmd", ".log",
             ".tif", ".jpeg", ".png", ".svg",
-            ".cpg", ".shx", ".dbf", ".prj", ".shp", ".tex", 
-            ".csv", 
-            ".html", ".ftz", ".ftz_0", ".txt", 
+            ".cpg", ".shx", ".dbf", ".prj", ".shp", ".tex",
+            ".csv",
+            ".html", ".ftz", ".ftz_0", ".txt",
             ".list", ".nc", ".xml", ".sh", ".grd", ".yrly"]
-            
-        files = filter(file -> 
+
+        files = filter(file ->
             !occursin(r"(wq_|pl$|sh$|fzt|ftz|log$|ini|otherdata|intern)", file)
             , files)
-        
+
             # Process each file
         for file in files
             # Check if the file extension is in the list of extensions to keep
@@ -13306,12 +13306,12 @@ module WaSiM
                 println("Processing $file ...")
                 ms = ["-9999", "lin", "log", "--"]
                 #df = CSV.read(file, DataFrame)
-                df = CSV.File(file; 
-                    delim="\t", 
+                df = CSV.File(file;
+                    delim="\t",
                     header=1,
-                    silencewarnings=true, 
-                    normalizenames=false, 
-                    missingstring=ms, 
+                    silencewarnings=true,
+                    normalizenames=false,
+                    missingstring=ms,
                     types=Float64) |> DataFrame
                 dropmissing!(df,ncol(df))
                 # dropmissing!(df,4)
@@ -13367,7 +13367,7 @@ module WaSiM
                 )
             end
         end
-        Plots.plot(plots..., #size=(1200, 1000), 
+        Plots.plot(plots..., #size=(1200, 1000),
             layout = (rows, cols))
     end
 
@@ -13389,13 +13389,13 @@ module WaSiM
         return(join(a[3:end-1]," ")) #rem first 2 and last lines
     end
     """
-    function build_soil_dictionary(soiltable::String)     
+    function build_soil_dictionary(soiltable::String)
         entries = split(soiltable, "}")
         filter!(s -> !isempty(s), entries)
         filter!(s -> length(s)>2, entries)
         entries = strip.(entries)
         dictionary = Dict{Int, DataFrame}()
-        
+
         for entry in entries
             # Extract key and value
             m = match(r"(\d+)\s*\{", entry)
@@ -13405,7 +13405,7 @@ module WaSiM
             else
                 println("No match found in string: $entry")
             end
-            
+
             value_match = match(r"\{\s*(.*)", entry)
             if value_match !== nothing
                 value = value_match.captures[1]|>strip
@@ -13422,7 +13422,7 @@ module WaSiM
                 pairs = split(value, ",")
                 # Create an empty dictionary to store the column names and values
                 #col_dict = Dict{String, Vector{String}}()
-                
+
                 # Iterate over the key-value pairs and extract the column names and values
                 filter!(s -> !isempty(s), pairs)
                 z=[]
@@ -13436,7 +13436,7 @@ module WaSiM
                 dictionary[key] = df
             end
         end
-        
+
         return dictionary
     end
 
@@ -13453,7 +13453,7 @@ module WaSiM
         # Iterate over the key-value pairs in the dictionary
         for (key, df) in mysoildict
             # Add a column named "key" with the current key value to the DataFrame
-            df.key = fill(key, size(df, 1))    
+            df.key = fill(key, size(df, 1))
             # Append the current DataFrame to the combined DataFrame
             append!(xdf, df)
         end
@@ -13500,14 +13500,14 @@ module WaSiM
     function extract_layers(df::DataFrame, colkey::String="ksat")
         num_layers = size(select(df,Cols(colkey))[1,1],1)
         layer_columns = [Symbol("layer$i") for i in 1:num_layers]
-        layer_values = Vector{Vector{Float64}}(undef, num_layers)   
+        layer_values = Vector{Vector{Float64}}(undef, num_layers)
         #layer_values = Vector{Vector{Any}}(undef, num_layers)
         for i in 1:num_layers
             layer_values[i] = [ r[1][i] for r in eachrow(select(df, colkey)) ]
-        end    
+        end
         df1 = DataFrame(layer_columns .=> layer_values)
         dout = rename(hcat(df.key,df1), 1 => :key)
-        return dout    
+        return dout
     end
 
     """
@@ -13530,7 +13530,7 @@ module WaSiM
         end
         if !all(i -> i isa Int64, df.YY)
             filtermask = broadcast(x->looks_like_number(x),df[!,1])
-            df = df[filtermask, :]        
+            df = df[filtermask, :]
         end
         date_strings = string.(df.YY, "-", df.MM, "-", df.DD, "-", df.HH)
         df.date = DateTime.(date_strings, "yyyy-mm-dd-HH")
@@ -13542,21 +13542,21 @@ module WaSiM
                 rename!(df,Dict(x=>newname))
             end
         end
-        return df 
+        return df
     end
 
     """
     sim obs plot rglob regex
-    x::Union{Regex,DataFrame}; 
+    x::Union{Regex,DataFrame};
         yscale::Symbol = :log,
-        fun::Function = sum, 
+        fun::Function = sum,
         freq::String="monthly",simcol=1,obscol=2
         freq can also shortened, like D,M,Q,Y
     """
     function hyeval(
-        x::Union{Regex,DataFrame}; 
+        x::Union{Regex,DataFrame};
         yscale::Symbol = :log,
-        fun::Function = sum, 
+        fun::Function = sum,
         freq::String="monthly",
         ylab::String="[mm/$freq]",
         simcol=1,obscol=2,kw...)
@@ -13566,12 +13566,12 @@ module WaSiM
         else
             ndf = reorder_df(x)
         end
-                
+
         ndf = select(ndf,Cols(simcol,obscol,r"date|month|year"))
         dropmissing!(ndf)
 
         @info "aggregation (sum) freq: $freq"
-        try 
+        try
         # Resample the DataFrame based on the specified freq
             if freq == "daily" || freq == "D" || freq == "day"
                 #ndf = ndf[hour.(ndf.date) .== 0, :]
@@ -13579,7 +13579,7 @@ module WaSiM
             elseif freq == "monthly" || freq == "M" || freq == "mon" || freq == "month"
                 #df[day.(df.date) .== 1, :]
                 ndf = qrtr(ndf;fun=fun,agg=month) #monsum(ndf)
-            elseif freq == "quarterly" || freq == "Q" 
+            elseif freq == "quarterly" || freq == "Q"
                 #df[day.(df.date) .== 1 && month.(df.date) % 3 == 1, :]
                 ndf = qrtr(ndf;fun=fun)
             elseif freq == "seasonal"
@@ -13600,16 +13600,16 @@ module WaSiM
         sim,obs = names(ndf[!,Not(Cols(r"date|month|year"))])[1:2]
         ndf = hcat(ndf[!,Not(Cols(r"date|month|year"))],
             ndf[:,Cols(r"date|month|year")])
-    
+
         #printstyled(names(ndf)...,bold=true,color=:red)
         #split(names(ndf)...,' '),bold=true,color=:red)
         printstyled(names(ndf),bold=true,color=:red)
-        
+
         rename!(ndf, [:Simulated,:Observed,:Date]) #wie in gof3.r
-        
+
         printstyled(" changed to :Simulated,:Observed,:Date ! \n",bold=true,color=:red)
-        
-        overall_pearson_r = cor(ndf[!, :Observed], 
+
+        overall_pearson_r = cor(ndf[!, :Observed],
             ndf[!, :Simulated])
         r2 = overall_pearson_r^2
         #nse(simulations, evaluation)
@@ -13617,52 +13617,52 @@ module WaSiM
         kge_score = kge1(ndf[!, :Simulated],ndf[!, :Observed])
         ve = round(vef(ndf[!, :Simulated],ndf[!, :Observed]), digits=2)
         subs = "RSQ: $(round(r2, digits=2))\nNSE: $(round(nse_score, digits=2))\nKGE: $(round(kge_score, digits=2))\nVE: $ve"
-        
 
-        ti = try 
+
+        ti = try
             first(split(basename(x),"_"))
         catch
             @warn "No basename in metadata!"
             raw""
         end
-        
+
         fr = replace(freq,"ly"=>"")
-        p = Plots.plot(title=ti, ylabel=ylab, 
-            xlabel="", 
-            yaxis = yscale, 
+        p = Plots.plot(title=ti, ylabel=ylab,
+            xlabel="",
+            yaxis = yscale,
             legend=:topleft;kw...)
 
             #sim,obs
-        Plots.plot!(p, ndf[!, :Date], ndf[!, :Simulated], 
+        Plots.plot!(p, ndf[!, :Date], ndf[!, :Simulated],
                 color=:red, label=sim) #label="Modeled")
-        Plots.plot!(p, ndf[!, :Date], ndf[!, :Observed], 
+        Plots.plot!(p, ndf[!, :Date], ndf[!, :Observed],
         line=:dash, color=:blue, label=obs)
         #label="Observed")
-            
-        
+
+
         Plots.annotate!(
             :topright,
             Plots.text("$subs", 10, :black, :right;
             family="Computer Modern")
         )
 
-        if freq == "quarterly" || freq == "Q" || freq == "qrtr" 
+        if freq == "quarterly" || freq == "Q" || freq == "qrtr"
             Plots.xticks!(
                 1:4, ["Q1", "Q2", "Q3", "Q4"])
         end
-                
+
         if freq == "monthly" || freq == "M" || freq == "mon" || freq == "month"
             Plots.xticks!(
                 1:12, monthabbr.(1:12))
         end
-        
+
         if freq == "yearly" || freq == "Y" || freq == "yr" || freq == "year"
             Plots.xticks!(
-                #1:nrow(ndf), 
-                ndf.Date, 
+                #1:nrow(ndf),
+                ndf.Date,
                 string.(ndf.Date))
         end
-        
+
 
         return p
     end
@@ -13674,7 +13674,7 @@ module WaSiM
         if x isa String
             printstyled("reading $x\n",color=:light_red)
             df = waread2(x;silencewarnings=false)
-            dropmissing!(df)    
+            dropmissing!(df)
         elseif x isa Regex
             x = first(dfonly(x))
             printstyled("reading $x\n",color=:light_red)
@@ -13702,9 +13702,9 @@ module WaSiM
         md = convert(Matrix{Union{Float64, Missing}}, md)
         replace!(md, 1.0 => missing)
         replace!(md, 0.0 => missing)
-        p1 = heatmap(md, 
+        p1 = heatmap(md,
             c = Plots.colormap("RdBu",size(md, 1),mid=0.33),
-            linewidth = 0.9, 
+            linewidth = 0.9,
             cbar = true,
             # cbar=true,
             #colorbar_title = "RSQ",
@@ -13720,18 +13720,18 @@ module WaSiM
             yticks =false,
             grid = :false; kw...);
             # # legend = :outertopright,
-            # # legendtext = string(names(df[:, Not(:date)])),#xlabel="", #ylabel="", 
+            # # legendtext = string(names(df[:, Not(:date)])),#xlabel="", #ylabel="",
             # title="Correlation Heatmap"
         if ann
             for i in 1:size(md, 1)
                 for j in 1:size(md, 2)
                     value = round(md[i, j], digits=2)
                     color = ismissing(value) ? :transparent : :black
-                    Plots.annotate!(j, i, 
-                        Plots.text(string(value), 8, 
+                    Plots.annotate!(j, i,
+                        Plots.text(string(value), 8,
                         "Computer Modern",
-                        color, 
-                        :center, 
+                        color,
+                        :center,
                         halign=:center, rotation=-35.0))
                 end
             end
@@ -13755,10 +13755,10 @@ module WaSiM
         return z
     end
 
-    
+
     """
     reads from
-    jqloop qb > tst.json 
+    jqloop qb > tst.json
     """
     function jsread(fn::String)
         d = map(DataFrame,JSON.parsefile(fn))
@@ -13790,15 +13790,15 @@ module WaSiM
         tmp=grep("Messstellen-Name",readlines(x))
         # rename!(df,2=>:dat)
         # df.dat .= tryparse.(Float64,df.dat)
-        
+
         colnm = split(tmp[1],";")[2]
         rename!(df,Dict(
             1 => :date,
             2 => Symbol(colnm)))
-        
+
         # if !all(i -> i isa Int64, df.YY)
         #     filtermask = broadcast(x->looks_like_number(x),df[!,1])
-        #     df = df[filtermask, :]        
+        #     df = df[filtermask, :]
         # end
         if !isempty(tmp)
             println(
@@ -13833,7 +13833,7 @@ module WaSiM
         predictor = term(:dn)
         formula = FormulaTerm(response, predictor)
         model = lm(formula, df)
-        
+
         #model = lm(@formula(Matrix(select(df,dat))|>vec ~ dn),df);
         # col = select(df,col)
         # col = names(col)|>first
@@ -13846,12 +13846,12 @@ module WaSiM
         #trendline_equations = "$dat\ny = $(round(slope; sigdigits=2))x + $(round(intercept, sigdigits=1))"
         trendline_equations = "y = $(round(slope; sigdigits=2))x + $(round(intercept, sigdigits=1))"
 
-        plot(df.date, Matrix(select(df,dat))|>vec, 
+        plot(df.date, Matrix(select(df,dat))|>vec,
             label=string(dat),
             legend=:topright)
         #@df df plot(:date, cols(dat), label=string(dat), legend=:topright)
-        plot!(df.date, predict(model, df), 
-            label=trendline_equations, 
+        plot!(df.date, predict(model, df),
+            label=trendline_equations,
             linewidth=2.5,style=:dash)
     end
 
@@ -13866,7 +13866,7 @@ module WaSiM
         osize = 0 #Threads.Atomic{Int}(0)
         n = 0 #Threads.Atomic{Int}(0)
         for (root, dirs, files) in walkdir(cwd)
-            #Threads.@threads 
+            #Threads.@threads
             for file in files
                 osize += stat(joinpath(root, file)).size
                 n += 1
@@ -13877,7 +13877,7 @@ module WaSiM
                 printstyled("check dir: $dir\n", color=:light_red)
             end
         end
-        end 
+        end
         println("$(n) files in directory")
         @printf("%-40s %15.2f GB\n","$(cwd):",osize/1024^3)
     end
@@ -13890,7 +13890,7 @@ module WaSiM
         osize = Threads.Atomic{Int}(0)
         n = Threads.Atomic{Int}(0)
         l = ReentrantLock()
-    
+
         for (root, dirs, files) in walkdir(cwd)
             Threads.@threads for file in files
                 size = stat(joinpath(root, file)).size
@@ -13908,7 +13908,7 @@ module WaSiM
                     printstyled("check dir: $dir\n", color=:light_red)
                 end
             end
-        end 
+        end
         println("$(n[]) files in directory")
         #sizeof(osize)
         osize_val = osize[]
@@ -13922,7 +13922,7 @@ module WaSiM
 
     end
 
-    
+
     """
     controlfile::String = "",
     match1::String = "[landuse_table]",
@@ -13931,13 +13931,13 @@ module WaSiM
     see also landuse.jl for plotfuncs
     m1 = r"^[[]landuse_table[]]"
     m2 = r"^[[]"
-    a = readbetween(open(fn), m1, m2) #|>first    
+    a = readbetween(open(fn), m1, m2) #|>first
 
     """
     function lutab(;
         controlfile::String = "",
         match1::Regex = r"^[[]landuse_table[]]",
-        match2::Regex = r"^[[]", 
+        match2::Regex = r"^[[]",
         lutable::String = "")
         #match2::String = "\$JDVegReset",
         if controlfile != ""
@@ -13950,9 +13950,9 @@ module WaSiM
         entries = strip.(entries)
         entries = filter(s -> !isempty(s) && length(s) > 2 && !occursin(r"^(?i)#",s) && !occursin(r"^[[]",s), entries)
         map!(x->replace(x,r"\t" => " "),entries,entries)
-        
+
         dictionary = Dict{Int, DataFrame}()
-        
+
         for entry in entries
             # Extract key
             m = match(r"(\d+)\s+(\w+)\s+\{", entry)
@@ -13963,7 +13963,7 @@ module WaSiM
             key = parse(Int, m.captures[1]|>strip)
             nm = m.captures[2]|>strip
             println("check: $key $nm")
-            
+
             # Extract value
             value_match = match(r"\{(.*)", entry)
             if value_match === nothing
@@ -13980,7 +13980,7 @@ module WaSiM
             pairs = split(value, ",")
             pairs = lstrip.(pairs)
             pairs = filter(s -> !isempty(s), pairs)
-            
+
             data = [split(strip(pair), " = ", limit = 2) for pair in pairs]
             #data = vcat([["class",nm]], data) #prepend to first pos
             data = vcat([["key",key]], data) #prepend to first pos
@@ -13990,7 +13990,7 @@ module WaSiM
             # Store key-value pair in the dictionary
             dictionary[key] = df
         end
-        
+
         #return dictionary
         return [dictionary[i] for i in keys(dictionary)]
     end
@@ -14003,16 +14003,16 @@ module WaSiM
     function luvars(dfs::Vector{DataFrame};par::String="LAI")
         reg_var = Regex(par,"i")
         ad = mapreduce(df -> begin
-            filtered_df = filter(row -> occursin(reg_var, 
+            filtered_df = filter(row -> occursin(reg_var,
                 row[:Param]), df)
             if nrow(filtered_df) > 0
                 return DataFrame(
                     class =  replace.(last(names(filtered_df)),r"_" => " "),
-                    par = parse.(Float64, 
+                    par = parse.(Float64,
                     split(first(filtered_df[!, 2])))
                 )
             else
-                return DataFrame(class = String[], 
+                return DataFrame(class = String[],
                 par = Float64[])
             end
         end, vcat, dfs)
@@ -14039,10 +14039,10 @@ module WaSiM
                     #seriestype=:bar,
                     grid = false,
                     #xlims=(1,12),
-                    xticks = (1:12, 
+                    xticks = (1:12,
                     [ monthabbr(x) for x in 1:12 ]),
                     xrotation = 35
-                    ) 
+                    )
             end
         end
         # Display the plot
@@ -14059,8 +14059,8 @@ module WaSiM
             xf = grep(Regex(pattern,"i"), readlines(match))
             if !isempty(xf)
                 xf=strip.(xf)
-                PrettyTables.pretty_table(xf, 
-                header = [basename(match)], 
+                PrettyTables.pretty_table(xf,
+                header = [basename(match)],
                 alignment = :left)
                 # println("File: $match
                 # \nMatches: $xf")
@@ -14068,7 +14068,7 @@ module WaSiM
         end
     end
 
-    
+
     """
     creates a export snippet\n
     for all Funcs in given Module\n
@@ -14087,54 +14087,54 @@ module WaSiM
     function interpolate_missing(df::DataFrame, column::Symbol)
         # Get the data from the column
         data = df[!, column]
-    
+
         # Find the indices of the missing values
         missing_indices = findall(ismissing, data)
-    
+
         # Find the indices of the non-missing values
         non_missing_indices = findall(!ismissing, data)
-    
+
         # Fill the first missing values with the first non-missing value
         first_non_missing_index = first(non_missing_indices)
         data[1:first_non_missing_index] .= data[first_non_missing_index]
-    
+
         # Fill the last missing values with the last non-missing value
         last_non_missing_index = last(non_missing_indices)
         data[last_non_missing_index:end] .= data[last_non_missing_index]
-    
+
         # Interpolate the missing values
         for i in missing_indices
             # Skip if it's the first or last missing value
             if i in [first_non_missing_index, last_non_missing_index]
                 continue
             end
-    
+
             # Find the nearest non-missing indices
             left_index = last(non_missing_indices[non_missing_indices .< i])
             right_index = first(non_missing_indices[non_missing_indices .> i])
-    
+
             # Interpolate the value
-            interpolated_value = data[left_index] + (data[right_index] - data[left_index]) * 
+            interpolated_value = data[left_index] + (data[right_index] - data[left_index]) *
                                  ((i - left_index) / (right_index - left_index))
-    
+
             # Replace the missing value with the interpolated value
             data[i] = interpolated_value
         end
-    
+
         # Update the column in the DataFrame
         df[!, column] = data
-    
+
         return df
     end
 
-    
+
     """
     different from yrsum
     renames and adds a rowsum column
     """
     function yearsum(df::DataFrame)
-        df_yearsum = combine(groupby(transform(df, 
-        :date => ByRow(year) => :year), :year), 
+        df_yearsum = combine(groupby(transform(df,
+        :date => ByRow(year) => :year), :year),
         Not(:date) .=> sum)
         names(df_yearsum)
         #rename!(df_yearsum, :year_date => :year)
@@ -14147,10 +14147,10 @@ module WaSiM
         leg = :outertopright, logy = false
         ,kwargs...)`
     """
-    function hyd2(x::Union{Regex,String,DataFrame}; 
+    function hyd2(x::Union{Regex,String,DataFrame};
         col::Union{Int64,Regex,String} = 1,
-        leg = :outertopright, 
-        logy = false, 
+        leg = :outertopright,
+        logy = false,
         #ti::String = "",
         kwargs...)
         if isa(x, DataFrame)
@@ -14200,16 +14200,16 @@ module WaSiM
         #                           string(x)), names(df))
         years = unique(year.(df.date))
         # years_str = string.(years)
-        
+
         ylog = logy ? :log : :identity
 
         # month_order = Dict(
-        #     "Sep" => 1, "Oct" => 2, 
-        # "Nov" => 3, "Dec" => 4, 
-        # "Jan" => 5, "Feb" => 6, 
-        # "Mar" => 7, "Apr" => 8, 
-        # "May" => 9, "Jun" => 10, 
-        # "Jul" => 11, 
+        #     "Sep" => 1, "Oct" => 2,
+        # "Nov" => 3, "Dec" => 4,
+        # "Jan" => 5, "Feb" => 6,
+        # "Mar" => 7, "Apr" => 8,
+        # "May" => 9, "Jun" => 10,
+        # "Jul" => 11,
         # "Aug" => 12)
 
         hp1 = plot(xrot = 45,
@@ -14222,8 +14222,8 @@ module WaSiM
 
         for yr in years
             #Filter
-            su = filter(row -> (year(row.date) == yr && 
-                month(row.date) >= 10) || (year(row.date) == yr + 1 && 
+            su = filter(row -> (year(row.date) == yr &&
+                month(row.date) >= 10) || (year(row.date) == yr + 1 &&
                 month(row.date) < 10), df)
             #mn = sort([monthabbr(x) for x in unique(month.(su.date))], by = x -> month_order[x])
             #mn = sort([value(month_order(x)) for x in unique(month.(su.date))], by = x -> month_order[x])
@@ -14239,15 +14239,15 @@ module WaSiM
             #     xticks =(st, mn),
             #             label = yr)
 
-                        
+
         end
         lng = size(df, 1) ./ length(years) ./ 12
         nln = size(df, 1) ./ length(years)
         # Create a dictionary that maps each month abbreviation to a number
-        # month_order = Dict("Oct" => 1, "Nov" => 2, 
-        #     "Dec" => 3, "Jan" => 4, "Feb" => 5, 
-        #     "Mar" => 6, "Apr" => 7, "May" => 8, 
-        #     "Jun" => 9, "Jul" => 10, "Aug" => 11, 
+        # month_order = Dict("Oct" => 1, "Nov" => 2,
+        #     "Dec" => 3, "Jan" => 4, "Feb" => 5,
+        #     "Mar" => 6, "Apr" => 7, "May" => 8,
+        #     "Jun" => 9, "Jul" => 10, "Aug" => 11,
         #     "Sep" => 12)
         # Get the unique months and sort them according to the custom order
         #mn = sort([monthabbr(x) for x in unique(month.(df.date))], by = x -> month_order[x])
@@ -14270,9 +14270,9 @@ module WaSiM
     Rs flowscreen alt version
     """
     function xflow_o(TS, q=[0.9, 0.1];
-        text::String="Wolfsmünster", 
+        text::String="Wolfsmünster",
         ylab::LaTeXString = L"\left[\frac{l}{s\cdot km^2}\right]",
-        # y_lims=(0,10), 
+        # y_lims=(0,10),
         kw...)
         TS = copy(TS)
         TS.Month = month.(TS.date)
@@ -14283,7 +14283,7 @@ module WaSiM
         TS.mn = map(x -> mn[Int(x)], TS.Month)
         rename!(TS, 1 => :Flow)
         doy = (TS.DOY)
-        Qdoy = fill(NaN, maximum(map(Int, doy)), 7)      
+        Qdoy = fill(NaN, maximum(map(Int, doy)), 7)
         Qdoy[:, 1] .= [maximum(TS.Flow[doy .== d]) for d in levels(doy)]
         Qdoy[:, 2] .= [minimum(TS.Flow[doy .== d]) for d in levels(doy)]
         Qdoy[:, 3] .= [mean(TS.Flow[doy .== d]) for d in levels(doy)]
@@ -14303,10 +14303,10 @@ module WaSiM
             alpha=0.8,
             #markersize=.95,markershape=:circle,
             label=L"Q_{min}")
-            #label="", 
+            #label="",
         #Adds a new, empty subplot overlaid on top of sp, with a mirrored y-axis and linked x-axis.
         #axis2 = twinx()
-        plot!( 
+        plot!(
             df.MaxQ,
             color=:red,
             alpha=0.8,
@@ -14330,7 +14330,7 @@ module WaSiM
             label=L"Q_{90}")
 
         plot!(df.Median,
-            color=:black, 
+            color=:black,
             alpha=0.5,
             seriestype=:line,
             #markersize=.75,
@@ -14347,27 +14347,27 @@ module WaSiM
         title!(text)
         xticks!(15:31:lng, mn; xrotation=45)
         return p1
-    end 
+    end
 
     """
     Rs flowscreen
     ```wa.xflow(a,q=[0.6,0.3],ylab=L"mm")```
     """
     function xflow(df, q=[0.9, 0.1];
-        #text::String="", 
+        #text::String="",
         ylab::LaTeXString = L"\left[\frac{l}{s\cdot km^2}\right]",
         kw...)
-    
+
         #TS = copy(TS)
         # drop if doy is 366
         TS = filter(row -> Dates.dayofyear(row[date_column]) != 366, df)
-        
+
         #ismissing(TS.mn)
         if any(ismissing.(TS[!,1]))
             @warn "missing values found!"
             dropmissing!(TS)
         end
-    
+
         TS.Month = month.(TS.date);
         TS.DOY = Dates.dayofyear.(TS.date)
         TS.mnen = Dates.monthname.(TS.date)
@@ -14378,10 +14378,10 @@ module WaSiM
         # Map the german months to their names
         mndt = ["Okt", "Nov", "Dez", "Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep"]
         mndict = Dict(zip(mnv, mndt))
-        TS.mn = map(x -> mndict[x], TS.mnen)        
+        TS.mn = map(x -> mndict[x], TS.mnen)
         rename!(TS, 1 => :Flow)
         doy = TS.DOY
-        Qdoy = fill(NaN, maximum(map(Int, doy)), 7)      
+        Qdoy = fill(NaN, maximum(map(Int, doy)), 7)
         Qdoy[:, 1] .= [maximum(TS.Flow[doy .== d]) for d in levels(doy)]
         Qdoy[:, 2] .= [minimum(TS.Flow[doy .== d]) for d in levels(doy)]
         Qdoy[:, 3] .= [mean(TS.Flow[doy .== d]) for d in levels(doy)]
@@ -14389,7 +14389,7 @@ module WaSiM
         Qdoy[:, 5] .= [quantile(TS.Flow[doy .== d], q[2]) for d in levels(doy)]
         Qdoy[:, 6] .= [median(TS.Flow[doy .== d]) for d in levels(doy)]
         Qdoy[:, 7] .= [first(TS.Month[doy .== d]) for d in levels(doy)]
-    
+
         nms = ["MaxQ", "MinQ", "MeanQ", "Q90", "Q10", "Median", "Month"]
         df = DataFrame(Qdoy, nms)
         df[!, "SortOrder"] = ifelse.(df.Month .>= 10, df.Month .- 12, df.Month)
@@ -14401,18 +14401,18 @@ module WaSiM
             alpha=0.8,
             #markersize=.95,markershape=:circle,
             label=L"Q_{min}")
-            #label="", 
+            #label="",
         #Adds a new, empty subplot overlaid on top of sp, with a mirrored y-axis and linked x-axis.
         #axis2 = twinx()
-        plot!( 
+        plot!(
             df.MaxQ,
             color=:red,
             alpha=0.8,
             #fillalpha=0.2,
             seriestype=:scatter,
-            
+
             markersize=1.95, #.95,
-            
+
             markershape=:diamond,
             label=L"Q_{max}");
         plot!(df.Q10,
@@ -14428,15 +14428,15 @@ module WaSiM
             #markersize=.75,
             #markershape=:diamond,
             label=L"Q_{90}")
-        
+
         areaplot!(
             df.MeanQ,
             color="#08519C",
             alpha=0.3,
             label=L"Q_{Mean}")
-    
+
         plot!(df.Median,
-            color=:grey, 
+            color=:grey,
             alpha=0.7,
             seriestype=:line,
             #markersize=.75,
@@ -14453,9 +14453,9 @@ module WaSiM
         lng = size(df, 1)
         xticks!(15:31:lng, mndt; xrotation=45)
         return p1
-    end 
+    end
 
-    
+
     function remove_leap_days(df::DataFrame, date_column::Symbol)
         return filter(row -> month(row[date_column]) != 2 || day(row[date_column]) != 29, df)
     end
@@ -14469,23 +14469,23 @@ module WaSiM
         ylab::LaTeXString = L"\left[\frac{l}{s\cdot km^2}\right]",
         date_column::Symbol = :date,
         kw...)
-    
+
         #TS = copy(df)
-        
+
         # a = Dates.dayofyear.(TS.date)
         # count("366",string(a))
         # count("365",string(a))
         #so drop the leap year
-        
+
         #TS = filter(row -> month(row[date_column]) != 2 || day(row[date_column]) != 29, df)
         # drop if doy is 366
         TS = filter(row -> Dates.dayofyear(row[date_column]) != 366, df)
-        
+
         if any(ismissing.(TS[!,1]))
             @warn "missing values found!"
             dropmissing!(TS)
         end
-    
+
         TS.Month = month.(TS.date);
         TS.DOY = Dates.dayofyear.(TS.date)
         TS.mnen = Dates.monthname.(TS.date)
@@ -14496,10 +14496,10 @@ module WaSiM
         # Map the german months to their names
         mndt = ["Okt", "Nov", "Dez", "Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep"]
         mndict = Dict(zip(mnv, mndt))
-        TS.mn = map(x -> mndict[x], TS.mnen)        
-        rename!(TS, 1 => :Flow)        
+        TS.mn = map(x -> mndict[x], TS.mnen)
+        rename!(TS, 1 => :Flow)
         doy = TS.DOY
-        Qdoy = fill(NaN, maximum(map(Int, doy)), 7)      
+        Qdoy = fill(NaN, maximum(map(Int, doy)), 7)
         Qdoy[:, 1] .= [maximum(TS.Flow[doy .== d]) for d in levels(doy)]
         Qdoy[:, 2] .= [minimum(TS.Flow[doy .== d]) for d in levels(doy)]
         Qdoy[:, 3] .= [mean(TS.Flow[doy .== d]) for d in levels(doy)]
@@ -14507,8 +14507,8 @@ module WaSiM
         Qdoy[:, 5] .= [quantile(TS.Flow[doy .== d], q[2]) for d in levels(doy)]
         Qdoy[:, 6] .= [median(TS.Flow[doy .== d]) for d in levels(doy)]
         Qdoy[:, 7] .= [first(TS.Month[doy .== d]) for d in levels(doy)]
-    
- 
+
+
         nms = ["MaxQ", "MinQ", "MeanQ", "Q90", "Q10", "Median", "Month"]
         df = DataFrame(Qdoy, nms)
         df[!, "SortOrder"] = ifelse.(df.Month .>= 10, df.Month .- 12, df.Month)
@@ -14520,7 +14520,7 @@ module WaSiM
             alpha=0.8,
             #markersize=.95,markershape=:circle,
             label=L"Q_{min}")
-        plot!( 
+        plot!(
             df.MaxQ,
             color=:red,
             alpha=0.7,
@@ -14543,15 +14543,15 @@ module WaSiM
             color=:lightblue,
             alpha=0.5,
             label=L"Q_{90}")
-        
+
         areaplot!(
             df.MeanQ,
             color="#08519C",
             alpha=0.3,
             label=L"Q_{Mean}")
-    
+
         plot!(df.Median,
-            color=:purple, 
+            color=:purple,
             alpha=0.7,
             seriestype=:line,
             #markersize=.75,
@@ -14568,13 +14568,13 @@ module WaSiM
         lng = size(df, 1)
         xticks!(15:31:lng, mndt; xrotation=45)
         return p1
-    end 
+    end
 
     """
     climateplot from dfs
     (r"^tem",r"^pre")
     """
-    function cmdf(temp::DataFrame,prec::DataFrame;col::Int=1)    
+    function cmdf(temp::DataFrame,prec::DataFrame;col::Int=1)
         yrs = Dates.year.(prec.date)|>unique|>length
         prec = monsum(prec)
         if ncol(prec) > 2
@@ -14584,9 +14584,9 @@ module WaSiM
         else
             precvec = vec(Matrix(select(prec, Not(:month))))
         end
-                
+
         precvec = precvec ./ yrs
-        
+
         temp = monmean(temp)
         if ncol(temp) > 2
             select!(temp, Not(:month))
@@ -14595,9 +14595,9 @@ module WaSiM
         else
             tempvec = vec(Matrix(select(temp, Not(:month))))
         end
-        
-        month_abbr = ["Jan", "Feb", "Mär", "Apr", 
-            "Mai", "Jun", "Jul", "Aug", "Sep", 
+
+        month_abbr = ["Jan", "Feb", "Mär", "Apr",
+            "Mai", "Jun", "Jul", "Aug", "Sep",
                 "Okt", "Nov", "Dez"];
         #;family="Computer Modern"
         #Plots.theme(:ggplot2) #passt.
@@ -14605,17 +14605,17 @@ module WaSiM
         #Plots.theme(:sheet)
         Plots.theme(:wong2)
         #Plots.showtheme(:dracula)
-        
-        p1 = Plots.bar(prec.month, precvec, 
-            color=:cornflowerblue, 
+
+        p1 = Plots.bar(prec.month, precvec,
+            color=:cornflowerblue,
             guidefontfamily="Computer Modern",
             tickfontfamily="Computer Modern",
             #ylims = (0.0, maximum(precvec) + 5.0),
             ylims = (0,120),
             xflip=false,
-            ylabel="Niederschlag [mm]", 
+            ylabel="Niederschlag [mm]",
             ylabelfontsize=10,
-            legend=false, 
+            legend=false,
             yflip=true,
             left_margin = 5mm,
             tick_direction = :out
@@ -14624,39 +14624,39 @@ module WaSiM
 
         for i in prec.month
             val = round(precvec[i]; digits=1)
-            annotate!(i, precvec[i], 
+            annotate!(i, precvec[i],
             Plots.text("$(val)",8,:bottom; family="Computer Modern"))
         end
-        
+
         ann2 = map(x->Plots.text(
-            string.(round(x; digits=1))*"°", 
+            string.(round(x; digits=1))*"°",
                 9,
-                :left, 
+                :left,
                 :black;
                 #:red;
                 family="Computer Modern"),
                 tempvec)
-        
+
         plot!(twinx(), tempvec,
-            ylabel="Temperatur [°C]", 
+            ylabel="Temperatur [°C]",
             ylabelfontsize=10,
             guidefontfamily="Computer Modern",
             tickfontfamily="Computer Modern",
             color=:coral2,
-            #ylims = (minimum(tempvec) - 1.0 , 
+            #ylims = (minimum(tempvec) - 1.0 ,
             #    maximum(tempvec) + 1.0),
             ylims = (-5,20),
 
-            annotations = (temp.month .+ 0.125, 
+            annotations = (temp.month .+ 0.125,
                 tempvec .+ 0.1, ann2, :center),
-            label=false, 
+            label=false,
             linestyle = :dashdot,
             linewidth = 2,
             right_margin = 5mm,
             left_margin = 5mm,
             #margins = 10mm,
-            tick_direction = :out            
-            );      
+            tick_direction = :out
+            );
 
         return p1
     end
@@ -14671,7 +14671,7 @@ module WaSiM
             if !isempty(match)
                 fn = first(split(file,"_qout"))
                 for line in match
-                    line = strip(line) 
+                    line = strip(line)
                     line = join(split(line), " ")  ##remove inner whitespaces
                     printstyled(rpad("$fn:",30),lpad("$line\n",10),color=:green)
                 end
