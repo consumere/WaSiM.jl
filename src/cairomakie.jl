@@ -931,7 +931,7 @@ end
 
 function vgjl(snippet::AbstractString)
     owd = pwd()
-    cd("C:/Users/Public/Documents/Python_Scripts/julia")
+    cd(dirname(pathof(WaSiM)))
     files = filter(file -> endswith(file, ".jl"), readdir())
     for file in files
         open(file) do f
@@ -968,7 +968,7 @@ function vgjlrec(snippet::AbstractString)
     """
     recursive grep
     """
-    owd = "C:/Users/Public/Documents/Python_Scripts/julia"
+    owd = dirname(pathof(WaSiM))
     for (root, dirs, files) in walkdir(owd)
         for file in files
             if (endswith(file, ".jl"))
