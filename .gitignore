@@ -1,2 +1,6 @@
 /Manifest.toml
 /.vscode
+/sfuncs/*
+/cmfuncs/*
+/win/*
+/*_o.jl
