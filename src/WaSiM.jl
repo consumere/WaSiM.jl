@@ -1,4 +1,4 @@
-
+__precompile__(false)
 #julia --startup-file=no -q --color=yes --project="/mnt/c/Users/chs72fw/.julia/dev/WaSiM"
 
 #cd "/mnt/c/Users/chs72fw/.julia/dev/WaSiM"
@@ -28,7 +28,7 @@ module WaSiM
     using Shapefile
     using DelimitedFiles: readdlm
     using DataFrames
-    using DataFrames: combine, groupby, transform
+    #using DataFrames: combine, groupby, transform
 
     using CSV
     using DataFramesMeta
@@ -45,6 +45,7 @@ module WaSiM
     using SHA
     using Statistics
     using StatsPlots
+
     # ##import rasterstuff
     include("rasterfuncs.jl")
     # include("smallfuncs.jl") #<-depricated
@@ -53,7 +54,7 @@ module WaSiM
 
     # DATAFRAME Operations
     export dfread, dfrib, dfsp, dfsplog, dfp, dfp!, dfpall,
-        #dfr,
+        dfr,
         yrsum, yrmean, dfm, dfmo, dfl, dfl!, dfilter,
         monmean, monsum, lastcol
         #dfroute,
@@ -61,7 +62,7 @@ module WaSiM
     # File Operations
     export readall, readalloutput, readallras, read_between, read_log_file,
         read_mhm, read_soildata, read_soildata_2, read_soildata_4,
-        read_until_flag, read_wq, old_waread, old_waread2,
+        read_until_flag, read_wq,
         pout,
         project,
         read_landuse_data2, readmeteo, readras,
@@ -75,7 +76,7 @@ module WaSiM
         yearsum, hyd2
 
     # Statistical Functions
-    export addname, all_values_equal,
+    export ls, du, addname, all_values_equal,
         barsum, baryr,
         baryrmean, baryrsum, build_soil_dictionary, byear, climateplot,
         climateplot_dfold, cmplot, cntcolread, cntcols, colorfunction, colsums,
@@ -94,7 +95,7 @@ module WaSiM
         jldfnm, jsrast, jsread, juliasize, kernelplot, kge, kge1, kge2, kge_df,
         kge_df3, kge_fread, kge_read, kge_rec, kgedf, kgerec, kgeval, klog, ldf,
         ldfpall, lg, listdfs, loadalldfs, loaddf, loadso, lplot, lplotf, lpro,
-        luheat, luplot, lutab, luvars, mall, malldf, mbx,
+        luheat, lutab, luvars, mall, malldf, mbx,
         moisture_plot_with_confidence, monc, monc_f, moncol, monp
         #revcrds, reverse_coords #moved to rst
 
@@ -129,33 +130,6 @@ module WaSiM
     #     include(thisfile)
     # end
 
-
-
-    """
-    filters internal WaSiM stats of routed discharge files
-    works recursively
-    """
-    function qgk(;rootdir=".", prefix="qgk")
-        files = []
-        for (looproot, dirs, filenames) in walkdir(rootdir)
-            for filename in filenames
-                if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
-                    push!(files, joinpath(looproot, filename))
-                end
-            end
-        end
-
-        for z in files
-            println(raw"file:	",basename(z),"...")
-            m = filter(line -> occursin(r"^[LIN. R]|^[LOG. R]|^CO",line), readlines(open(z)))
-            for l in m
-                x = replace(l, r"\s+" => "\t")
-                x = replace(x, ".\t" => " ")
-                println(x)
-            end
-        end
-        return nothing
-    end
 
     """
     Calculates the potential evapotranspiration (PET) using the Penman-Monteith equation.
@@ -217,27 +191,6 @@ module WaSiM
         PET = (delta_term + psi_term) / Lambda
 
         return PET
-    end
-
-    function ls()
-        p=pwd()
-        f=readdir()
-        dirs=filter(x -> (isdir(x)),f)
-        files=filter(x -> (isfile(x)),f)
-        if length(files)>0 && length(dirs)>0
-            nf=length(files)
-            println("$p\ndirs: $dirs\n $nf files:\n$files")
-        elseif length(dirs)>0
-            println("$p\ndirs: $dirs\n")
-        elseif (length(files)>0 && length(files)<=12)
-            nf=length(files)
-            println("$p\n$nf files:\n $files\n")
-        elseif (length(files)>0 && length(files)>12)
-            nf=length(files)
-            println("$p\n$nf files:\n",first(f,6),"...",last(f,6))
-        else
-            println("$p\n")
-        end
     end
 
     """
@@ -931,84 +884,7 @@ module WaSiM
         return size
     end
 
-    """
-    gets sorted DF by size recursivley
-    """
-    function fz()
-        cwd = pwd()
-        osize = 0
-    #    fn = 0
-        m = []
-        for (root, dirs, files) in walkdir(cwd)
-         for file in files
-            if isfile(file)
-               nm=joinpath(root, file)
-               osize = stat(nm).size/1024^2
-    #	       fn += stat(nm).size
-               #push!(m,(nm))
-               push!(m,Dict(:name=>file,
-               :size=>osize,
-    #           :total=>(fn/1024^2),
-               :fullnaname=>nm))
-            end
-        end
-    end
-        df = DataFrame(m)
-        sort!(df, [order(:size,rev = true), order(:name)])
-        return(df)
-    end
 
-    function homg()
-        pt="D:/Wasim/Goldbach/revision/"
-        cd(pt)
-        println("you are here: ",pwd())
-    end
-
-    function hombr()
-        pt="D:/Wasim/Tanalys/DEM/brend_fab/out/m4/"
-        cd(pt)
-        println("you are here: ",pwd())
-    end
-
-    function hometeo()
-        cd("D:/Wasim/Tanalys/DEM/Input_V2/meteo/")
-        println("you are here: ",pwd())
-    end
-
-    function homreg()
-        cd("D:/Wasim/regio/out/");
-        println("you are here: ",pwd())
-        fdi()
-    end
-
-    function homrc()
-        if platform == "unix"
-            cd("/mnt/d/Wasim/regio/out/rc200");
-        else
-            cd("D:/Wasim/regio/out/rc200");
-        end
-        println("you are here: ",pwd())
-        fdi()
-    end
-
-
-    function homg()
-        cd("D:/Wasim/Goldbach/");
-        println("you are here: ",pwd())
-        fdi()
-    end
-
-    function home()
-        cd("D:/Wasim/");
-        println("you are here: ",pwd())
-        fdi()
-    end
-
-    function homqm()
-        pt="D:/remo/qm/"
-        cd(pt)
-        println("you are here: ",pwd())
-    end
 
     """
     list_files_sorted_by_last_change
@@ -1092,63 +968,6 @@ module WaSiM
     # findlast
     # findnext
     # findprev
-
-    # fx=raw"D:\Wasim\regio\control\rcm200_r6.ctl"
-    # for (i, line) in enumerate(eachline(fx))
-    #     if findfirst("dr11", line) !== nothing
-    #         println("Line $i: $line")
-    #     end
-    # end
-
-    function regand(v::Vector{String},x1::AbstractString,y1::AbstractString)
-        needle=join([x1,y1],"+.*");
-        z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
-        return(z)
-    end
-
-    function regand(v::Vector{String},xv::Tuple{String, String})
-        needle=join([xv[1],xv[2]],"+.*");
-        z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
-        return(z)
-    end
-
-    function regand(v::Vector{String},xv::Vector{Symbol})
-        needle=join(xv,"+.*");
-        z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
-        return(z)
-    end
-
-    function regand(v::Vector{String},xv::Vector{String})
-        needle=join(xv,"+.*");
-        z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
-        return(z)
-    end
-
-
-    """
-    join([x1,y1],"+.*")
-    r"this+.*that"
-    """
-    function regand(v::Vector{String},x1::AbstractString,y1::AbstractString)
-        needle=join([x1,y1],"+.*");
-        z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
-    return(z)
-    end
-
-    function regand(v::Vector{String},xv::Tuple{String, String})
-        needle=join([xv[1],xv[2]],"+.*");
-        z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
-    return(z)
-    end
-
-    """
-    here you can put any regex to filter the Vector
-    like regand(getnames(dfs),r"tem")
-    """
-    function regand(v::Vector{Any},xv::Regex)
-        z = v[(broadcast(x->occursin(xv,x),v))]
-        return(z)
-    end
 
     """
     dir_path::String, match::String;file_ending="ctl"
@@ -1322,43 +1141,6 @@ module WaSiM
         metadata!(df, "filename", x, style=:note);
     end
 
-    """
-    recursively removes duplicates
-    uses SHA
-    """
-    function rmdub(;directory=pwd())
-
-        # Create a dictionary to store file hashes as keys and file paths as values
-        #hash_dict = Dict{String, String}()
-        hash_dict = Dict{Vector{UInt8}, String}()
-
-        # Get a list of all files in the directory
-        #files = readdir(directory)
-        for (root, dirs, files) in walkdir(directory)
-            for file in files
-                filepath = joinpath(directory, file)
-                if isfile(filepath)
-                    # Calculate the SHA-256 hash of the file's contents
-                    #hash = string(sha256(open(filepath, "r")))
-                    io = open(filepath, "r")
-                    #filehash = string(sha256(io))
-                    #filehash = string(hash(io))
-                    filehash = sha256(io)
-                    #println(filehash)
-                    close(io)
-
-                    # If the hash is not already in the dictionary, add it
-                    if !haskey(hash_dict, filehash)
-                        hash_dict[filehash] = filepath
-                    else
-                        # If a file with the same hash is found, delete it
-                        println("Deleting duplicate file: $filepath")
-                        rm(filepath)
-                    end
-                end
-            end
-        end
-    end
 
     function cntcolv(x::String)
         # Get a list of all files in the directory
@@ -2038,26 +1820,6 @@ module WaSiM
         end
     end
 
-    """
-    removes latest file
-    """
-    function rmlat()
-        files = filter(isfile, readdir(;sort=false))
-        sorted_files = sort(files, by = mtime, rev = true)
-        if !isempty(sorted_files)
-            lat = sorted_files[1]
-            println("This deletes the latest created file, i.e: ", lat)
-            print("continue? (y/n): ")
-            reply = readline(stdin)
-            println(reply)
-            if lowercase(string.(reply)) == "y"
-                rm(lat, force=true)
-                println("Deleted: ", lat)
-            else
-                @error "abort...."
-            end
-        end
-    end
 
     function lat()
         files = filter(isfile, readdir(;sort=false))
@@ -2075,16 +1837,6 @@ module WaSiM
     function tree_helper(root, indent)
 
         entries = filter(isdir, readdir(root))
-
-        # #das geht auch, aber too much
-        # entries = []
-        # for (root, dirs, files) in walkdir(root)
-        #     for dir in dirs
-        #         #dstr = (joinpath(root, dir))
-        #         dstr = dir
-        #         push!(entries, dstr)
-        #     end
-        # end
 
         for (i, entry) in enumerate(entries)
             entry_path = joinpath(root, entry)
@@ -2123,205 +1875,95 @@ module WaSiM
         end
     end
 
-    function pyread(x::Union{String,Regex})
-        """
-        pyreader, reads all as stings, conversion later.
-        """
-        if x isa Regex
-            x = dfonly(x)|>first
-        end
-        pd = pyimport("pandas")
-        df = pd.read_table(x,
-            engine="c",
-            verbose=true,
-            low_memory=false,
-            header=0,
-            skipinitialspace=true,
-            dtype="str",              #new!
-            na_values=[-9999]
-            )
-        col_names = df.columns  # Get the column names from the Python DataFrame
-        col_names = convert(Array, col_names)
-        col_arrays = [convert(Array, df[col]) for col in col_names]
-        filtered_rows = broadcast(x->looks_like_number(x),col_arrays[1])
+    # """
+    # pyreader, reads all as stings, conversion later.
+    # """
+    # function pyread(x::Union{String,Regex})
+    #     if x isa Regex
+    #         x = dfonly(x)|>first
+    #     end
+    #     pd = pyimport("pandas")
+    #     df = pd.read_table(x,
+    #         engine="c",
+    #         verbose=true,
+    #         low_memory=false,
+    #         header=0,
+    #         skipinitialspace=true,
+    #         dtype="str",              #new!
+    #         na_values=[-9999]
+    #         )
+    #     col_names = df.columns  # Get the column names from the Python DataFrame
+    #     col_names = convert(Array, col_names)
+    #     col_arrays = [convert(Array, df[col]) for col in col_names]
+    #     filtered_rows = broadcast(x->looks_like_number(x),col_arrays[1])
 
-        df = DataFrame(col_arrays, :auto)
+    #     df = DataFrame(col_arrays, :auto)
 
-        df = df[filtered_rows, :]
+    #     df = df[filtered_rows, :]
 
-        rename!(df, col_names)
-        if "YY" ∉ names(df)
-            println("Column 'YY' not found in the CSV file.")
-            return nothing
-        end
+    #     rename!(df, col_names)
+    #     if "YY" ∉ names(df)
+    #         println("Column 'YY' not found in the CSV file.")
+    #         return nothing
+    #     end
 
-        function parse_date(row)
-            try
-                year = parse(Int, row[1])
-                month = parse(Int, row[2])
-                day = parse(Int, row[3])
-                return Date(year, month, day)
-            catch
-                return missing  # Return missing if parsing fails
-            end
-        end
+    #     function parse_date(row)
+    #         try
+    #             year = parse(Int, row[1])
+    #             month = parse(Int, row[2])
+    #             day = parse(Int, row[3])
+    #             return Date(year, month, day)
+    #         catch
+    #             return missing  # Return missing if parsing fails
+    #         end
+    #     end
 
-        df.date = map(parse_date, eachrow(df))
+    #     df.date = map(parse_date, eachrow(df))
 
-        df = select(df, Not(1:4))
+    #     df = select(df, Not(1:4))
 
-        for x in names(df)
-            if looks_like_number(x)
-                newname=replace(x,"$x"=>"C$x", count=1)
-                rename!(df,Dict(x=>newname))
-            end
-        end
+    #     for x in names(df)
+    #         if looks_like_number(x)
+    #             newname=replace(x,"$x"=>"C$x", count=1)
+    #             rename!(df,Dict(x=>newname))
+    #         end
+    #     end
 
-        #map(y->typeof(y),eachcol(df))
+    #     #map(y->typeof(y),eachcol(df))
 
-        # Iterate over column names
-        for colname in names(df)
-            # Check if the column type is not Date
-            if eltype(df[!, colname]) != Date
-                df[!, colname] .= tryparse.(Float64, df[!, colname])
-            end
-        end
+    #     # Iterate over column names
+    #     for colname in names(df)
+    #         # Check if the column type is not Date
+    #         if eltype(df[!, colname]) != Date
+    #             df[!, colname] .= tryparse.(Float64, df[!, colname])
+    #         end
+    #     end
 
-        DataFrames.metadata!(df, "filename", x, style=:note)
-        return df
-    end
+    #     DataFrames.metadata!(df, "filename", x, style=:note)
+    #     return df
+    # end
 
-    function read_df(s::Union{String,Regex})
-        """
-        reads a DataFrame from a file w dlm and tryparse subsetting
-        """
-        if s isa Regex
-            s = dfonly(s)|>first
-        end
-        data, colnames = DelimitedFiles.readdlm(s, '\t', String, '\n', header=true)
-        df = DataFrame(Matrix{Any}(data), :auto)
-        rename!(df,Symbol.(colnames)|>vec)
-        df = df[map(x->!isnothing(x),tryparse.(Int,df[!,1])),:]
-        for i in 1:size(df, 2)
-            df[!, i] = map(x -> parse(Float64, x), df[!, i])
-        end
-        for i in 5:size(df,2)
-            df[!,i]=replace(df[!,i],-9999.0 => missing)
-        end
-        for i in 5:size(df,2)
-            replace!(df[!,i],-9999.0 => missing)
-        end
 
-        for i in 1:3
-            df[!,i]=map(x ->Int(x),df[!,i])
-        end
-        #and parse dates...
-        df.date = Date.(string.(df[!,1],"-",df[!,2],"-",df[!,3]),"yyyy-mm-dd");
-        df = df[:,Not(1:4)]
-        metadata!(df, "filename", s, style=:note);
-        return df
-    end
+    # function pyplot_df(df::DataFrame;log=false)
+    #     x = df.date
+    #     ln = (filter(x -> !occursin(r"date|month|year", x), names(df)))
 
-    function wread(x::String;skip=3)
-        """
-        Read wasim ts with DelimitedFiles.readdlm, skipto line 3
-        no header column
-        """
-        df = DelimitedFiles.readdlm(x, '\t', Float64, '\n';
-            header=false,skipstart=skip)
-        df = DataFrame(df,:auto)
-        for i in 5:size(df,2)
-            df[!,i]=replace(df[!,i],-9999.0 => missing)
-        end
-        for i in 5:size(df,2)
-            replace!(df[!,i],-9999.0 => missing)
-        end
-        for i in 1:3
-            df[!,i]=map(x ->Int(x),df[!,i])
-        end
-        #and parse dates...
-        df.date = Date.(string.(df[!,1],"-",df[!,2],"-",df[!,3]),"yyyy-mm-dd");
-        df=df[:,Not(1:4)]
-        metadata!(df, "filename", x, style=:note);
-    end
+    #     for col in ln
+    #         y = df[!, Symbol(col)]
+    #         PyPlot.plot(x, y, label=col)
+    #     end
 
-    function wread(x::Regex;skip=3)
-        """
-        Read wasim ts with DelimitedFiles.readdlm, skipto line 3
-        no header column
-        """
-        rgx = glob(x)|>first
-        println("loading $rgx ...")
-        df = DelimitedFiles.readdlm(rgx, '\t', Float64, '\n';
-            header=false,skipstart=skip)
-        df = DataFrame(df,:auto)
-        for i in 5:size(df,2)
-            df[!,i]=replace(df[!,i],-9999.0 => missing)
-        end
-        for i in 5:size(df,2)
-            replace!(df[!,i],-9999.0 => missing)
-        end
-        for i in 1:3
-            df[!,i]=map(x ->Int(x),df[!,i])
-        end
-        #and parse dates...
-        df.date = Date.(string.(df[!,1],"-",df[!,2],"-",df[!,3]),"yyyy-mm-dd");
-        df=df[:,Not(1:4)]
-        metadata!(df, "filename", x, style=:note);
-    end
+    #     if log
+    #         PyPlot.yscale("log")
+    #     end
 
-    function wintree()
-        #run(`cmd /c tree /f`)
-        run(`cmd /c tree`)
-    end
-
-    """
-    cd into dir of file
-    """
-    function cdof(x::Union{String,DataFrame})
-        if x isa DataFrame
-            try
-                d = collect(DataFrames.metadata(x))[1][2]
-                cd(dirname(d))
-            catch
-                @error "no basename in $x !"
-            end
-        else
-            cd(dirname(x))
-        end
-        d=pwd()
-        println("current dir: $d")
-    end
-
-    cdinto = cdof
-
-    #k=raw"C:/Users/Public/Documents/Python_Scripts/julia/smallfuncs.jl"
-
-    # k=src_path*"/smallfuncs.jl"
-    # println("script loc is $k")
-
-    #homedir()|>cd
-
-    function pyplot_df(df::DataFrame;log=false)
-        x = df.date
-        ln = (filter(x -> !occursin(r"date|month|year", x), names(df)))
-
-        for col in ln
-            y = df[!, Symbol(col)]
-            PyPlot.plot(x, y, label=col)
-        end
-
-        if log
-            PyPlot.yscale("log")
-        end
-
-        PyPlot.xlabel("Date")
-        PyPlot.ylabel("")
-        PyPlot.legend()
-        ti = only(values(DataFrames.metadata(df)))
-        PyPlot.title(ti)
-        PyPlot.grid(true)
-    end
+    #     PyPlot.xlabel("Date")
+    #     PyPlot.ylabel("")
+    #     PyPlot.legend()
+    #     ti = only(values(DataFrames.metadata(df)))
+    #     PyPlot.title(ti)
+    #     PyPlot.grid(true)
+    # end
 
     function fsz(;rec=false)
         """
@@ -2369,24 +2011,6 @@ module WaSiM
         DataFrames.metadata!(odf, "Total Size", tot, style=:note)
         printstyled("Total Size: $tot MB\n",color=:green)
         return(odf)
-    end
-
-    #when Df loaded
-    function waread2(x::String)
-        """
-        Read the text file, preserve line 1 as header column
-        Instead of using CSV.read, we use CSV.File to create a lazy representation of the file.
-        This avoids reading the entire file into memory at once,
-        which can be more memory-efficient for large datasets.
-        """
-        ms = ["-9999", "lin", "log", "--"]
-        df = CSV.File(x; delim="\t", header=1, normalizenames=true, missingstring=ms, types=Float64) |> DataFrame
-        dropmissing!(df,1)
-        dt2 = [Date(Int(row[1]), Int(row[2]), Int(row[3])) for row in eachrow(df)]
-        select!(df, Not(1:4))
-        df.date = dt2
-        metadata!(df, "filename", x, style=:note)
-        return df
     end
 
 
@@ -2449,39 +2073,6 @@ module WaSiM
         return df
     end
 
-
-
-    function rmeq()
-        """
-        removes empty TS;
-        use with caution!
-        """
-        #x = pwd()
-
-        # files = filter(file -> (occursin(Regex(x, "i"), file) &
-        # (!occursin(r"xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg|txt", file))
-        # ), readdir())
-
-        files = filter(file ->
-        !occursin(r"tex|pl|sh|csv|html|xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg|txt", file)
-        , readdir())
-
-        ms = ["-9999", "lin", "log", "--"]
-        for inF in files
-            if isfile(inF)
-                df = CSV.File(inF; delim="\t", header=1,
-                silencewarnings=true,
-                    normalizenames=false,
-                    missingstring=ms,
-                    types=Float64) |> DataFrame
-                dropmissing!(df,ncol(df))
-                if nrow(df)==0
-                    println(basename(inF)," removed!")
-                    rm(inF)
-                end
-            end
-        end
-    end
 
     function pew()
         try
@@ -2556,35 +2147,6 @@ module WaSiM
         end
     end
 
-    """
-    function to open latest file in notepad++
-    """
-    function npplat(;opener="c:/Program Files (x86)/Notepad++/notepad++.exe")
-        files = filter(isfile, readdir(;sort=false))
-        fl = sort(files, by = mtime, rev = true)[1]
-        if endswith(fl,".nc")
-            @error "$fl cannot be opened in notepad++"
-            return
-        end
-
-        try
-            if platform == "windows"
-                run(`$opener $fl`)
-            elseif platform == "unix" || platform == "linux" && src_path == "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
-                fl = fl
-                run(`"/mnt/c/Program Files (x86)/Notepad++/notepad++.exe" $fl`)
-            else
-                fx = `wslpath -m $fl` #translate from a WSL path to a Windows path, with '/'
-                opcmd = `wslpath -a $opener` #force result to absolute path format
-                wslpt = readchomp(pipeline(opcmd))
-                run(`$wslpt $fx`)
-
-            end
-        catch
-              @error "could not open $fl via notepad++
-                  check if notepad++ is installed in $opener"
-        end
-    end
 
     """
     gets pkgversion
@@ -2656,16 +2218,6 @@ module WaSiM
             delim="\t")
         nothing
     end
-
-    """
-    writes describe(df) to file, no date conversion
-    """
-    function writedesc(table,file)
-        CSV.write(file, describe(table), transform = (col, val) -> something(val, missing),delim="\t")
-        nothing
-    end
-
-
 
     """
     read df to datetime
@@ -3315,27 +2867,6 @@ module WaSiM
         metadata!(df, "filename", x, style=:note);
     end
 
-    function old_waread2(x::String)
-        """
-        Read the text file, preserve line 1 as header column
-        """
-        ms=["-9999","lin","log","--"]
-        df = CSV.read(x, DataFrame,
-            delim="\t",
-            header=1,
-            missingstring=ms,
-            normalizenames=true,
-            types=Float64)
-        dropmissing!(df,1)
-        dt2::Vector{Date} = []
-        for i in eachrow(df)
-            z=i[1:3]|>collect|>transpose
-            push!(dt2,Date(z[1],z[2],z[3]))
-        end
-        df.date = dt2
-        df=df[:,Not(1:4)]
-        metadata!(df, "filename", x, style=:note);
-    end
 
     """
     Read the text file, preserve line 1 as header column
@@ -4467,10 +3998,7 @@ module WaSiM
         CSV.write(file, describe(table), transform = (col, val) -> something(val, missing),delim="\t")
         nothing
     end
-
-    #writedf("tst.csv",describe(df))
-    #writedesc("tst.csv",df)
-
+    #[]
     #wc -l in julia:
     function wcl(x::AbstractString)
         files = filter(file -> occursin(Regex(x,"i"),file), readdir())
