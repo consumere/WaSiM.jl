@@ -2,9 +2,9 @@ name: CI
 on:
   push:
     branches:
-#      - main
+      #      - main
       - dev
-    tags: ['*']
+    tags: ["*"]
   pull_request:
 concurrency:
   # Skip intermediate builds: always.
@@ -19,9 +19,9 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.9'
-#          - '1.10'
-          - 'nightly'
+          #          - '1.9'
+          - "1.10"
+          - "nightly"
         os:
           - ubuntu-latest
         arch:
