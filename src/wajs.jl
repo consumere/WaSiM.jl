@@ -4,6 +4,10 @@ module wajs
     using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions
     using DelimitedFiles, Grep, Printf
 
+    export baryrjs, dfbarjs, dfljs, dflogjs, dfpjs, 
+    dfpjsold, dfplot, dfplotjs, dfyrs, ftpjs, pline, 
+    plotdf, plotlybaryr, tpjs, xdf
+
     function dfyrs(df::DataFrame;logy=true)
         ti = DataFrames.metadata(df)|>only|>last|>basename
         fact,logy = 1,0
@@ -93,6 +97,11 @@ module wajs
         display(fig)
     end
 
+    """
+    ```
+    dfpjs(df::String;)
+    ```
+    """
     function dfpjs(df::String;)
         df = waread(df)
 
@@ -319,10 +328,10 @@ module wajs
         return 1 - sqrt((r - 1)^2 + (α - 1)^2 + (β - 1)^2)
     end
 
+    """
+    theplot optimized to PlotlyJS
+    """
     function tpjs(x::DataFrame)
-        """
-        theplot optimized to PlotlyJS
-        """
         ndf = x
         nm=names(ndf)[2]     #obscol
         ##subset DF by value (all positive vals..)
@@ -356,10 +365,10 @@ module wajs
         return p
     end
 
+    """
+    theplot optimized to PlotlyJS
+    """
     function tpjs(x::Regex)
-        """
-        theplot optimized to PlotlyJS
-        """
         ndf = waread(x)
         dropmissing!(ndf)
         #nm=names(ndf)[2]     #obscol
@@ -392,10 +401,10 @@ module wajs
         return p
     end
 
+    """
+    theplot optimized to PlotlyJS
+    """
     function tpjs(x::AbstractString)
-        """
-        theplot optimized to PlotlyJS
-        """
         df = DataFrame(CSV.File(x))
         nm=names(df)[end-1] #lastbefore column (qobs)
         ##subset DF by value (all positive vals..)
@@ -622,11 +631,11 @@ module wajs
         vertical_spacing=0.05,
         )
         for i in 1:nrows;
-                add_trace!(p, 
-                scatter(x=df.date, y=df[:,i],
+                PlotlyJS.add_trace!(p, 
+                PlotlyJS.scatter(x=df.date, y=df[:,i],
                 name=st[i]),   row=i,     col=1);
         end
-        relayout!(p,height=600*1.5,width=900*1.5)
+        PlotlyJS.relayout!(p,height=600*1.5,width=900*1.5)
         return(p)
     end
 
@@ -641,7 +650,7 @@ module wajs
         vertical_spacing=0.05,
         )
         for i in 1:nrows;
-                add_trace!(p, 
+                PlotlyJS.add_trace!(p, 
                 PlotlyJS.scatter(x=df.date, y=df[:,i],
                 name=st[i]),   row=i,     col=1);
         end
@@ -673,38 +682,48 @@ module wajs
         display(p)
     end
 
-    function dfplotjs(df::DataFrame;logy::Bool,fact::Float64)
-        nrows=size(df)[2]-1 
-        #length(names(df))-1
-        o = DataFrames.metadata(df)|>collect
-        ti = basename(o[1][2])
-        fig = PlotlyJS.make_subplots(
-            shared_xaxes=true, 
-            shared_yaxes=true    
-        #rows=2, cols=2
-            );
-        for i in 1:nrows;
-            PlotlyJS.add_trace!(fig, 
-            PlotlyJS.scatter(x=df.date, y=df[:,i],
-            name=names(df)[i]));
-        end
-        fact = isnothing(fact) ? 1 : fact; #nice
-        logy = isnothing(logy)==true ? logy==false : logy==true;
-        if logy == true
-            PlotlyJS.relayout!(fig,yaxis_type="log",
-            height=600*fact,width=900*fact,
-            title_text="Series of "*ti)
-        #elseif isnothing(log) 
-        else
-            PlotlyJS.relayout!(fig,
-            height=600*fact,width=900*fact,
-            title_text="Series of "*ti)
-        end
-        display(fig)
-    end
+    # function dfplotjs(df::DataFrame;logy::Bool = true,fact::Float64 = 1.0)
+    #     nrows=size(df)[2]-1 
+    #     #length(names(df))-1
+    #     o = DataFrames.metadata(df)|>collect
+    #     ti = basename(o[1][2])
+    #     fig = PlotlyJS.make_subplots(
+    #         shared_xaxes=true, 
+    #         shared_yaxes=true    
+    #     #rows=2, cols=2
+    #         );
+    #     for i in 1:nrows;
+    #         PlotlyJS.add_trace!(fig, 
+    #         PlotlyJS.scatter(x=df.date, y=df[:,i],
+    #         name=names(df)[i]));
+    #     end
+    #     fact = isnothing(fact) ? 1 : fact; #nice
+    #     logy = isnothing(logy)==true ? logy==false : logy==true;
+    #     if logy == true
+    #         PlotlyJS.relayout!(fig,yaxis_type="log",
+    #         height=600*fact,width=900*fact,
+    #         title_text="Series of "*ti)
+    #     #elseif isnothing(log) 
+    #     else
+    #         PlotlyJS.relayout!(fig,
+    #         height=600*fact,width=900*fact,
+    #         title_text="Series of "*ti)
+    #     end
+    #     display(fig)
+    # end
 
-    function dfplotjs(df::AbstractString;logy::Bool,fact::Float64)
-        df=waread(df)
+    """
+    updated dfplotjs
+    ```
+    function dfplotjs(df::Union{AbstractString,DataFrame};logy::Bool = true,fact::Float64 = 1.0,date_col_name::Union{String,Symbol} = "date")
+    ```
+    """
+    function dfplotjs(df::Union{AbstractString,DataFrame};logy::Bool = true,fact::Float64 = 1.0,date_col_name::Union{String,Symbol} = "date")
+        if typeof(df) == AbstractString
+            df = waread(df)
+        else
+            df = df
+        end
         nrows=size(df)[2]-1
         #length(names(df))-1
         o = DataFrames.metadata(df)|>collect
@@ -713,11 +732,18 @@ module wajs
             shared_xaxes=true, 
             shared_yaxes=true    
             );
-        for i in 1:nrows;
-            PlotlyJS.add_trace!(fig, 
-            PlotlyJS.scatter(x=df.date, y=df[:,i],
-            name=names(df)[i]));
-        end
+            # Identify the position of the date column
+            
+            date_col_pos = findfirst(names(df) .== date_col_name)
+            
+            # Loop through columns, skipping the date column
+            for i in 1:ncol(df)
+                if i != date_col_pos
+                    PlotlyJS.add_trace!(fig, 
+                        PlotlyJS.scatter(x=df[:, date_col_pos], y=df[:, i],
+                        name=names(df)[i]))
+                end
+            end
         fact = isnothing(fact) ? 1 : fact; #nice
         logy = isnothing(logy)==true ? logy==false : logy==true;
         if logy == true
@@ -730,10 +756,6 @@ module wajs
             title_text="Series of "*ti)
         end
         display(fig)
-    end
-
-    function dfplotjs(filepath::AbstractString)
-        dfplotjs(filepath;logy=false,fact=1.0)
     end
 
     function dflogjs(filepath::AbstractString)
@@ -998,7 +1020,6 @@ module wajs
         return 1 - sqrt((r - 1)^2 + (α - 1)^2 + (β - 1)^2)
     end
 
-
     #function dfpl(df::DataFrame;logy::Bool,fact::Float64)
     function dfljs(df::DataFrame;logy=true,fact=.66)
         nrows=size(df)[2]-1 
@@ -1036,7 +1057,32 @@ module wajs
         end
     end
 
-      
+    """
+    plots a DataFrame as a table
+    """
+    function dftab(values::DataFrame)
+        nms = names(values)
+        values = values |> Matrix |> collect
+        trace = table(
+            header=attr(
+                values=nms, 
+                align="center", line=attr(width=1, color="black"),
+                fill_color="grey", font=attr(family="Arial", size=12, color="white")
+            ),
+            cells=attr(
+                values=values, align="center", line=attr(color="black", width=1),
+                font=attr(
+                    #https://plotly.com/julia/reference/scatter/#scatter-textfont-family 
+                    #family= "Droid Sans Mono",
+                    family= "Balto",
+                    #family=  "Courier New", 
+                    size=12, 
+                    color="black")
+            )
+        )
+        PlotlyJS.plot(trace)
+    
+    end
 
 
-end #module
+end #module endof
