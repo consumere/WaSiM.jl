@@ -1,27 +1,12 @@
 #rasterfuncs
-
-#module rst
-using Reexport
-@reexport using WaSiM
-#@reexport 
-using DataFrames, CSV, Statistics, Dates, Distributions,StatsPlots, Plots.PlotMeasures
-using DelimitedFiles, Grep, Printf, PrettyTables
-using Rasters, ArchGDAL 
-
-import ArchGDAL
-import GeoDataFrames
-import GeoInterface
-import InteractiveUtils
-import NCDatasets
-import Shapefile
-
+using Rasters
 
 module rst
 
     using DataFrames, CSV, Statistics, Dates, Distributions,StatsPlots, Plots.PlotMeasures
     using DelimitedFiles, Grep, Printf, PrettyTables
     using Rasters, ArchGDAL 
-    import NCDatasets, Shapefile
+    import NCDatasets, Shapefile, GeometryOps
     import LibGEOS: centroid
     import GeoInterface: coordinates
     import GeoInterface
@@ -33,8 +18,8 @@ module rst
     # export addplot, agcont, agcont2, agheat, agjson, 
     # agmask, agread, agsurf, cntplt, cpal, cpl, cplt, 
     # crop_geodf, descr, ezplot, facets, facets_loop, 
-    # filterplot, filterplot!, fp, fzplot, fzplot2, gdalop, 
-    # jlzonal, jlzonal2, loadalloutput, mask_trim, 
+    # fp, fzplot, fzplot2, gdalop, 
+    # include, jlzonal, jlzonal2, loadalloutput, mask_trim, 
     # maskplot, median_filter, ncdf, ncell, ncmean, 
     # process_rasters, project, project_o, rcont, 
     # readalloutput, readallras, readras, readras2, 
@@ -44,72 +29,6 @@ module rst
     # stats, stp, stplot, stread, surf, tdifnc
 
     #begin
-
-        # """
-        # greps from current dir iRegex
-        # """
-        # function glob(x::AbstractString)
-        #     filter(file -> occursin(Regex(x,"i"),file), readdir())
-        # end
-
-        # function glob(x::Regex)
-        #     """
-        #     greps from current dir Regex
-        #     """
-        #     filter(file -> occursin(x,file), readdir())
-        # end
-
-        
-        """
-        3D plot with geoarrays
-        depricated!
-        use rpr, surf or agsurf instead!
-        """
-        function rp3(x::String)
-            @error "
-            depricated!
-            use rpr , surf or agsurf instead!"
-            # ga = GeoArrays.read(x)
-            # values = ga.A # a 3D array of raster values
-            # #GeoArrays.coords(ga) # a tuple of x, y and band coordinates
-            # #crs = ga.crs # a string of CRS definition
-            # t = GeoArrays.coords(ga)|>size
-            # coords = (1:t[1], 1:t[2]) # a Tuple{UnitRange{Int64}, UnitRange{Int64}}
-            # ti=basename(x)     #title!("3D Raster Plot")
-            # #p1=
-            # Plots.surface(coords[1], coords[2], 
-            # values[:, :, 1]    ,
-            # xlabel="x",ylabel="y",zlabel="value",title=ti)
-            
-        end
-
-
-        """
-        reads non-recursively all ncdf files
-        """
-        function readallras(path::AbstractString)
-            v = readdir(path);
-            v = v[broadcast(x->endswith(x,"nc"),v)];
-            z::Vector{Raster}=[];
-            for s in v; 
-            #if contains(x1,s) & occursin(r"nc$",s)
-            ts=read(Raster(s,missingval=0))
-            push!(z,ts);
-            end
-            return(z)
-        end
-
-        function readallras(path::AbstractString, ex::AbstractString)
-            v = readdir(path);
-            v = v[broadcast(x->endswith(x,"nc") & occursin(ex,x),v)];
-            z::Vector{Raster}=[];
-            for s in v; 
-            #if contains(x1,s) & occursin(r"nc$",s)
-            ts=read(Raster(s,missingval=0))
-            push!(z,ts);
-            end
-            return(z)
-        end
 
         function readallras(ex::Regex)
             v = readdir(".");
@@ -176,7 +95,6 @@ module rst
             return(x)
         end
         
-
         """
         prefix::Regex; missingval=0,crs=EPSG(25832),mappedcrs=EPSG(25832),kw...)
         reads first match of regex raster
@@ -284,70 +202,6 @@ module rst
         end
         end
 
-        # """
-        # join([x1,y1],"+.*")
-        # r"this+.*that"
-        # """
-        # function regand(v::Vector{String},x1::AbstractString,y1::AbstractString)
-        #     needle=join([x1,y1],"+.*");
-        #     z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))] 
-        # return(z)
-        # end
-        
-        # function regand(v::Vector{String},xv::Tuple{String, String})
-        #     needle=join([xv[1],xv[2]],"+.*");
-        #     z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
-        # return(z)
-        # end
-
-        # #function regand(v::Vector{String},xv::Tuple{Symbol,Symbol})
-        # function regand(v::Vector{String},xv::Vector{Symbol})
-        #     needle=join(xv,"+.*");
-        #     z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
-        # return(z)
-        # end
-
-        # function regand(v::Vector{String},xv::Vector{String})
-        #     needle=join(xv,"+.*");
-        #     z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
-        # return(z)
-        # end
-
-        # """
-        # basic a + b regex
-        # """
-        # function regand(a::String, b::String)
-        #     needle=join([a,b],"+.*");
-        #     z=Regex(needle,"i")
-        #     return(z)
-        # end
-
-        # """
-        # here you can put any string to filter the Vector
-        # like regand(getnames(dfs),"scn","ssr")
-        # """
-        # function regand(v::Vector{Any},a::String, b::String)
-        #     needle=Regex(join([a,b],"+.*"),"i")
-        #     z = v[(broadcast(x->occursin(needle,x),v))] 
-        #     if length(z)==1
-        #         return(only(z))
-        #     else
-        #         return(z)
-        #     end
-        # end
-
-
-        # """
-        # here you can put any regex to filter the Vector
-        # like regand(getnames(dfs),r"tem")
-        # """
-        # function regand(v::Vector{Any},xv::Regex)
-        #     z = v[(broadcast(x->occursin(xv,x),v))] 
-        # return(z)
-        # end
-
-
-        #########tdiff 
         """
         path="."
         read non-recursivley and plots tdiff
@@ -418,7 +272,8 @@ module rst
             """
             if x.dims|>length > 2
                 @warn "subsetting to layer $ex !"
-                xr = x[Dim{Rasters.name(x.dims)[end]}(Rasters.Where(x -> x >= ex))]
+                #xr = x[Dim{Rasters.name(x.dims)[end]}(Rasters.Where(x -> x >= ex))]
+                xr = x[t=ex]
             else
                 xr = x
             end
@@ -804,10 +659,10 @@ module rst
             return(df)
         end
 
+        """
+        3D plot with Rasters
+        """
         function rpr(x::String)
-            """
-            3D plot with Rasters
-            """
             #x="D:/temp/saale/output/thulba/v2/All_HydrologicResponseUnits.nc"
             ga = Rasters.read(Rasters.Raster(x))
             values = ga.data[:,:,1]
@@ -857,8 +712,11 @@ module rst
             #     camera = (-20, 75))
         end
         
-        function filterplot(regex::AbstractString,ncs::Vector{Raster})
-            "selects first match and plots..."
+        """
+        selects first match and plots...
+        filterplot
+        """
+        function filterpl(regex::AbstractString,ncs::Vector{Raster})
             r = ncs[map(n->occursin(Regex(regex,"i"),n),
             map(x->string.(name(x)),ncs)
             )] |> first
@@ -868,7 +726,7 @@ module rst
             text("cellsize: $cz", 8, :black, :right))
         end
 
-        function filterplot!(regex::AbstractString,ncs::Vector{Raster})
+        function filterpl!(regex::AbstractString,ncs::Vector{Raster})
             "selects first match and add to plot..."
             r = ncs[map(n->occursin(Regex(regex,"i"),n),
             map(x->string.(name(x)),ncs)
@@ -1564,11 +1422,14 @@ module rst
         """
         filterplot for rasters regex
         """
-        function fp(x::Regex;)
-            x = glob(x)
-            filter!(z->endswith(z,".nc"),x)
-            x = first(x)
-            r = read(Raster(x,missingval=0;lazy=true))
+        function fp(x::Union{Regex,String})
+            x = isa(x,Regex) ? x : Regex(x,"i")
+            fn = filter(file -> (
+                endswith(file,".nc") && 
+                occursin(x,file)), 
+                readdir() ) |> first
+            
+            r = read(Raster(fn,missingval=0;lazy=true))
             println(descr(r))
             Plots.plot(
                 r;
@@ -1578,54 +1439,6 @@ module rst
                 ylabel="",
                 title = name(r)
                 )
-        end
-
-        """
-        reprojects a wasim NetCDF 
-        using Rasters and ArchGDAL 
-        to a new coordinate system
-        rebuilds the raster using misval argument
-        """
-        function project_o(x::Union{String,Raster,String};
-            misval::Number=0,
-            #layer = 1,
-            s_srs="EPSG:25832",
-            t_srs="EPSG:4326",method="bilinear")
-            if x isa Regex
-                #x = nconly(x)|>first
-                try
-                    v::Vector{String} = readdir();
-                    v = v[broadcast(f->endswith(f,"nc"),v)];
-                    z = v[(broadcast(f->occursin(x,f),v))];
-                    file = z|>first    
-                    r = Raster(file,missingval=-9999;crs=s_srs)
-                catch
-                    throw("no file found!")
-                end
-            elseif x isa String
-                try
-                r = Raster(x,missingval=-9999;crs=s_srs)
-                catch
-                    throw("no file found!")
-                end           
-            elseif x isa Raster
-                file = x
-                #works, because self
-                r = Raster(file,missingval=-9999;crs=s_srs)
-            else
-                throw(x)
-                @error("x must be a Raster or String")
-            end
-            
-            #r = r[t=layer]
-            flags = Dict(
-                "s_srs"=>s_srs,
-                "t_srs"=>t_srs,
-                "r"=>method)
-            rs = Rasters.warp(r,flags)
-            rout = replace_missing(rs, missval)
-            #rs = Rasters.trim(Rasters.rebuild(rs,missingval=misval))
-            return rout
         end
 
         """
@@ -1644,7 +1457,10 @@ module rst
         note that ArchGDAL.wkbPolygon is reporjected inplace!
         see also @doc Rasters.resample
         """
-        function project(x::Union{Regex,Raster,String,ArchGDAL.IGeometry{ArchGDAL.wkbPolygon}};
+        function project(x::Union{Regex,Raster,String,
+                ArchGDAL.IGeometry{ArchGDAL.wkbPolygon},
+                ArchGDAL.IGeometry{ArchGDAL.wkbMultiPolygon}
+                };
             misval::Number=0,
             src="EPSG:25832",
             dst="EPSG:4326",
@@ -1668,7 +1484,7 @@ module rst
                 file = x
                 #works, because self
                 A = Raster(file) #;crs=s_srs
-            elseif x isa ArchGDAL.IGeometry{ArchGDAL.wkbPolygon}
+            elseif x isa ArchGDAL.IGeometry{ArchGDAL.wkbPolygon} || x isa ArchGDAL.IGeometry{ArchGDAL.wkbMultiPolygon}
                 #z = deepcopy(x) #does not work
                 reprojected_polygon = ArchGDAL.reproject(
                         x,
@@ -1901,8 +1717,11 @@ module rst
 
         """
         reads stationdata
+        ```
+        function stp(fn::String;proj=false,dst=ProjString("+proj=longlat +datum=WGS84 +no_defs"),encode=true)
+        ``` 
         """
-        function stp(fn::String;proj=false,dst=ProjString("+proj=longlat +datum=WGS84 +no_defs"))
+        function stp(fn::String;proj=false,dst=ProjString("+proj=longlat +datum=WGS84 +no_defs"),encode=true)
             fl = CSV.read(fn,DataFrame;limit=4)
             xc = fl[2,5:end]|>collect
             yc = fl[3,5:end]|>collect
@@ -1929,6 +1748,18 @@ module rst
                 end
             end
             nd = DataFrame(geometry=pts, name=propertynames(fl)[5:end], xc=xc, yc=yc)
+            if encode 
+                data = string.(nd.name)
+                # Ersetze bestimmte Muster in den Zeichenketten mithilfe von Vektoroperationen
+                nd.name .= map(x->replace(x,     
+                    "ß" => "ss",
+                    "\\x" => "ue",
+                    r"\/" => "_",    r"_" => "-", r"-" => "", r"," => "_",
+                    "\xc4" => "Ae","\xf6" => "oe",   
+                    "\xd6" => "Oe",   "\xdc" => "Ue",
+                    "\xe4" => "ae",   "\xf6" => "oe",
+                    "\xfc" => "ue",   "\xdf" => "ss"),data)
+            end
             return nd
         end
 
@@ -2030,14 +1861,20 @@ module rst
 
         """
         wrapper for ArchGDAL.unsafe_gdaldem
-            operation:
-            one of "hillshade", "slope", 
-            "aspect", "color-relief", "TRI", "TPI",
-            "Roughness"
+        ```
+        gdalop(input_file, output_file, operation::String="TPI";fileformat::String="AAIGrid")
+        operation:
+        one of "hillshade", "slope", "aspect", 
+        "color-relief", "TRI", "TPI", "Roughness"
+        ```
         """
-        function gdalop(input_file, output_file, operation::String="TPI")
+        function gdalop(input_file, output_file, operation::String="TPI";fileformat::String="AAIGrid")
             dataset = ArchGDAL.read(input_file)
-            ArchGDAL.unsafe_gdaldem(dataset, operation, ["-of", "AAIGrid"], dest=output_file)
+            ArchGDAL.unsafe_gdaldem(
+                dataset, 
+                operation, 
+                ["-of", fileformat], 
+                dest=output_file)
         end
 
         """
@@ -2069,24 +1906,55 @@ module rst
 
         """
         build a GeoDataFrame from a shapefile
+        ```
+        jlzonal2(vectorpath::Union{String,DataFrame}, rasterobj::Union{String,Raster};agg=mean,showplot=true,kwargs...)
+        ```
+        kwargs are passed to Rasters.zonal()
         """
-        function jlzonal2(shapefilepath, rasterpath;agg=mean,kwargs...)
-            shp = Shapefile.Table(shapefilepath)
-            raster = Raster(rasterpath)
-            df = Float64.(zonal(agg, raster; of=shp,kwargs...))        
+        function jlzonal2(vectorpath::Union{String,DataFrame}, rasterobj::Union{String,Raster};agg=mean,showplot=true,kwargs...)
+            if vectorpath isa String
+                #shp = Shapefile.Table(vectorpath)
+                shp = GeoDataFrames.read(vectorpath)
+                #warn and drop if missing
+                if any(ismissing.(shp.geometry))
+                    dropmissing!(shp, :geometry)
+                    @warn "dropped missing geometries!"
+                end
+            else
+                shp = vectorpath
+            end
+            if rasterobj isa String
+                raster = Raster(rasterobj)
+            else
+                raster = rasterobj
+            end
+            
+            # df = try
+            #     Float64.(zonal(agg, raster; of=shp,kwargs...))
+            # catch e
+            #     @warn "Flat64 conversion failed: $e"
+            #     x = Rasters.zonal(agg, raster; of=shp,kwargs...)
+            #     return x
+            # end
+            df = zonal(agg, raster; of=shp,kwargs...)
             gdf = DataFrame(geometry=shp.geometry, val=df)
             rename!(gdf,:val => Symbol(agg))
-            centerpoints = [centroid(gdf.geometry[i]) for i in 1:length(gdf.geometry)]
-            cr = coordinates.(centerpoints)
-            p1 = Plots.plot(gdf.geometry;fillcolor=:cividis,fillalpha=0.5)
-            #anns = string.(select(gdf, 2))
-            anns = getproperty(gdf,Symbol(agg))
-            Plots.annotate!(first.(cr),last.(cr),
-                Plots.text.(anns, 7, color, :center, 
-                    halign=:center, rotation=35.0;family="Computer Modern"))
-        
-
-            display(p1)
+            if showplot
+                centerpoints = [centroid(gdf.geometry[i]) for i in 1:length(gdf.geometry)]
+                cr = coordinates.(centerpoints)
+                p1 = Plots.plot(gdf.geometry;
+                    #cgrad = :matter,
+                    cgrad = :cividis,
+                    #fillcolor=:cividis,
+                    fillalpha=0.5)
+                #anns = string.(select(gdf, 2))
+                anns = round.(getproperty(gdf,Symbol(agg)),digits=2)
+                Plots.annotate!(first.(cr),last.(cr),
+                    Plots.text.(anns, 7, :black, :center, 
+                        halign=:center, rotation=25.0;
+                        family="Computer Modern"))
+                display(p1)
+            end
             return gdf
         end
             
@@ -2100,9 +1968,13 @@ module rst
             # reversed_crds = [[[(lon, lat) for (lat, lon) in ring] for ring in polygon] for polygon in crds]
             if polygon isa DataFrame
                 out = []
-                for i in 1:length(polygon.geometry)
+                #filter out multipolgons...
+                pol = filter(x -> isa(x,ArchGDAL.IGeometry{ArchGDAL.wkbPolygon}), polygon.geometry)
+                #for i in 1:length(polygon.geometry)
+                for i in pol                    
                     # Get the coordinates of the polygon
-                    coords = GeoInterface.coordinates(polygon.geometry[i])
+                    #coords = GeoInterface.coordinates(polygon.geometry[i])
+                    coords = GeoInterface.coordinates(i)
                     # Flatten the list of points
                     ptc = coords[1]
                     ptc_tuples = [tuple(pt...) for pt in ptc]
@@ -2366,65 +2238,79 @@ module rst
         #cmd = pipeline(`mamba run -n ds python $(gdal_polygonize_path) $(input_raster_path) -f $(output_format) $(output_file_path)`)
         run(cmd)
     end
-    
+
+    """
+    returns a DataFrame with the values and geometries of the polygons
+    ```
+    polygonizejl(r::Raster;lyr = 1)
+    ```
+    """
+    function polygonizejl(r::Raster;lyr = 1)
+        if size(r)|>length > 2
+            @warn("subsetting raster to band $lyr ...")
+            #tvec = Ref(t)
+            #tvec = Rasters.name(r.dims)[end]
+            #tvec = r.dims|>last
+            r = r[t=lyr]
+        end
+        p = GeometryOps.polygonize(r)
+        printstyled("polygonizejl: $(p.extent)\n",color=:green)
+        ngeo = reduce(vcat,[x.parent for x in p.parent])
+        df = DataFrame(
+            val=[last(x) for x in ngeo],
+            geometry=[first(x) for x in ngeo]
+            )
+        dropmissing!(df)
+        return df
+    end
+
+    """
+    w resample option
+    ```
+    function fzplot3(dirpath::String=".";resample=true,kwargs...)
+    ```
+    """
+    function fzplot3(dirpath::String=".";resample=true,
+            srccrs=EPSG(25832),
+            dstcrs=EPSG(4326),kwargs...)
+        r = try
+            filter(file -> occursin(Regex(".fzs\$"),file),
+            readdir(dirpath;join=true))|>first
+        catch
+            @error "No .fzs file found in $dirpath !"
+            return nothing
+        end 
+        r = Raster(r;crs=srccrs)|>Rasters.trim
+        if resample
+            r = Rasters.resample(r, crs=dstcrs)
+        end
+        A = replace(r, -9999.0 => missing)
+        Plots.plot(A ./ 3600,
+            title = "Fliesszeitsummen [h]",
+            xaxis="", yaxis="";
+            kwargs...)
+        Plots.contour!(A,c=:greys,levels=10)
+    end
 
     #end #endof funcs
 
 end #endof module rst
 
-#end #end of endof module rst
+
+fnames = names(rst, all=true)
+fnames = filter(x -> !occursin(Regex("eval|include"), string(x)), fnames)
+for submodule in fnames
+    @eval import Main.rst.$submodule
+end
+
+#Get a module's enclosing Module. Main is its own parent.
+#parentmodule(rp)
+# Base.current_project()
+# Base.ACTIVE_PROJECT
 
 
-# fnames = names(rst, all=true)
-# for submodule in fnames
-#     @eval import Main.rst.$submodule
-# end
-
-# #this is necessary to use the modules in the REPL
-# using DataFrames, CSV, Statistics, Dates, Distributions,StatsPlots, Plots.PlotMeasures
-# using DelimitedFiles, Grep, Printf, PrettyTables
-# using Rasters, ArchGDAL, Grep
-# import NCDatasets
-
-
-
-
-# """
-# pycall function to polygonize a raster
-# polygonize_raster(input_raster_path::String, output_shapefile_path::String;epsg=25832)
-# """
-# function polygonize_raster(input_raster_path::String, output_shapefile_path::String;epsg=25832)
-#     gdal = pyimport("osgeo.gdal")
-#     ogr = pyimport("osgeo.ogr")
-#     osr = pyimport("osgeo.osr")
-
-#     # Open the raster dataset
-#     dataset = gdal.Open(input_raster_path)
-
-#     # Get the first band
-#     band = dataset.GetRasterBand(1)
-
-#     # Get the "ESRI Shapefile" driver
-#     driver = gdal.GetDriverByName("ESRI Shapefile")
-
-#     # Create a new shapefile dataset
-#     out_ds = driver.Create(output_shapefile_path, 0, 0, 0, gdal.GDT_Unknown)
-
-#     # Create a spatial reference object
-#     srs = osr.SpatialReference()
-#     srs.ImportFromEPSG(epsg)
-
-#     # Create a new layer
-#     layer = out_ds.CreateLayer("polygonized", srs, ogr.wkbPolygon)
-
-#     # Polygonize the raster
-#     try
-#         gdal.Polygonize(band, py"None", layer, -1, [], callback=py"None")
-#         @info "new shapefile created at: $output_shapefile_path ..."
-#     catch
-#         @error "gdal.Polygonize failed ..."
-#     end
-    
-#     # Close the dataset to write it to the disk
-#     out_ds = py"None"
-# end
+#this is necessary to use the modules in the REPL
+using DataFrames, CSV, Statistics, Dates, Distributions,StatsPlots, Plots.PlotMeasures
+using DelimitedFiles, Grep, Printf, PrettyTables
+using Rasters, ArchGDAL, Grep
+import NCDatasets

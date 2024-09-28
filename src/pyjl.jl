@@ -2,7 +2,6 @@ if !(isdefined(Main, :src_path) && ispath(src_path))
     include("smallfuncs.jl")
 end
 
-
 module pyjl
     using PyCall
     using PyPlot
@@ -29,6 +28,15 @@ module pyjl
     plt = pyimport("matplotlib.pyplot")
     plt.rc("font", family="serif", serif=["cmr10"])
     plt.rc("axes", unicode_minus=false)
+
+    function nconly(rx::Union{AbstractString,Regex})
+        z = filter(z -> endswith(z,".nc"),readdir()[map(x->occursin(rx,x),readdir())])
+        # v = readdir();
+        # z = v[map(x->occursin(rx,x),v)]
+        # z = z[map(x->endswith(x,"nc"),z)]
+        return(z)
+    end
+    
 
     """
     Fastest Reader
@@ -286,10 +294,10 @@ module pyjl
         return py"waread3($x, $flag)"
     end
 
+    """
+    uses xarray to plot a 4xn grid of wasim stacks.
+    """
     function xrfacets(a::AbstractString;maskval=0)
-        """
-        uses xarray to plot a 4xn grid of wasim stacks.
-        """
         # xr  = pyimport("xarray")
         # plt = pyimport("matplotlib.pyplot")
         ad = xr.open_dataset(a)
@@ -319,17 +327,17 @@ module pyjl
     end
 
     #ENV["LD_PRELOAD"] = .so to the missing c++ library...
-
-    
     #filter(z -> endswith(z,".nc"),readdir()[map(x->occursin(rx,x),readdir())])
 
-
     """
+    wasim nc plotter
+    ´´´
     pyjl.xrp(r"sb.+06") 
     xrp(x::Union{String,Regex}; maskval=0, lyr=0)
             if isa(x,Regex)
                 x = nconly(x)|>last
             end
+    ´´´
     """
     function xrp(x::Union{String,Regex}; maskval=0, lyr=0)
         if isa(x,Regex)
@@ -352,7 +360,6 @@ module pyjl
         plt.title(ti)
         plt.show()
     end
-
     
     """
     pyplot_df(df::Union{String,Regex,DataFrame};log=false)
@@ -1491,6 +1498,73 @@ module pyjl
         xm = mall(jdf,od)
         return xm
     end
+
+    """
+    fast nc plotter
+    ´´´
+    xrnc(x::Union{String,Regex}; maskval=0, key::String)
+    ´´´
+    takes dx.isel(Dict(lastdim=>0)) #first timestep
+    """
+    function xrnc(x::Union{String,Regex}; maskval=0, key::String="")
+        if isa(x,Regex)
+            v = readdir();
+            z = v[map(k->occursin(x,k),v)]
+            println(z)
+            z = z[map(k->endswith(k,"nc"),z)][end]
+            x = z
+        end
+        xr = pyimport("xarray")
+        plt = pyimport("matplotlib.pyplot")
+        dx = xr.open_dataset(x,mask_and_scale=true)
+        if length(key) > 0
+            m = key
+        else
+            m = dx.keys()|>collect|>last
+        end
+        #m = dx.keys()|>collect|>last
+        @info "key is $m"
+        lastdim = dx.dims|>collect|>last
+        #dx[m].where(dx[m]>maskval).isel(lastdim=lyr).plot(cmap="turbo")
+        #,dx[lastdim]|>first
+        dx = dx.isel(Dict(lastdim=>0)) #first timestep
+        dx[m].where(dx[m]>maskval).plot(cmap="turbo")
+        ti=basename(x)
+        plt.title(ti)
+        plt.show()
+    end
+
+    """
+    fast rioxarray plotter
+    ´´´
+    rp(x::Union{String,Regex},maskval=0;returnras=false)
+    ´´´
+    """
+    function rp(x::Union{String,Regex},maskval=0;returnras=false)
+        if isa(x,Regex)
+            v = readdir();
+            z = v[map(k->occursin(x,k),v)]
+            x = first(z)
+            println("$x will be masked with $maskval")
+        end
+        rio = pyimport("rioxarray")
+        plt = pyimport("matplotlib.pyplot")
+        ##dx.values[dx.values .> maskval]
+        dx = rio.open_rasterio(x,mask_and_scale=true,band_as_variable=true)
+        #firstdim = dx.dims|>collect|>first
+        m = dx.variables |> collect |> last #usually "band_1"
+        #dx.plot(cmap="turbo")
+        #dx["band_1"].where(dx.band_1 > 320).plot()
+        dx[m].where(dx[m] > maskval).plot(cmap="turbo")
+        #dx[firstdim].where(dx[firstdim]>maskval).plot(cmap="turbo")
+        ti=basename(x)
+        plt.title(ti)
+        plt.show()
+        if returnras
+            return dx
+        end
+    end
+
       
 
 end #end of module #endof

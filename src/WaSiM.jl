@@ -4032,6 +4032,11 @@ module WaSiM
         end
     end
 
+    """
+    ``` 
+    vg(snippet::AbstractString, file_ending::AbstractString) 
+    ```
+    """
     function vg(snippet::AbstractString, file_ending::AbstractString)
         files = filter(file -> endswith(file, file_ending), readdir())
         # loop over each file
@@ -4040,49 +4045,53 @@ module WaSiM
                 counter = 0 # Zähler initialisieren
                 for line in eachline(f)
                     counter += 1 # Zähler erhöhen
-                    # check if the line matches the regex
-                    #if occursin(Regex(regex), line)
                     if Base.contains(line,snippet)
-    #                    println("$file: $counter:\t $line")
-                        printstyled("$counter:\t",color=:light_red)
-                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true)
-                        printstyled("$line\n",color=:green,bold=true)
+                        printstyled("$counter:\t",color=:light_red) 
+                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
+                        printstyled("$line\n",color=:green,bold=true) 
                     end
                 end
             end
         end
     end
 
-    function vgjl(snippet::AbstractString)
+    """
+    ``` 
+    vgjl(snippet::Union{AbstractString,Symbol};searchpath=nothing) 
+    ```
+    """
+    function vgjl(snippet::Union{AbstractString,Symbol};searchpath=nothing)
         owd = abspath(pwd())
-        platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-
-        if platform == "windows"
-            script_dir = dirname(pathof(WaSiM))
-        else
-            # Assuming you want to use a different path for Linux/WSL, adjust as needed
-            script_dir = dirname(pathof(WaSiM))
+        if snippet isa Symbol
+            snippet = string(snippet)
         end
-
+        if isnothing(searchpath)
+            script_dir = src_path        
+        else
+            script_dir = searchpath
+            printstyled("looking for jl files in $script_dir ...\n",color=:yellow)
+        end
+        
         cd(script_dir)
 
-        # files = []
-        files = filter(file -> endswith(file, ".jl"), readdir())
-        fwin = filter(file -> endswith(file, ".jl"),
-            readdir(script_dir*"/win", join=true))
-        files = vcat(files,fwin)
-        #files = rglob(r"[.]jl$")
-        # rootdir=script_dir
-        # suffix = r"[.]jl$"
-        # files = []
-        # for (looproot, dirs, filenames) in walkdir(rootdir)
-        #     for filename in filenames
-        #         if (occursin(suffix,filename))
-        #             push!(files, joinpath(looproot, filename))
-        #         end
-        #     end
-        # end
-
+        files = []
+        if (any(x->isdir(x),readdir()))
+            for (looproot, dirs, filenames) in walkdir(script_dir)
+                for filename in filenames
+                    if (occursin(r"jl$",filename))
+                        push!(files, joinpath(looproot, filename)) 
+                    end
+                end
+            end
+        else
+            printstyled("no dirs in $script_dir !\n",color=:light_red)
+            for filename in (filter(x->isfile(x),readdir(;join=false)))
+                    if (occursin(r"jl$",filename))
+                    push!(results, filename) 
+                end
+            end
+        end
+        
         for file in files
             open(file) do f
                 counter = 0 # Initialize the counter
@@ -4096,17 +4105,9 @@ module WaSiM
                 end
             end
         end
-
+        
         cd(owd)
     end
-
-
-
-
-    # for (root, dirs, files) in walkdir(owd)
-    #     z = filter(file -> (endswith(file, ".jl")) && isfile(file), files)
-    #     println(z)
-    # end
 
     """
     recursive grep
@@ -4132,8 +4133,6 @@ module WaSiM
             end
         end
     end
-
-    #vgjl("wsl")
 
     function vgro(snippet::AbstractString)
         owd=pwd()
@@ -4246,7 +4245,6 @@ module WaSiM
         end
     end
 
-
     """
     Usage: vgctl("set \$TS")
     """
@@ -4306,43 +4304,6 @@ module WaSiM
         """
         filter(file -> occursin(x,file), readdir())
     end
-
-    # function rglob(prefix::AbstractString)
-    #     rootdir=pwd();
-    #     results = []
-    #     if (any(x->isdir(x),readdir()))
-    #         for (looproot, dirs, filenames) in walkdir(rootdir)
-    #             for filename in filenames
-    #                 #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
-    #                 if (occursin(Regex(prefix,"i"),filename))
-    #                     push!(results, joinpath(looproot, filename))
-    #                 end
-    #             end
-    #         end
-    #     else
-    #         printstyled("no dirs in $rootdir !\n",color=:light_red)
-    #         for filename in (filter(x->isfile(x),readdir(;join=false)))
-    #             #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
-    #             if (occursin(Regex(prefix,"i"),filename))
-    #                 push!(results, filename)
-    #             end
-    #         end
-    #     end
-    #     return results
-    # end
-
-    # function rglob(prefix::Regex)
-    #     rootdir="."
-    #     results = []
-    #     for (looproot, dirs, filenames) in walkdir(rootdir)
-    #         for filename in filenames
-    #             if (occursin(prefix,filename))
-    #                 push!(results, joinpath(looproot, filename))
-    #             end
-    #         end
-    #     end
-    #     return results
-    # end
 
     """
     function rglob(pattern::Union{AbstractString, Regex}, rootdir::AbstractString=pwd())
@@ -12141,36 +12102,6 @@ module WaSiM
         df = select(df,Cols(col,:date))
         @info "aggregation monthly mean of col: $col at confidence_level: $confidence_level"
 
-        # if startswith(colname,"_")
-        #     colname = "basin"*colname
-        # end
-
-        # #dmean = copy(df)
-        # dmean = df
-        # s = map(Symbol, filter(x -> !occursin("date", x), names(dmean)))
-        # dmean[!, :month] = month.(dmean[!,:date])
-        # select!(dmean, Not(:date))
-
-        # # # Calculate monthly mean and confidence interval using combine and groupby
-        # # dmean = DataFrames.combine(DataFrames.groupby(dmean, :month),
-        # #     s .=> (dmean -> (mean(dmean), 1.96 * std(dmean) / sqrt(length(dmean))))
-        # #     .=> s)
-
-        # # Calculate monthly mean and narrower confidence interval using combine and groupby
-        # dmean = DataFrames.combine(DataFrames.groupby(dmean, :month),
-        #     s .=> (
-        #         dmean ->
-        #         (mean(dmean), 1.1 * std(dmean) / sqrt(length(dmean))))
-        #     .=> s)
-
-
-        # # Create separate columns for mean, lower bound, and upper bound
-        # for col in s
-        #     dmean[!, string(col)*"_mean"]  .= [first(only(x)) for x in eachrow(dmean[!, col])]
-        #     dmean[!, string(col)*"_lower"] .= [first(only(x)) - last(only(x)) for x in eachrow(dmean[!, col])]
-        #     dmean[!, string(col)*"_upper"] .= [first(only(x)) + last(only(x)) for x in eachrow(dmean[!, col])]
-        # end
-
         dmean = monc(df;confidence_level = confidence_level) #s.o. confidence_interval 95%
         mean_col = propertynames(select(dmean, Cols(r"mean")))[1]
         lower_col = propertynames(select(dmean, Cols(r"lower")))[1]
@@ -12178,10 +12109,6 @@ module WaSiM
         lower_bounds = dmean[!, lower_col]|>unique
         upper_bounds = dmean[!, upper_col]|>unique
 
-        #plt = @df dmean plot(:month, Matrix(dmean[!,Cols(r"mean")]),
-            #ribbon=(dmean.Lai_lower, dmean.Lai_upper),
-            # ribbon=(Matrix(dmean[!,Cols(r"lower")]),
-            #         Matrix(dmean[!,Cols(r"upper")])),
         plt = @df dmean plot(:month, cols(mean_col),
                           ribbon=(lower_bounds, upper_bounds),
             labels = lab, #see above at ti   # "Lai_mean",
