@@ -19,4 +19,3 @@ function npp(fl::String;opener="c:/Program Files (x86)/Notepad++/notepad++.exe")
     end
 end
 
-"""

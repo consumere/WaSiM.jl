@@ -13,10 +13,3 @@ function colorfunction(v::Vector)
                 x < 9*f ? :pink :
                 :blue for x in v ./ max_val]  # normalize v here
     end
-
-
-    """
-    annotated boxplot with monthly mean
-    mbx(selt(df,4))
-
-    annotated monthly boxplot with apply 
