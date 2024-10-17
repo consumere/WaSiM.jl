@@ -2,8 +2,8 @@
 using WaSiM
 using Test
 # %%
-f(x) = @test isone(x)
-@testset f(1)
+ftest(x) = @test isone(x)
+@testset ftest(1)
 
 @testset verbose = true "arithmetrics" begin
     # Write your tests here.
@@ -18,6 +18,6 @@ end
    ls()
 end
 
-# @testset verbose = true "my du test" begin
-#    du()
-# end
+@testset verbose = true "my du test" begin
+   du() # also works
+end

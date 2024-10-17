@@ -2297,20 +2297,20 @@ module rst
 end #endof module rst
 
 
-fnames = names(rst, all=true)
-fnames = filter(x -> !occursin(Regex("eval|include"), string(x)), fnames)
-for submodule in fnames
-    @eval import Main.rst.$submodule
-end
+# fnames = names(rst, all=true)
+# fnames = filter(x -> !occursin(Regex("eval|include"), string(x)), fnames)
+# for submodule in fnames
+#     @eval import Main.rst.$submodule   #no Main. -->errors.
+# end
 
-#Get a module's enclosing Module. Main is its own parent.
-#parentmodule(rp)
-# Base.current_project()
-# Base.ACTIVE_PROJECT
+# #Get a module's enclosing Module. Main is its own parent.
+# #parentmodule(rp)
+# # Base.current_project()
+# # Base.ACTIVE_PROJECT
 
 
-#this is necessary to use the modules in the REPL
-using DataFrames, CSV, Statistics, Dates, Distributions,StatsPlots, Plots.PlotMeasures
-using DelimitedFiles, Grep, Printf, PrettyTables
-using Rasters, ArchGDAL, Grep
-import NCDatasets
+# #this is necessary to use the modules in the REPL
+# using DataFrames, CSV, Statistics, Dates, Distributions,StatsPlots, Plots.PlotMeasures
+# using DelimitedFiles, Grep, Printf, PrettyTables
+# using Rasters, ArchGDAL, Grep
+# import NCDatasets
