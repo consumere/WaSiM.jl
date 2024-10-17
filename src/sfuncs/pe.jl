@@ -13,6 +13,3 @@ function pe()
         println("Failed to translate to wslpath.")
     end
 end
-
-
-"""

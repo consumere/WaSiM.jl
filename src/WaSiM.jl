@@ -1,6 +1,6 @@
-__precompile__(false)
-#julia --startup-file=no -q --color=yes --project="/mnt/c/Users/chs72fw/.julia/dev/WaSiM"
+#__precompile__(false)
 
+#julia --startup-file=no -q --color=yes --project="/mnt/c/Users/chs72fw/.julia/dev/WaSiM"
 #cd "/mnt/c/Users/chs72fw/.julia/dev/WaSiM"
 #julia --startup-file=no -q --color=yes --project=.
 
@@ -117,18 +117,6 @@ module WaSiM
         readmhm, readroute, rec, rename_columns, rename_columns!, rename_duplicates,
         renamer, reorder_df, rmm, rmopt, rmqout, routeg, routg,
         rowmeans, rowsums, runwasim, seldf, selt, skipyr, so_read, stplot!, strans
-
-        # qall, findlog,
-
-    # function ssup()
-    #     thisfile=src_path*"/smallfuncs.jl"
-    #     include(thisfile)
-    # end
-
-    # function setup()
-    #     thisfile=src_path*"/func-win.jl"
-    #     include(thisfile)
-    # end
 
 
     """

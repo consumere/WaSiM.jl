@@ -9,7 +9,7 @@ module rst
     import NCDatasets, Shapefile, GeometryOps
     import LibGEOS: centroid
     import GeoInterface: coordinates
-    import GeoInterface
+    import GeoInterface, GeometryOps
     import CFTime
     import GeoDataFrames
     import Conda #for gdal

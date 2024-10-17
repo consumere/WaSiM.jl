@@ -28,6 +28,3 @@ function dfrdt(x::Union{Regex,String})
     end
     return df 
 end
-
-
-"""
