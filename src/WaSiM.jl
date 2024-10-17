@@ -10,9 +10,6 @@
 # pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM";cd(pt)
 
 module WaSiM
-    # if Main.src_path !== nothing
-    #     src_path = "./src"
-    # end
     src_path = "./src"
     # if !(isdefined(Main, :src_path) && ispath(src_path))
     #     include("smallfuncs.jl")
@@ -47,6 +44,7 @@ module WaSiM
     using StatsPlots
 
     # ##import rasterstuff
+    #include(joinpath(src_path,"rasterfuncs.jl"))
     include("rasterfuncs.jl")
     # include("smallfuncs.jl") #<-depricated
     #include("timeseries.jl")
@@ -1513,20 +1511,7 @@ module WaSiM
         readbetween(open(pt),Regex(_str),r"^\s*function")
     end
 
-    macro wajs() pt="C:\\Users\\Public\\Documents\\Python_Scripts\\julia\\wajs.jl";include(pt);end
-    macro bash_str(s) open(`bash`,"w",stdout) do io; print(io, s); end;end
-
-    #@bash_str "which python" #redirects to wsl bash
-    # @bash_str "python -V"
-    # @bash_str "python -c 'import sys; print(sys.version_info)'"
-    # @bash_str @bash_str "python -c 'import rasterio; print(rasterio.__version__)'"
-
-    #@bash_str "python -c 'import rasterio; print(rasterio.__version__)'"
-    #@cmd_str "python -c 'import rasterio; print(rasterio.__version__)\n\n'"
-
-    #pwrs""" which python """
-    #pwrs""" pwd """
-
+    
     """
     this works in wsl too
     run(`cmd.exe /c start .`)
@@ -2265,9 +2250,7 @@ module WaSiM
         clipboard(strs)
     end
 
-
-
-    #macro jlcnt() pt=src_path*"/win/ccnt.jl";include(pt);end
+   
     function count_files(path::String, level::Int64)
         n = 0  # Number of files
         s = 0  # Total size in bytes
@@ -10272,12 +10255,12 @@ module WaSiM
         return lat
     end
 
-    function toMain()
-        fnames = names(Main.wa, all=true)
-        for submodule in fnames
-            @eval import Main.wa.$submodule
-        end
-    end
+    # function toMain()
+    #     fnames = names(Main.wa, all=true)
+    #     for submodule in fnames
+    #         @eval import Main.wa.$submodule
+    #     end
+    # end
 
 
 
