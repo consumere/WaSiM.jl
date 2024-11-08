@@ -175,10 +175,10 @@ module cmk
         return size
     end
 
+    """
+    gets sorted DF by size recursivley
+    """
     function fz()
-        """
-        gets sorted DF by size recursivley
-        """
         cwd = pwd() 
         osize = 0
         m = []
@@ -211,73 +211,72 @@ module cmk
         return(v)
     end
 
-    function waread(x::Regex;recurse=false)
-        """
-        waread(x::Regex)
-        reads first match of regex wasim timeseries
-        """
-        if recurse
-            results = []
-            rootdir="."
-            for (looproot, dirs, filenames) in walkdir(rootdir)
-                for filename in filenames
-                    if (occursin(x,filename)) && (!occursin(r"txt|yrly|nc|png|svg|grd",filename))
-                        push!(results, joinpath(looproot, filename)) 
-                    end
+    """
+    enhanced Reader.
+    Read the text file, preserve line 1 as header column \n
+    `function waread(x::String;station=false,proj=false,pts_and_data=false,src=EPSG(25832),dst=EPSG(4326))`
+    """
+    function waread(x::String;station=false,proj=false,pts_and_data=false,src=EPSG(25832),dst=EPSG(4326))
+        ms = ["-9999","lin","log","--"]
+        if station
+            fl = CSV.read(x,DataFrame;limit=4)
+            ez = fl[1,5:end]|>collect
+            xc = fl[2,5:end]|>collect
+            yc = fl[3,5:end]|>collect
+            no = fl[4,5:end]|>collect
+            pts = ArchGDAL.IGeometry[]
+            
+            #for i in 1:length(xc)
+            for i in 1:lastindex(xc)
+                pt = ArchGDAL.createpoint([xc[i],yc[i]])
+                if proj
+                    pt = ArchGDAL.reproject(pt,src,dst)
                 end
+                push!(pts,pt)
             end
-            if length(results)==0
-                @error "no match for $x !"
-                return
-            end
-            fn=first(results)
-        else
-            fn=try 
-                first(filter(file -> (occursin(x,file) & 
-                (!occursin(r"xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg",
-                file))), readdir()))
-                #That’s a speedup of about 2x, but x is a string
-                # regex = Regex(x * "(?!\\.(xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg))","i")
-                # files = [file for file in readdir() if occursin(regex, file)]
-                # first(files) #1st match
-            catch
-                    @error "no match for $x !"
-                    return
+            
+            nd = DataFrame(geometry=pts, 
+                name=names(fl)[5:end],
+                ez = ez, no = no,
+                xc=xc, yc=yc)
+
+            if !pts_and_data
+                return nd
             end
         end
-        x = fn
-        ms=["-9999","lin","log","--"]
-        df = CSV.read(x,DataFrame,
-        missingstring = ms, 
-        # ntasks=4,
-        limit = typemax(Int),
-        types = Float64,
-        ignorerepeated = true,
-        delim="\t",
-        silencewarnings=true,
-        stripwhitespace=true,
-        normalizenames=true,
-        drop=(i, nm) -> i == 4)
-        dropmissing!(df,1)
-        df.YY=map(x ->Int(x),df.YY);
-        df.MM=map(x ->Int(x),df.MM);
-        df.DD=map(x ->Int(x),df.DD);
-        df.date = Date.(string.(df.YY,"-",df.MM,"-",df.DD),"yyyy-mm-dd");
-        df=df[:,Not(1:3)]
-        metadata!(df, "filename", x, style=:note);
-        
-        #s = (filter(x->!occursin(r"year|date",x),names(df)))
-        #renamer - remove char _   
+
+        df = CSV.read(x, DataFrame; 
+            delim="\t", header=1, 
+            missingstring=ms, 
+            maxwarnings = 1, #silencewarnings = true,
+            normalizenames=true, types=Float64)
+        df = dropmissing(df, 1)
+        dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
+        df.date = dt2
+        df = select(df, Not(1:4))
+        DataFrames.metadata!(df, "filename", x, style=:note)
         for x in names(df)
             if startswith(x,"_")
-            #newname=replace(x,"_"=>"C")
-            newname=replace(x,"_"=>"C", count=1)
-            rename!(df,Dict(x=>newname))
+                newname=replace(x,"_"=>"C", count=1)
+                rename!(df,Dict(x=>newname))
             end
         end
-        #names(df)
-        #s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
-        return df 
+            
+        if (pts_and_data && !station)
+            fl = CSV.read(x, DataFrame; limit=4)
+            ez, xc, yc, no = [fl[i, 5:end] |> collect for i in 1:4]
+            pts = [ArchGDAL.createpoint([xc[i], yc[i]]) for i in 1:lastindex(xc)]
+            if proj
+                pts = ArchGDAL.reproject.(pts, Ref(src), Ref(dst))
+            end
+            nd2 = DataFrame(geometry=pts, name=names(fl)[5:end], ez=ez, no=no, xc=xc, yc=yc)
+            return (nd2,df)
+        elseif (pts_and_data && station)
+            return (nd,df)
+        else
+            return df
+        end
+        
     end
 
     function waread(x::AbstractString)
@@ -322,41 +321,47 @@ module cmk
         return df 
     end
 
-    function old_waread2(x::String)
-        """
-        Read the text file, preserve line 1 as header column
-        """
-        ms=["-9999","lin","log","--"]
-        df = CSV.read(x, DataFrame, 
-            delim="\t",
-            header=1,
-            missingstring=ms,
-            normalizenames=true,
-            types=Float64)
-        dropmissing!(df,1)
-        dt2::Vector{Date} = []
-        for i in eachrow(df)
-            z=i[1:3]|>collect|>transpose
-            push!(dt2,Date(z[1],z[2],z[3]))
-        end
-        df.date = dt2
-        df=df[:,Not(1:4)]
-        metadata!(df, "filename", x, style=:note);
-    end
 
-    function waread2(x::String)
-        """
-        Read the text file, preserve line 1 as header column
-        Instead of using CSV.read, we use CSV.File to create a lazy representation of the file.
-        This avoids reading the entire file into memory at once, 
-        which can be more memory-efficient for large datasets.
-        """
-        ms = ["-9999", "lin", "log", "--"]
-        df = CSV.File(x; delim="\t", header=1, normalizenames=true, missingstring=ms, types=Float64) |> DataFrame
+    """
+    Read the text file, preserve line 1 as header column
+    Instead of using CSV.read, we use CSV.File to create a lazy representation of the file.
+    This avoids reading the entire file into memory at once, 
+    which can be more memory-efficient for large datasets.
+    kwargs are passed to CSV.read
+    """
+    function waread2(x::String;kwargs...)
+        ms = ["-9999","-9999.0","lin", "log", "--"]
+        df = CSV.File(x; delim="\t", header=1, normalizenames=true, 
+            missingstring=ms, types=Float64, kwargs...) |> DataFrame
         dropmissing!(df,1)
         dt2 = [Date(Int(row[1]), Int(row[2]), Int(row[3])) for row in eachrow(df)]
         select!(df, Not(1:4))
         df.date = dt2
+        metadata!(df, "filename", x, style=:note)
+        return df
+    end
+
+
+    """
+    waread2 on regex
+    kwargs... passed to CSV.File
+    Read the text file, preserve line 1 as header column
+    Instead of using CSV.read, we use CSV.File to create a lazy representation of the file.
+    This avoids reading the entire file into memory at once, 
+    which can be more memory-efficient for large datasets.
+    """
+    function waread2(x::Regex;kwargs...)
+        inF = first(filter(x->!occursin(r"yrly|nc|png|svg|grd",x),Grep.grep(x,readdir())))
+
+        ms = ["-9999", "lin", "log", "--"]
+        df = CSV.File(inF; delim="\t", header=1, 
+            normalizenames=true, missingstring=ms,
+            #maxwarnings=2, 
+            silencewarnings=true, 
+            types=Float64, kwargs...) |> DataFrame
+        dropmissing!(df,1)        
+        df.date = [Date(Int(row[1]), Int(row[2]), Int(row[3])) for row in eachrow(df)]
+        select!(df, Not(1:4)) #since date is at last position
         metadata!(df, "filename", x, style=:note)
         return df
     end
@@ -2234,42 +2239,6 @@ module cmk
         df.date = Date.(string.(df[!,1],"-",df[!,2],"-",df[!,3]),"yyyy-mm-dd");
         df=df[:,Not(1:4)]
         metadata!(df, "filename", x, style=:note);
-    end
-
-    function waread2(x::Regex)
-        """
-        waread2 on regex
-        Read the text file, preserve line 1 as header column
-        Instead of using CSV.read, we use CSV.File to create a lazy representation of the file.
-        This avoids reading the entire file into memory at once, 
-        which can be more memory-efficient for large datasets.
-        """
-        #x=glob(x)|>first
-        #glob==filter(file -> occursin(Regex(x,"i"),file), readdir())
-
-        #@time filter(file -> occursin(Regex(x,"i"),file), readdir()) #slower
-        #@time filter(file -> occursin(r"sb",file), readdir()) #slower
-        
-        
-        # @time Grep.grep(r"sb",readdir()) #0.000541 
-        # x="sb"
-        # @time glob(x) #faster
-        # @time Grep.grep(Regex(x),readdir()) #equally fast.
-
-        #filter(x->!occursin(r"yrly|nc|png|svg|grd",x),readdir("."))
-        #@time x = first(filter(x->!occursin(r"yrly|nc|png|svg|grd",x),glob(x)))
-        #slightly faster.
-        #@time x = first(filter(x->!occursin(r"yrly|nc|png|svg|grd",x),Grep.grep(x,readdir())))
-        inF = first(filter(x->!occursin(r"yrly|nc|png|svg|grd",x),Grep.grep(x,readdir())))
-
-        ms = ["-9999", "lin", "log", "--"]
-        df = CSV.File(inF; delim="\t", header=1, normalizenames=true, missingstring=ms, types=Float64) |> DataFrame
-        dropmissing!(df,1)
-        dt2 = [Date(Int(row[1]), Int(row[2]), Int(row[3])) for row in eachrow(df)]
-        select!(df, Not(1:4))
-        df.date = dt2
-        metadata!(df, "filename", x, style=:note)
-        return df
     end
 
     
@@ -4194,12 +4163,8 @@ module cmk
         value_to_color = Dict(unique_values[i] => colors[i % length(colors) + 1] for i in 1:length(unique_values))
         # Map values in a to colors
         selected_colors = [value_to_color[value] for value in a]
-   
         #category_labels = names(df[!,Not(:date)]),
         fig = Figure() 
-        #resolution=(600, 400), 
-        #fonts=(;regular = "consolas")
-                
         ax3 = Axis(fig[1, 1], 
             title = replace(ti,r"_|so"=>" "),
             xlabel="", ylabel = "") 
@@ -4597,8 +4562,8 @@ module cmk
             reverse!(z,dims=2)
             replace!(z, missval=>missing)
         end
-        ex = extrema(z|>skipmissing)
-        lscale = ex[1]:10:ex[2] # Adjusted levels
+        #ex = extrema(z|>skipmissing)
+        #lscale = ex[1]:10:ex[2] # Adjusted levels
         fig = Figure(
             #size=(800, 600), 
             fontsize=22);
@@ -4641,12 +4606,12 @@ module cmk
                 @warn "replace missing failed!"
             end
         end
-        ex = extrema(z|>skipmissing)
-        lscale = ex[1]:10:ex[2] # Adjusted levels
+        #ex = extrema(z|>skipmissing) #can be errornous due to NaN32
+        #lscale = ex[1]:10:ex[2] # Adjusted levels
         fig = Figure(size=(1200, 400), fontsize=22);
         axs = [Axis(fig[1, j], aspect=1, xlabel="x", ylabel=j == 1 ? "y" : "")
                 for j in 1:3]
-        p1 = heatmap!(axs[1], z, colormap=:plasma, levels=lscale)
+        p1 = heatmap!(axs[1], z, colormap=:plasma)
             contour!(axs[2], z; color=:black) 
             heatmap!(axs[3], z; colormap=(:plasma, 0.85))
         contour!(axs[3], z; color=:white)
@@ -5128,6 +5093,7 @@ module cmk
         mskval::Number=0.001,
         umask::Number=10^6,
         missval::Number=0.0,
+        assign_missing::Bool=true,
         psize = (900, 700),
         turn=true,
         c=(:plasma,0.7),
@@ -5142,15 +5108,17 @@ module cmk
                     crs=EPSG(25832),
                     mappedcrs=EPSG(25832))
                 else
-                    Raster(fn;missingval=missval) #missingval,
+                    Raster(fn;missingval=missval)
                 end
             catch
                 @error "no file found!"
                 return
             end
-            
+        elseif isa(x,Raster) && assign_missing
+            ds = Rasters.rebuild(x;missingval=missval)
+            fn = string.(name(ds))
         elseif isa(x,Raster)
-            ds = x #Rasters.rebuild(x;missingval=missval)
+            ds = x
             fn = string.(name(ds))
         else
             fn = x
@@ -5160,7 +5128,7 @@ module cmk
                     crs=EPSG(25832),
                     mappedcrs=EPSG(25832))
                 else
-                    Raster(fn;missingval=missval) #missingval,
+                    Raster(fn;missingval=missval)
                 end
             catch
                 @error "no file found!"
@@ -5298,14 +5266,15 @@ module cmk
         c=(:greys,0.7), kw... )
     
         if isa(x,Regex)
-            fn = first(filter(z -> endswith(z, "nc") && occursin(x, z), readdir()))
+            #fn = first(filter(z -> !endswith(z, "nc") && occursin(x, z), readdir()))
+            fn = first(filter(z -> occursin(x, z), readdir()))
             if isfile(fn)
                 ds = create_raster(fn; missval=missval)
             else
                 @error "no file found!"
                 return
             end
-        elseif isa(x,Raster) && hasdim(r, t)
+        elseif isa(x,Raster) && hasdim(x, :t)
             ds = x[t=1]
             fn = string.(name(ds))
         elseif isa(x,Raster)
@@ -5423,8 +5392,25 @@ module cmk
         return fig
     end
 
-    function mkflow(TS, q=[0.9, 0.1]; text::String="Wolfsmünster", ylab::LaTeXString = L"\left[\frac{l}{s\cdot km^2}\right]",leg=true,kw...)
+    """
+    ``` 
+    function mkflow(TS, q=[0.9, 0.1]; text::String="", ylab::LaTeXString = <liter per second*km²>,leg=true,kw...)
+    usage: cmk.mkflow(df;text="Flow Series \n") #Time of df is in Legend Title
+    ```
+    """
+    function mkflow(TS, q=[0.9, 0.1]; text::String="", ylab::LaTeXString = L"\left[\frac{l}{s\cdot km^2}\right]",leg=true,kw...)
         TS = copy(TS)
+        if !hasproperty(TS, :date)
+            @error "no date column in dataframe!"
+            return
+        end
+        if first(propertynames(TS)) == :date
+            #date to last position
+            TS = select(TS, Not(:date), :)
+        end
+        timestring = string.(extrema(TS.date))
+        text = text*" "*timestring[1]*" - "*timestring[2]
+
         mn = ["Okt", "Nov", "Dez", "Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep"]
         #TS.date = Date.(TS.date) # Ensure Date column is of type Date
         #TS.HydroYear = year.(TS.date)
@@ -5482,7 +5468,6 @@ module cmk
                 label=col)
         end
         if leg
-            #lt = replace(tit, r"_|so" => " ")
             legend = Legend(fig, ax3, text, 
                 framevisible = true,
                 nbanks = 2)
@@ -5508,10 +5493,8 @@ module cmk
         
         dt = vec(Matrix(
             select(df,
-                first(filter(x->occursin(r"date|year",x),
+                first(filter(x->occursin(r"date|year|time"i,x),
                 names(df))))))
-        #dt = df.date
-        
         fig = Figure( #resolution=(600, 400), 
             #fonts=(;regular = "cmr10")
             #fonts=(;regular = "consolas")
@@ -5711,15 +5694,23 @@ module cmk
     density_plot(df::Union{DataFrame,Regex,String}; date_col::Symbol=:date, value_col::Symbol=:value,agg=mean, kwargs...)
     ```
     """
-    function density_plot(df::Union{DataFrame,Regex,String}; date_col::Symbol=:date, value_col::Symbol=:value,agg=mean, kwargs...)
+    function density_plot(df::Union{DataFrame,Regex,String}; date_col::Symbol=:date, 
+            value_col::Union{Symbol,String,Int}="",agg=mean, kwargs...)
         if isa(df, Regex) || isa(df, String)
             df = dfr(df)
-        end    
+        end
+        if value_col isa String
+            value_col = Symbol(value_col)
+        end
+        if value_col isa Int
+            value_col = propertynames(df)[value_col]
+            @info "value_col is $value_col"
+        end
         df = copy(df)
         if !(value_col in propertynames(df))
             value_col = first(propertynames(df[!,Not(:date)]))
-            @info "value_col not found in DataFrame! 
-            Using first column as value_col which is $value_col"
+            #@info "value_col not found in DataFrame! 
+            @info "Using first column as value_col which is $value_col"
         end
         # Extract month and day
         df.month = month.(df[!,date_col]);
@@ -5728,17 +5719,35 @@ module cmk
         agg_df = DataFrames.combine(DataFrames.groupby(df, [:month, :day]), value_col => agg => :mean_value)
         density_data = [agg_df.mean_value[agg_df.month .== m] for m in 1:12]
         labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-        
-        # grs = ["#1C1C1C", "#2E2E2E", "#404040", "#525252", "#646464", 
-        # "#767676", "#888888", "#9A9A9A", "#ACACAC", "#BEBEBE", 
-        # "#D0D0D0", "#E2E2E2"]
+        reverse!(labels) # Reverse the order of the labels
+
+        grs = ["#1C1C1C", "#2E2E2E", "#404040", "#525252", "#646464", 
+        "#767676", "#888888", "#9A9A9A", "#ACACAC", "#BEBEBE", 
+        "#D0D0D0", "#E2E2E2"]
+        thermal_colors = [
+            "#ADD8E6",  # January (Sky Blue - Cool)
+            "#87CEFA",  # February (Light Sky Blue - Mild)
+            "#00BFFF",  # March (Deep Sky Blue - Mild Warm)
+            "#00FF7F",  # April (Spring Green - Warm)
+            "#FFD700",  # May (Gold - Warm)
+            "#FFA500",  # June (Orange - Hot)
+            "#FF4500",  # July (Orange Red - Very Hot)
+            "#FF6347",  # August (Tomato - Hot)
+            "#FF7F50",  # September (Coral - Mild Hot)
+            "#FFB6C1",  # October (Light Pink - Cooling)
+            "#D3D3D3",   # November (Light Gray - Cool)
+            "#B0E0E6"  # December (Light Blue - Cool)
+        ]
         
         # Plot density
         fig = Figure()
         ax = Axis(fig[1, 1], ylabel = string(value_col);kwargs...)
         for (i, data) in enumerate(density_data)
-            d = density!(ax, data, label = labels[i])
-            #color = grs[i])
+            d = density!(ax, data, 
+                label = labels[i],
+                strokewidth = .66, 
+                strokecolor = :black,
+                color = thermal_colors[i])
             #Apply an absolute translation to the Scene
             #translate!(d, 0, 0, -0.2i) 
             translate!(d, 0, 0.1i, -0.1i) 
@@ -5763,11 +5772,124 @@ module cmk
         return fig
     end
 
+    """
+    Contour over heatmap
+    ```
+    mkc(r::Raster,wasim=false,missval=0)
+    ```
+    """                     
+    function mkc(r::Raster,wasim=false,missval=0)
+        if wasim
+            z = r.data[:,:,1]
+            reverse!(z,dims=1)
+            z = z'
+            replace!(z, missval=>missing)
+        else
+            z = r.data
+            reverse!(z,dims=1)
+            reverse!(z,dims=2)
+            replace!(z, missval=>missing)
+        end
+        # if missingval(z) != missval
+        #     z = replace_missing!(z,0)
+        # end
+        # ex = extrema(z|>skipmissing)
+        # lscale = ex[1]:10:ex[2]   # errors by NaN32
+        fig = Figure(
+            #size=(800, 600), 
+            fontsize=22);
+        axs = Axis(fig[1,1], aspect=1, xlabel="x", ylabel="y")
+        p1 = heatmap!(axs, z, colormap=(:plasma, 0.87))
+        contour!(axs, z; color=:black) # levels=lscale)
+        Colorbar(fig[1, 2], p1, width=20, ticksize=20, tickalign=1)
+        xmax = findmax(size(z))[1] #gets the index of the max value
+        limits!(axs, 1, xmax, 1, xmax)
+        return fig
+    end
+    
+    """
+    ``` performance_metrics(df::DataFrame) ```
+    """
+    function performance_metrics(df::DataFrame)
+        # Create a figure
+        fig = Figure()
+        
+        # Create an axis
+        ax = Axis(fig[1, 1], 
+            title = "Performance Metrics Over Years", 
+            xlabel = "Year", 
+            ylabel = "Metric Value"
+        )
+        
+        # Plot the lines
+        lines!(ax, df.year, df.nse, color = :blue, linewidth = 2, label = "NSE")
+        lines!(ax, df.year, df.kge, color = :red, linewidth = 2, label = "KGE")
+        lines!(ax, df.year, df.ve, color = :green, linewidth = 2, label = "VE")
+        
+        # Add a legend
+        axislegend(ax, position = :rt)
+        
+        return fig
+    end
+
+    """
+    ``` cumplot(df::DataFrame; leg::Bool=true, scale = identity, oneyear::Bool=false) ```
+    plots cumulated values of each column of a dataframe
+    """
+    function cumplot(x::DataFrame; leg::Bool=true, scale = identity, oneyear::Bool=false)
+        if isa(x,DataFrame)
+            df = (x)
+        else
+            df = waread(x)
+        end        
+        #enumerate([identity, log10, log2, log, sqrt, Makie.logit])
+        dropmissing!(df)
+        if oneyear
+            lastfullyear = year(last(df.date))
+            df = filter(row -> year(row.date) == lastfullyear, df)
+            #mean_values = DataFrames.combine(df, names(df, Not(:date)) .=> mean)
+            #println(mean_values)
+        end
+        
+        fig = Figure()
+        #make shure to start x-axias label at first date value
+        #a,b = extrema(df[!, :date])
+        #a,b = (1, size(df, 1))
+        ax = Axis(fig[1, 1], yscale = scale,
+            #limits = ((a, b), nothing),
+            #xlabel = "Date", 
+            ylabel = "", xlabel = "")
+            #ylabel = "Cumulated Rainfall")
+        #labs = []
+        for col in filter(c -> c != :date, propertynames(df)) # exclude the "date" column
+            if eltype(df[!, col]) <: Number # check if the column is numeric
+                lines!(ax, df[!, "date"], 
+                    cumsum(df[!, col]), 
+                    label = string.(col))
+                #push!(labs, col)
+            end
+        end
+        ax.xticks = (4:size(df, 1)+4, df[!, "date"]) # show dates on x-axis
+        ax.xticklabelrotation = π / 4 # rotate x-axis labels for better readability
+        ax.xticklabelalign = (:right, :center)
+        #hidedecorations!(ax)
+        if leg
+            tit = try
+                values(DataFrames.metadata(df)) |> only |> basename
+                catch
+                    @warn "no metadata in df"
+                    raw""
+                end
+            lt = replace(tit, r"_|so" => " ")
+            legend = Legend(fig, ax, lt, 
+                framevisible = true, nbanks = 2)
+            fig[1, 2] = legend
+        end
+        fig
+    end
+
 
 end   ##endof end of module
-
-
-println("cairomakie.jl module cmk loaded")
 
 # #https://docs.makie.org/stable/explanations/fonts/
 # Makie.to_font("Computer Modern")
@@ -5781,3 +5903,10 @@ println("cairomakie.jl module cmk loaded")
 #     Axis(fig[3, 1], title = "An axis with matching font for the tick labels")
 #     fig
 # end
+
+
+printstyled("
+    cairomakie.jl as module cmk loaded \n
+    using .cmk to access functions from Main\n
+            ",
+    color=:green)

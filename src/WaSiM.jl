@@ -65,7 +65,7 @@ module WaSiM
         project,
         read_landuse_data2, readmeteo, readras,
         readras2, readrasrec,
-        readroute
+        readroute, sf
 
     # Hydrological Functions
     export hd, hydro, hydro_f, hydromon, hyeval,
@@ -2456,7 +2456,7 @@ module WaSiM
     end
 
     """
-        sf(pattern::Union{AbstractString, Regex}, rootdir::AbstractString=pwd())
+    sf(pattern::Union{AbstractString, Regex}, rootdir::AbstractString=pwd())
 
     Search for files in a directory and its subdirectories that match a given pattern.
 
@@ -2496,31 +2496,6 @@ module WaSiM
         end
 
         return results
-    end
-
-    function jdd(;return_string=true)
-        """
-        """
-        cwd = pwd()
-        dirs = readdir(".")
-        vst = []
-        for dir in dirs
-            if isdir(dir)
-                size = 0
-                for (root, dirs, files) in walkdir(dir)
-                    for file in files
-                        size += stat(joinpath(root, file)).size
-                    end
-                end
-                @printf("%-40s %15.2f MB\n","$(cwd)\\$dir:",size/1024^2)
-                if return_string
-                    #v = string.(cwd,"\\",dir,": ",size/1024^2," MB\n")
-                    v = hcat(string.(cwd,"\\",dir,),size/1024^2)
-                    push!(vst,v)
-                end
-            end
-        end
-      return(vst)
     end
 
     function dd(;cwd=pwd(),msg=true)
@@ -7940,8 +7915,6 @@ module WaSiM
     end
 
     macro sdjl() fx=src_path*"/sd2.jl";include(fx);end
-    #@sdjl
-    macro sf(s) glob(s);end
     macro listdir() ls();end
 
     function rmqout()
@@ -14103,6 +14076,56 @@ module WaSiM
                 end
             end
         end
+    end
+
+    """
+    plot numeric vectors as a time series
+    ``` hydrograph(t, rain, flow) ```
+    """
+    function hydrograph(t, rain, flow)
+        p = Plots.plot(
+            #twinx(),  # Create secondary y-axis
+            t, flow,
+            #links = :x,  # Link x-axis, already in twinx
+            #yminorticks = :none,
+            #label="Discharge",
+            seriescolor=:cornflowerblue,
+            #seriescolor=:lightgrey,
+            seriestype=:line,
+            xlim=extrema(t),
+            tick_direction = :out,
+            yflip=false,
+            legend=false,
+            linewidth=1,
+            linestyle=:dashdotdot,
+            ylabel="Q [mm/d]",
+            ylim=(0, maximum(flow) * 1.5)
+        )
+        Plots.plot!(
+            Plots.twinx(),  # Create secondary y-axis
+            t, rain,
+            seriestype=:bar,
+            fillcolor=:blue,
+            yflip=true,  # Flip rainfall axis
+            #ylabel="Precipitation [mm]",
+            #label="Precipitation",
+            ylabel="Niederschlag [mm]", 
+            linewidth=1.5,
+            ylim=(0,maximum(rain) * 1.5),
+            xlim=extrema(t),
+            xflip=false,
+            legend=false,
+            # border=:none, # Hide all axis
+            # formatter=Returns(""), # Hide the y-axis label
+            tick_direction = :out,
+            #showaxis = :off
+            #yticks = nothing,  # Hide y ticks initially
+            yminorticks=false 
+            #xticks=:none,      # Hide x ticks initially
+            #framestyle=:box
+            );  
+
+        return p
     end
 
 
