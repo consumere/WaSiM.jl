@@ -9,7 +9,7 @@ module rst
     import NCDatasets, Shapefile, GeometryOps
     import LibGEOS: centroid
     import GeoInterface: coordinates
-    import GeoInterface, GeometryOps
+    import GeoInterface
     import CFTime
     import GeoDataFrames
     import Conda #for gdal
@@ -210,10 +210,14 @@ module rst
         """
         function tdifnc(;writenetcdf=false)
             #join([x1,y1],"+.") r"Layer+.nc$"
-            pot = filter(x->occursin(r"Layer.+.nc",x),glob(r"etp"))|>last|>readras
-            real= filter(x->occursin(r"Layer.+.nc",x),glob(r"etr"))|>last|>readras
+            fls = readdir()
+            #pot = filter(x->occursin(r"Layer.+.nc",x),Grep.grep(r"etp",fls))|>last|>readras
+            pot = filter(x->occursin(r"etp.+.Layer.+.nc",x),fls)|>last|>readras
+            #real= filter(x->occursin(r"Layer.+.nc",x),Grep.grep(r"etr",fls))|>last|>readras
+            real= filter(x->occursin(r"etr.+.Layer.+.nc",x),fls)|>last|>readras
             td = pot-real
-            nm = filter(x->occursin(r"Layer.+.nc",x),glob(r"etp"))|>last
+            #nm = filter(x->occursin(r"Layer.+.nc",x),glob(r"etp"))|>last
+            nm = filter(x->occursin(r"etp.+.Layer.+.nc",x),fls)|>last
             ti = split(nm,".")|>x->x[end-1]
             p = Plots.plot(td;
                 title = "Tdiff[mm] of "*ti,
@@ -225,8 +229,6 @@ module rst
                 write("tdiffjl.nc",td;force=true)
                 @info raw"saved to tdiffjl.nc ! "
             end
-            #@info raw"for writing: write(tdiffjl.nc,RasterObject;force=true) "
-            #return(td)
         end
 
         """
@@ -815,17 +817,15 @@ module rst
         keyword arguments by using a semicolon (;) in the parameter list. 
         maskplot(r;msk=0.0) ->plots
         """
-        function maskplot(xs::Raster;msk::Float64,gt=true)
-            #msk=0 #msk::Float64
-            #xs = r[t=Int(r.dims[3][end])+1]
+        function maskplot(xs::Raster;msk::Float64,gt=true,kw...)
             zm = (gt) ? (xs .> msk) : (xs .< msk)
-            fact=0.5
             Plots.plot(
                 Rasters.mask(xs; with=zm); 
                 c=cgrad(:matter),
                 xlabel="",
                 ylabel="",
-                size=(1200*fact, 800*fact))
+                kw...)
+                #size=(1200*fact, 800*fact))
         end
         
         function readras2(file::AbstractString)
@@ -1911,7 +1911,7 @@ module rst
         ```
         kwargs are passed to Rasters.zonal()
         """
-        function jlzonal2(vectorpath::Union{String,DataFrame}, rasterobj::Union{String,Raster};agg=mean,showplot=true,kwargs...)
+        function jlzonal2(vectorpath::Union{String,DataFrame}, rasterobj::Union{String,Raster};agg=mean,showplot=true,saveplot::Bool=false,kwargs...)
             if vectorpath isa String
                 #shp = Shapefile.Table(vectorpath)
                 shp = GeoDataFrames.read(vectorpath)
@@ -1929,13 +1929,6 @@ module rst
                 raster = rasterobj
             end
             
-            # df = try
-            #     Float64.(zonal(agg, raster; of=shp,kwargs...))
-            # catch e
-            #     @warn "Flat64 conversion failed: $e"
-            #     x = Rasters.zonal(agg, raster; of=shp,kwargs...)
-            #     return x
-            # end
             df = zonal(agg, raster; of=shp,kwargs...)
             gdf = DataFrame(geometry=shp.geometry, val=df)
             rename!(gdf,:val => Symbol(agg))
@@ -1946,6 +1939,7 @@ module rst
                     #cgrad = :matter,
                     cgrad = :cividis,
                     #fillcolor=:cividis,
+                    size = (1000, 800),
                     fillalpha=0.5)
                 #anns = string.(select(gdf, 2))
                 anns = round.(getproperty(gdf,Symbol(agg)),digits=2)
@@ -1954,6 +1948,10 @@ module rst
                         halign=:center, rotation=25.0;
                         family="Computer Modern"))
                 display(p1)
+            end
+            if saveplot
+                savefig(p1, "zonalplot.png")
+                @info "saved zonalplot.png"
             end
             return gdf
         end
@@ -2255,7 +2253,18 @@ module rst
         end
         p = GeometryOps.polygonize(r)
         printstyled("polygonizejl: $(p.extent)\n",color=:green)
-        ngeo = reduce(vcat,[x.parent for x in p.parent])
+        if hasproperty(p,:parent)
+         ngeo = reduce(vcat,[x.parent for x in p.parent])
+        else
+            hasproperty(p,:geom)
+            ngeo = reduce(vcat,[x.geom for x in p.geom])
+        end
+        if length(ngeo) == 0
+            @error("no geometries found!")
+            return
+        end
+
+        
         df = DataFrame(
             val=[last(x) for x in ngeo],
             geometry=[first(x) for x in ngeo]
@@ -2292,25 +2301,65 @@ module rst
         Plots.contour!(A,c=:greys,levels=10)
     end
 
+    function ftsp(x::AbstractString)
+        nc = NCDatasets.NCDataset(x);
+        #nc.attrib
+        dict = nc|>Dict   
+        mykeys = keys(dict)
+        println(string.(mykeys))
+        time = nc["time"][:]
+        v = filter(x->!occursin(r"time|lon|lat|x|y|spatial_ref",x),string.(mykeys))|>first
+        xm = nc[v]|>size|>first
+        xm = Int(round(median(1:xm);digits=0))
+        ym = nc[v]|>size|>second
+        ym = Int(round(median(1:ym);digits=0))
+        plot(time, nc[v][xm,ym,:],
+        label=nc[v].attrib["units"],
+        title=nc[v].attrib["long_name"])        
+    end
+
+    function nctodfo(x::AbstractString)
+        nc = NCDatasets.NCDataset(x);
+        #nc.attrib
+        dict = nc|>Dict   
+        mykeys = keys(dict)
+        #println(string.(mykeys))
+        v = filter(x->!occursin(r"time|lon|lat|x|y",x),string.(mykeys))|>first
+        time = nc["time"][:]
+        datetime_vector = coalesce.(time, missing)
+        #df = hcat(nc[v][end,end,:],datetime_vector)
+        xm = nc[v]|>size|>first
+        xm = Int(round(median(1:xm);digits=0))
+        ym = nc[v]|>size|>second
+        ym = Int(round(median(1:ym);digits=0))
+        df = DataFrame(
+                v=>nc[v][xm,ym,:],      #x, y, indices
+                "date"=>datetime_vector)
+        # df = DataFrame(
+        #         v=>nc[v][end,end,:],      #x, y, indices
+        #         "date"=>datetime_vector)
+        DataFrames.metadata!(df, "filename", x, style=:note);        
+        #df.date = Date.(string.(df.x2),"yyyy-mm-ddTHH:MM:SS") #not needed
+            # plot(time, nc[v][end,end,:],
+                # label=nc[v].attrib["units"],
+        # title=nc[v].attrib["long_name"])        
+    end
+
+    function rename_rasterstack(ser::RasterStack;old::Regex,new::String)
+        onam = names(ser)
+        nn = replace.(string.(onam), old => new)
+        
+        # Preallocate the array for better performance
+        k = Vector{typeof(layers(ser)[1])}(undef, length(layers(ser)))
+        
+        for (x, i) in enumerate(layers(ser))
+            k[x] = rebuild(i, name=nn[x])
+        end
+        
+        return RasterStack(k...) # rename a Rasterstack
+    end
+    
+
     #end #endof funcs
 
 end #endof module rst
-
-
-# fnames = names(rst, all=true)
-# fnames = filter(x -> !occursin(Regex("eval|include"), string(x)), fnames)
-# for submodule in fnames
-#     @eval import Main.rst.$submodule   #no Main. -->errors.
-# end
-
-# #Get a module's enclosing Module. Main is its own parent.
-# #parentmodule(rp)
-# # Base.current_project()
-# # Base.ACTIVE_PROJECT
-
-
-# #this is necessary to use the modules in the REPL
-# using DataFrames, CSV, Statistics, Dates, Distributions,StatsPlots, Plots.PlotMeasures
-# using DelimitedFiles, Grep, Printf, PrettyTables
-# using Rasters, ArchGDAL, Grep
-# import NCDatasets

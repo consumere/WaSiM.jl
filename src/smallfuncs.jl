@@ -16,6 +16,11 @@ import InteractiveUtils.clipboard
 
 src_path = "../"
 
+#test for shortcuts
+const t = true
+const f = false
+
+
 function ssup()
     thisfile=src_path*"/smallfuncs.jl"
     include(thisfile)
@@ -853,38 +858,6 @@ macro rcall() pt=src_path*"/rcall.jl";include(pt);end
 macro rgof() pt=src_path*"/RCall_gof.jl";include(pt);end
 macro pj() pt=src_path*"/pyjl.jl";include(pt);end
 macro pyjl() pt=src_path*"/pyjl.jl";include(pt);end
-
-# using TOML
-# #TOML is short for Tom’s Obvious Minimal Language and is a configuration file format
-# #that should be “easy to parse into data structures in a wide variety of languages”
-# macro toml_str(s::String)
-#     TOML.parse(s)::Dict{String, <:Any}
-# end
-
-# toml"""
-# ki11 = 6.6
-# dr11 = 1
-# kb11 = 0.4
-# q011 = 0.02
-# """
-
-# dx = toml"""ki11 = 6.6
-# dr11 = 1
-# kb11 = 0.4
-# q011 = 0.02"""|>DataFrame
-# #DataFrame(dx)
-# findall
-# findfirst
-# findlast
-# findnext
-# findprev
-
-# fx=raw"D:\Wasim\regio\control\rcm200_r6.ctl"
-# for (i, line) in enumerate(eachline(fx))
-#     if findfirst("dr11", line) !== nothing
-#         println("Line $i: $line")
-#     end
-# end
 
 function regand(v::Vector{String},x1::AbstractString,y1::AbstractString)
     needle=join([x1,y1],"+.*");
@@ -2766,6 +2739,168 @@ function sf(pattern::Union{AbstractString, Regex}, rootdir::AbstractString=pwd()
 
     return results
 end
+
+"""
+apply function on every directory at the 1st level
+```
+function applyf(f::Function,dir::AbstractString;verbose=false)
+```
+"""
+function applyf(f::Function,dir::AbstractString;verbose=false)
+    out = []
+    for i in readdir(dir)
+        if isdir(i)
+            cd(i)
+            fvalue = f()
+            push!(out,fvalue)
+            if verbose;println("$i done");end
+            cd("..")
+        end
+    end
+    return out
+end
+# wgr("density",3)
+###assigned to View
+#println("To view a DataFrame, use vscodedisplay(df)")
+try
+    # Attempt to use vscodedisplay, assuming it's available in a VS Code session
+    View = VSCodeServer.vscodedisplay
+    println("View assigned to vscodedisplay.")
+catch e
+    # If vscodedisplay is not available, handle the error gracefully
+    println("vscodedisplay is not available. Not in a VS Code session or vscodedisplay is not defined.")
+end
+
+"""
+helper function to copy backticks to clipboard to display Code
+"""
+function annot()
+    msg = "``` <jlcode here> ```"
+    clipboard(msg)
+    printstyled("$msg \n in clipboard! \n",color=:green)
+    return nothing
+end
+
+macro anno()
+    esc(annot())
+end
+
+"""
+like Grep.grep("x",df)
+"""
+function findindf(df::DataFrame, x::Union{AbstractString,Regex})
+    filter(row -> any(occursin(x, 
+        string(value)) for value in row), 
+            eachrow(df))
+end
+
+function qall(;recursive=false)
+    if recursive
+        files = rglob("qgko")
+    else
+        files = glob("qgko")
+    end
+    outdf::Vector{DataFrame} = []
+    for file in files
+        # Load the file into a DataFrame
+        #x = "qgkofab.m6.2010"
+        x = file
+        try
+            df = DataFrame(CSV.File(x, header=1, 
+                                delim="\t",
+                                skipto=366,
+                                ntasks=1,
+                                types = String,
+                                silencewarnings=true,
+                                ignorerepeated=true,
+                                ignoreemptyrows=true,
+                                stripwhitespace=true))
+                                
+            #df = CSV.read(x,DataFrame;ntasks=1)
+            println(x)
+            pattern = r"^[LIN. R]|^[LOG. R]|^CO"
+            mask = [occursin(pattern, df[i, 1]) for i in 1:nrow(df)]
+            dx = df[mask, :]
+            dx = permutedims(dx) |>dropmissing
+            
+            #mapcols!(x -> parse(Float64, x), dx)
+            #mapcols(x -> x.^2, dx)
+
+            #basins = copy(df[1,5:end])
+            #AsTable(basins)
+            basins = []
+            #for i in copy(df[1,5:end])
+            for i in names(df)[5:end]
+                push!(basins,i)
+            end
+            #size(basins)
+            insert!(basins, 1, "score")
+            insert!(basins, 2, "timestep")
+            dx[!, "basin"] = basins
+
+            cn = (dx[1,:])
+            rename!(dx, 1 => cn[1], 2 => cn[2], 3 => cn[3], 4 => cn[4])
+            dout = dx[3:end,:]
+            for col in names(dout)[1:end-1]
+                dout[!, col] = parse.(Float64, replace.(dout[!, col], "," => ""))
+            end          
+            #mapcols!(x -> parse(Float64, x), dout)
+            #dout = hcat(dx[!,Cols(r"bas")],dx[:,Not(Cols(r"bas"))])
+            dout = hcat(dout[:,Cols("basin")],dout[:,Not(Cols(r"bas"))])
+            dout.basin = parse.(Int64,dout[!, :basin])
+            dout.nm .= replace(file,".\\"=>"")
+            push!(outdf,dout)
+        catch
+            @warn("error! file $x can not be loaded as a DataFrame! ")
+            # Skip files that can't be loaded as a DataFrame
+            continue
+        end
+    end
+    return(outdf)
+end
+
+
+"""
+find LOG. R-SQUARE > .4 recursivley
+"""
+function findlog(;lb=.4)
+    v = qall(;recursive=true)
+    #map(x->DataFrames.subset(x,3 => ByRow(<(1))),v)
+    k = try 
+        map(x->DataFrames.subset(x,3 => ByRow(>(lb))),v)
+        catch
+            @error "no df on lowerbound! "
+            return
+    end
+    df = try 
+        reduce(vcat,k) 
+        catch
+            @error "vcat failed! "
+            return
+    end
+    
+    df = try 
+        DataFrames.subset(df,3 => ByRow(<(1.0)))
+        catch
+            println(first(k))
+            @error "no df on upperbound! "
+            return
+    end
+    
+    
+    return df
+end
+
+
+"""
+Like parse, but returns either a value of the requested type, 
+or missing if the string does not contain a valid number.
+``` 
+mytryparse(T, str) = something(tryparse(T, str), missing)
+```
+"""
+mytryparse(T, str) = something(tryparse(T, str), missing)
+
 
 #end #endof of smfc module
 
