@@ -2,6 +2,12 @@ using RCall
 using DataFrames
 using Dates
 
+# R"""
+# .libPaths(new="C:/Users/chs72fw/AppData/Local/R/win-library/4.2")
+# """
+# R"version"
+
+
 #julia --startup-file=no --threads auto -q "C:\Users\Public\Documents\Python_Scripts\julia\RCall_gof.jl"
 #macro rgof() pt=src_path*"/RCall_gof.jl";include(pt);end
 #@rgof
@@ -91,7 +97,7 @@ function process_files()
         #println("GOF of Basin $(names(xj)[2]) (sim) to $(names(xj)[end])...")
         Rgof = hydroGOF.gof(sim = xj[:, 1], obs = xj[:, 2])
         println("GOF of Basin $(names(xj)[1]) (sim) to $(names(xj)[2])...")
-        printstyled(Rgof, bold = true, color = :blue)
+        printstyled(Rgof, bold = true, color = :yellow)
         output_file = nms[fcnt] * "_output.txt"
         open(output_file, "w") do fy    #f fails!
             redirect_stdout(fy) do

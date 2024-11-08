@@ -40,13 +40,3 @@ function corrbar(a::Vector{Float64}, b::Vector{Float64})
     end
     
     
-    """
-    selects first dfcol (for so)
-    dt annotations
-    cmplot(;temp=r"^so_temper",prec=r"^so_prec")
-    see also:
-    climateplot(r"^tem",r"^pre")
-    col = subbasin of interest
-    climateplot(r"^temp",r"pre";col="tot_average")
-    ws. prc and temp tauschen un opacity einstellen....
-    #

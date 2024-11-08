@@ -1,6 +1,7 @@
 
 module wa
     using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions
+    using DataFrames: combine, groupby, sort, select, Not, propertynames, DataFrame, rename!, metadata!, dropmissing!
     using DataFramesMeta
     using DelimitedFiles, Grep , Printf
     using PrettyTables

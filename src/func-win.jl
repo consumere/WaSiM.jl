@@ -1,6 +1,14 @@
 #no conda.python deps.
+
+# if !(isdefined(Main, :src_path) && ispath(src_path))
+#     println("src_path is not defined yet...")
+# end
+
+#gethostname()
+
 begin
-    if isnothing(src_path)
+    #if isnothing(src_path)
+    if !(isdefined(Main, :src_path) && ispath(src_path))
         if Sys.isapple()
             platform = "osx"
             const homejl = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
@@ -10,22 +18,17 @@ begin
             platform = "windows"
             src_path = "C:\\Users\\Public\\Documents\\Python_Scripts\\julia"
             macro wasim() pt="C:\\Users\\chs72fw\\.julia\\dev\\WaSiM\\src\\wa.jl";include(pt);end
-            try
-                #Base.@showtime using RCall #errors in local scope
-                using RCall
-                printstyled("\nRCall loaded!\n",color=:green,bold=true,underline=true)    
-            catch e
-                printstyled("RCall errors at:\n $e",color=:red)
-            end    
         else
             platform = "unix"
             winpt = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
-            #pcld = "/home/pCloud Drive/Stuff/Python_Scripts/julia"
-            pcld = "~/pCloudDrive/Stuff/Python_Scripts/julia"
+            pcld = expanduser("~/pCloudDrive/Stuff/Python-Scripts/julia")
             src_path = isdir(winpt) ? winpt : pcld
-            if !isdir(src_path) #for docker images
-                #src_path = "/app/pyscripts/julia"
-                src_path = @__DIR__
+            if !isdir(src_path) & isdir("/app") # for docker images
+                src_path = "/app/pyscripts/julia"
+            elseif !isdir(pcld)
+                src_path = realpath(src_path)  
+            else 
+                src_path = pcld
             end
             println("sourcepath is $src_path")
             if isdir(winpt)
@@ -33,61 +36,170 @@ begin
             end
         end   
     else
-        println("src_path already set to $src_path")
+        printstyled("\n src_path already set to $src_path \n",color=:red)
     end
 end
 
 #startup.jl: C:\Users\chs72fw\.julia\config\startup.jl
+#@__DIR__
+#joinpath(homedir(),".julia")|>cd
 #in case of import errors.
-#/mnt/c/Users/chs72fw/.julia/registries/General/Registry.toml
+#joinpath(homedir(),".julia/registries/General/Registry.toml")|>edit
+
+if !(isdefined(Main, :src_path) && ispath(src_path))
+    include("smallfuncs.jl")
+end
+
 
 module wa
-    using DataFrames, CSV, Statistics, Dates, StatsPlots, Distributions
+    using DataFrames, CSV, Statistics, Dates 
+    using GLM, StatsPlots, Distributions
     using DataFramesMeta
-    using DelimitedFiles, Grep , Printf
+    using Grep, Printf
     using PrettyTables
     using Rasters
+    import DataFrames: combine, groupby, transform
+    import DelimitedFiles: readdlm
     import NCDatasets
     import ArchGDAL
-    import GeoInterface #for reverse_coords
+    import GeoInterface #for reverse_coords ->moved to rst
     import GeoDataFrames
     import Shapefile #for jlzonal
     import InteractiveUtils
     using Plots.PlotMeasures
+    using PlotThemes
     using SHA
     using PyCall
+    using LaTeXStrings
     import Conda #for python deps
+    import JSON #jsread
     #using RCall
     #    default(show = true)
     # using PlotlyJS
     using KernelDensity
     
-
-    if Sys.isapple()
-        platform = "osx"
-        const homejl = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
-        const mybash = "/Users/apfel/.bash_aliases"
-        src_path = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
-    elseif Sys.iswindows()
-        platform = "windows"
-        src_path = "C:\\Users\\Public\\Documents\\Python_Scripts\\julia"
-        macro wasim() pt="C:\\Users\\chs72fw\\.julia\\dev\\WaSiM\\src\\wa.jl";include(pt);end
-    else
-        platform = "unix"
-        winpt = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
-        pcld = "~/pCloud Drive/Stuff/Python_Scripts/julia"
-        src_path = isdir(winpt) ? winpt : pcld
-        println("sourcepath is $src_path")
-        if isdir(winpt)
-            macro wasim() pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM/src/wa.jl";include(pt);end
+    if Main.src_path !== nothing
+        if Sys.isapple()
+            platform = "osx"
+            const homejl = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
+            const mybash = "/Users/apfel/.bash_aliases"
+            src_path = "/Users/apfel/Library/Mobile Documents/com~apple~CloudDocs/uni/GitHub/Python-Scripts/julia"
+        elseif Sys.iswindows()
+            platform = "windows"
+            src_path = "C:\\Users\\Public\\Documents\\Python_Scripts\\julia"
+            macro wasim() pt="C:\\Users\\chs72fw\\.julia\\dev\\WaSiM\\src\\wa.jl";include(pt);end
+        else
+            platform = "unix"
+            winpt = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
+            pcld = "~/pCloud Drive/Stuff/Python_Scripts/julia"
+            src_path = isdir(winpt) ? winpt : pcld
+            println("sourcepath is $src_path")
+            if isdir(winpt)
+                macro wasim() pt="/mnt/c/Users/chs72fw/.julia/dev/WaSiM/src/wa.jl";include(pt);end
+            end
         end
     end
 
+    # export addname, all_values_equal, aplot, bardf, bardfm, bardfm!, bargroup, barp, barsum, baryr, baryrmean, 
+    # baryrsum, build_soil_dictionary, byear, calculate_folder_size, cb, cdb, cdinto, cdof, cdu, climateplot, 
+    # climateplot_dfold, cmplot, cnt, cntcolread, cntcols, cntcolv, colorfunction, colsums, condasize, corrbar, 
+    # correlogram, cpinto, cs, csize, ct, ctg, ctl, ctl2, ctl3, ctlook, ctsum, dd, ddense, denselog, denseplot, 
+    # dfbar, dfilter, dfl, dfl!, dfm, dfmo, dfon, dfonly, dfp, dfp!, dfpall, dfread, dfrib, dfroute, dfsp, dfsplog, 
+    # dftrend, dpr, dpr!, dprbig, dsbar, dtrange, du, dubplot, eeread, extract_duration_from_xml, extract_layers, 
+    # f1_score, fdd, fdf, fillmissing, filterdf, filterplot, filterplot!, findalls, findctl, findindf, findlog, 
+    # fparse, fread, freaddf, fsize, fsoil, fsz, ftp, ftplin, ftsp, fz, generate_export_statement, get_folder_size, 
+    # getdf, getf, getm, getmoduleorder, getnames, ggofbatch, ggofjl, ggofjl_nosvg, glob, globdf, globf, gofbatch, 
+    # gofbatch_nosvg, grec, grep_KGE, grep_files, grep_in_files, grep_with_context, gwread, hd, heat, heatraw, hombr, 
+    # homes, hometeo, homg, homreg, ht, hydro, hydro_f, hydromon, hyeval, irfan, isroute, jdd, jldf, jldfnm, 
+    # jlt, jsrast, jsread, juliasize, kernelplot, kge, kge1, kge2, kge_df, kge_df3, kge_fread, kge_read, kge_rec, 
+    # kgedf, kgegrep, kgegrepr, kgerec, kgeval, kgewrite, klog, lat, latx, ldf, ldfpall, lf, lg, listdfs, ll, llf, 
+    # loadalldfs, loaddf, loadso, looks_like_number, lplot, lplotf, lpro, ls, luheat, luplot, luscatter, lutab, 
+    # luvars, mall, malldf, mbx, merge_vectors, moisture_plot_with_confidence, monc, monc_f, moncol, monmean, monp, 
+    # monsum, mvwasim2, mywd, nctodf, nctodfo, nqp, nread, nse, nse2, nse_rec, nsegrep, nsegrepr, nseval, nsevalraw, 
+    # nsx, odfr, op, oplat, ovio, pall, pe, penman_monteith, pers, pew, pfix, platform, 
+    # plot_duration_graph, plot_grouped_metrics, plotf, polygonize_raster, pout, print_lines_between_patterns, 
+    # print_sorted_sizes, process_file2, process_folders_and_subfolders, pw, pww, pxm, pydf, pydf_to_julia, qall, 
+    # qall_num, qba, qbb, qgk, qpl, qplot, qqp, qrtr, rds, read_df, read_landuse_data2, read_log_file, read_soildata, 
+    # read_soildata_2, read_soildata_4, read_soildata_raw, read_until_flag, read_wq, readall, readbetween, readdf, 
+    # readf, readmeteo, readmhm, readroute, rec, regand, rename_columns, rename_columns!, rename_duplicates, renamer, 
+    # reorder_df, rglob, rmdub, rmeq, rmeq_rec, rmlat, rmm, rmopt, rmqout, route_from_dir, 
+    # routeg, routg, rowmeans, rowsums, rsq, rsqgrep, runwasim, sdf, seldf, selt, skipyr, so_read, src_path, stplot!, 
+    # strans, subset_dataframe_by_mask, subsum, tblcb, tbx, tdiff, te, theplot, tocb, tovec, 
+    # vjl, wa, waba, waba2, waread, waread2, wawrite, wcl, wintree, wqlen, wqpand, wqplot, wqsum, wread, writedesc, 
+    # writedf, writewa, wslp, wslpath, xread, yrmean, yrsum, zscore
+
+    # DATAFRAME Operations
+    export hd, dfread, dfrib, dfsp, dfsplog, dfp, dfp!, dfpall, 
+        dfr, yrsum, yrmean, dfm, dfmo, dfl, dfl!, dfilter,
+        monmean, monsum, lastcol
+
+    # File Operations
+    export  fsoil, readall, readalloutput, readallras, read_between, read_log_file, 
+        read_mhm, read_soildata, read_soildata_2, read_soildata_4, 
+        read_until_flag, read_wq, old_waread, old_waread2,         
+        pout,         
+        project,         
+        pydf, pydf_to_julia, 
+        read_landuse_data2, readmeteo, readras, 
+        readras2, readrasrec, 
+        readroute 
+
+    # Hydrological Functions
+    export hydro, hydro_f, hydromon, hyeval, 
+        kge, kge1, kge2, kge_df, kge_df3, kge_fread, kge_read, 
+        kge_rec, kgedf, kgerec, kgeval,
+        yearsum, hyd2, xflow
+
+    # Statistical Functions
+    export addname, all_values_equal,
+        barsum, baryr,
+        baryrmean, baryrsum, build_soil_dictionary, byear, climateplot, 
+        climateplot_dfold, cmplot, cntcolread, cntcols, colorfunction, colsums, 
+        condasize, corrbar, correlogram, #csize, ctl, ctl2, ctl3, ctlook, ctsum, 
+        ddense, denselog, dfilter, dfl, dfl!, dfm, dfmo, dfp, 
+        dfread, dfsp, dfsplog, dftrend,
+        dprbig, dsbar, dtrange, dubplot, eeread, extract_duration_from_xml, 
+        extract_layers, f1_score, fdf, fillmissing, filterdf, 
+        
+        findalls, findctl, fparse, fread, freaddf,
+        
+        generate_export_statement, getdf, getf, getnames, 
+        ggofbatch, ggofjl, ggofjl_nosvg, globdf, globf, gofbatch, gofbatch_nosvg, 
+        grec, grep_files, grep_in_files, grep_with_context, gwread, hd, heat, 
+        heatraw, homes, ht, hydro, hydro_f, hydromon, hyeval, irfan, isroute, jldf, 
+        jldfnm, jsrast, jsread, juliasize, kernelplot, kge, kge1, kge2, kge_df, 
+        kge_df3, kge_fread, kge_read, kge_rec, klog, ldf, 
+        ldfpall, lg, listdfs, loadalldfs, loaddf, loadso, lplot, lplotf, lpro, 
+        luheat, luplot, lutab, luvars, mall, malldf, mbx, 
+        moisture_plot_with_confidence, monc, monc_f, moncol, monp
+        #revcrds, reverse_coords #moved to rst
+
+        
+    # Plotting Functions
+    export aplot, bardf, bardfm, bardfm!, bargroup, barp, 
+    dfrib, dfp!, dfpall, ftp, ftplin, ftsp, filterplot, filterplot!, dpr, dpr!, denseplot, 
+    dfbar, stplot!,moisture_plot_with_confidence, mbx, lplot, lplotf, lpro, luheat, luplot, luscatter 
+    
+    export lutab, luvars, mall, malldf,
+        monc, monc_f, moncol, monmean, monp, monsum, 
+        mvwasim2, mywd, nctodf, nctodfo, nqp, nread, nse, nse2, nse_rec, nseval, 
+        nsevalraw, nsx, odfr, pall, penman_monteith, pers, pout, plot_duration_graph, 
+        plot_grouped_metrics, plotf, polygonize_raster, print_lines_between_patterns, 
+        process_file2, process_folders_and_subfolders, pw, pww, pxm,
+        qall_num, qba, qbb, qpl, qplot, qqp, qrtr, rds, read_landuse_data2, 
+        read_log_file, read_soildata, read_soildata_2, read_soildata_4, 
+        read_soildata_raw, read_until_flag, read_wq, readall, readdf, readf, readmeteo, 
+        readmhm, readroute, rec, rename_columns, rename_columns!, rename_duplicates, 
+        renamer, reorder_df, rmm, rmopt, rmqout, routeg, routg, 
+        rowmeans, rowsums, runwasim, seldf, selt, skipyr, so_read, stplot!, strans
+
+
+
+    """
+    filters internal WaSiM stats of routed discharge files
+    works recursively
+    """
     function qgk(;rootdir=".", prefix="qgk")
-        """
-        filters internal WaSiM stats of routed discharge files
-        works recursively
-        """
         files = []
         for (looproot, dirs, filenames) in walkdir(rootdir)
             for filename in filenames
@@ -109,34 +221,34 @@ module wa
         return nothing
     end
 
+    """
+    Calculates the potential evapotranspiration (PET) using the Penman-Monteith equation.
+
+    Parameters
+    ----------
+    ETo : Float64
+        Reference evapotranspiration (mm/day).
+    G : Float64
+        Soil heat flux density (mm/day).
+    T : Float64
+        Air temperature (°C).
+    Td : Float64
+        Dew point temperature (°C).
+    u2 : Float64
+        Wind speed at 2 m height (m/s).
+    es : Float64
+        Saturation vapor pressure (kPa).
+    ea : Float64
+        Actual vapor pressure (kPa).
+    Ra : Float64
+        Aerodynamic resistance (s/m).
+
+    Returns
+    -------
+    PET : Float64
+        Potential evapotranspiration (mm/day).
+    """
     function penman_monteith(ETo, G, T, Td, u2, es, ea, Ra)
-        """
-        Calculates the potential evapotranspiration (PET) using the Penman-Monteith equation.
-
-        Parameters
-        ----------
-        ETo : Float64
-            Reference evapotranspiration (mm/day).
-        G : Float64
-            Soil heat flux density (mm/day).
-        T : Float64
-            Air temperature (°C).
-        Td : Float64
-            Dew point temperature (°C).
-        u2 : Float64
-            Wind speed at 2 m height (m/s).
-        es : Float64
-            Saturation vapor pressure (kPa).
-        ea : Float64
-            Actual vapor pressure (kPa).
-        Ra : Float64
-            Aerodynamic resistance (s/m).
-
-        Returns
-        -------
-        PET : Float64
-            Potential evapotranspiration (mm/day).
-        """
         # Constants
         R = 8.314 # J/mol/K
         cp = 1.013e-3 # kJ/g/K
@@ -380,11 +492,13 @@ module wa
         @df df density(cols(s), legend = :topright)
     end
 
+    """
+    ```
+    readdf(x::Regex;recurse=false)
+    ```
+    reads first match of regex wasim timeseries
+    """
     function readdf(x::Regex;recurse=false)
-        """
-        readdf(x::Regex)
-        reads first match of regex wasim timeseries
-        """
         if recurse
             results = []
             rootdir="."
@@ -449,13 +563,13 @@ module wa
         return df 
     end
 
+    """
+    --- main reader ---
+    delim: if no argument is provided, 
+    parsing will try to detect the most consistent delimiter on the 
+        first 10 rows of the file
+    """
     function readdf(x::AbstractString)
-        """
-        --- main reader ---
-        delim: if no argument is provided, 
-        parsing will try to detect the most consistent delimiter on the 
-            first 10 rows of the file
-        """
         ms=["-9999","lin","log"]
         df::DataFrame = CSV.read(x,DataFrame,
         missingstring=ms,
@@ -553,13 +667,42 @@ module wa
     end
 
     """
-    Fastest Reader. is also dfr.
-    Read the text file, preserve line 1 as header column
+    enhanced Reader.
+    Read the text file, preserve line 1 as header column \n
+    `function waread(x::String;station=false,proj=false,pts_and_data=false,src=EPSG(25832),dst=EPSG(4326))`
     """
-    function waread(x::String)
+    function waread(x::String;station=false,proj=false,pts_and_data=false,src=EPSG(25832),dst=EPSG(4326))
         ms = ["-9999","lin","log","--"]
+        if station
+            fl = CSV.read(x,DataFrame;limit=4)
+            ez = fl[1,5:end]|>collect
+            xc = fl[2,5:end]|>collect
+            yc = fl[3,5:end]|>collect
+            no = fl[4,5:end]|>collect
+            pts = ArchGDAL.IGeometry[]
+            
+            #for i in 1:length(xc)
+            for i in 1:lastindex(xc)
+                pt = ArchGDAL.createpoint([xc[i],yc[i]])
+                if proj
+                    pt = ArchGDAL.reproject(pt,src,dst)
+                end
+                push!(pts,pt)
+            end
+            
+            nd = DataFrame(geometry=pts, 
+                name=names(fl)[5:end],
+                ez = ez, no = no,
+                xc=xc, yc=yc)
+
+            if !pts_and_data
+                return nd
+            end
+        end
+
         df = CSV.read(x, DataFrame; 
-            delim="\t", header=1, missingstring=ms, 
+            delim="\t", header=1, 
+            missingstring=ms, 
             maxwarnings = 1, #silencewarnings = true,
             normalizenames=true, types=Float64)
         df = dropmissing(df, 1)
@@ -573,7 +716,22 @@ module wa
                 rename!(df,Dict(x=>newname))
             end
         end
-        return df 
+            
+        if (pts_and_data && !station)
+            fl = CSV.read(x, DataFrame; limit=4)
+            ez, xc, yc, no = [fl[i, 5:end] |> collect for i in 1:4]
+            pts = [ArchGDAL.createpoint([xc[i], yc[i]]) for i in 1:lastindex(xc)]
+            if proj
+                pts = ArchGDAL.reproject.(pts, Ref(src), Ref(dst))
+            end
+            nd2 = DataFrame(geometry=pts, name=names(fl)[5:end], ez=ez, no=no, xc=xc, yc=yc)
+            return (nd2,df)
+        elseif (pts_and_data && station)
+            return (nd,df)
+        else
+            return df
+        end
+        
     end
 
     """
@@ -588,7 +746,7 @@ module wa
         df.date = dt2
         df = select(df, Not(1:4))
         metadata!(df, "filename", x, style=:note)
-        #renamer
+        #rename columns
         for x in names(df)
             if startswith(x,"_")
             newname=replace(x,"_"=>"C", count=1)
@@ -717,11 +875,15 @@ module wa
         end
         s = names(df)[1:2]
         t2 = string.(ti,"\n",s[1],"|",s[2],ti)
-        StatsPlots.plot( 
-        qqplot(df[!,1],df[!,2], qqline = :fit), 
-        qqplot(Cauchy,df[!,2]), 
-        qqnorm(df[!,2], qqline = :R),
-        title = t2)
+        l = @layout([a b;c])
+        
+        #p1 = StatsPlots.plot( 
+        a = qqplot(df[!,1],df[!,2], qqline = :fit,title = "fit")
+        b = qqplot(Cauchy,df[!,2],title = "Cauchy")
+        c = qqnorm(df[!,2], qqline = :R,
+            xlabel = s[1], ylabel = s[2],title = "R")
+            
+        Plots.plot(a, b, c, layout=l)#,title = t2)
     end
 
     function qpl(x::AbstractString)
@@ -879,12 +1041,17 @@ module wa
         for file in files
             file_path = joinpath(path, file)
             if isfile(file_path) && endswith(file, ext) && (!occursin(r"xml|qgk|fzt|ftz|log|ini|wq|txt|yrly|nc|tif|jpg|png|svg",file))
-                dd = CSV.read(file_path,DataFrame,missingstring="-9999",delim="\t")
-                # observed  = dd[:,5]
-                # simulated = dd[:,6]
-                # kge_value = kge2(observed, simulated)
-                kge_value = kge2(dd)
-                println(replace("KGE value is $kge_value on $file_path", "\\"  => "/"))
+                try
+                    dd = CSV.read(file_path,DataFrame,missingstring="-9999",delim="\t")
+                    kge_value = kge2(dd)
+                    println(replace("KGE value is $kge_value on $file_path", "\\"  => "/"))
+                catch
+                    #println("Error reading ",basename(file_path))
+                    println("Error reading ",file_path)
+                end
+                # dd = CSV.read(file_path,DataFrame,missingstring="-9999",delim="\t")
+                # kge_value = kge2(dd)
+                # println(replace("KGE value is $kge_value on $file_path", "\\"  => "/"))
             elseif isdir(file_path)
                 dfs_in_subdir = kge_read(file_path, ext)
             end
@@ -899,13 +1066,25 @@ module wa
         return (1 - (sum((predictions .- targets).^2) / sum((targets .- mean(targets)).^2)))
     end
 
+    """
+    used in byear
+    """
+    function nse2(simulated::Vector{Float64}, observed::Vector{Float64})
+        return (1 - (sum((simulated .- observed).^2) / sum((observed .- mean(observed)).^2)))
+    end
+
+
     function nse(df::DataFrame)
         simulated, observed = vec(Matrix(df[!,Cols(1)])),vec(Matrix(df[!,Cols(2)]))
         #observed, simulated = df[:,6],df[:,5]
         return (1 - (sum((simulated .- observed).^2) / sum((observed .- mean(observed)).^2)))
     end
 
-    function kge(df::DataFrame)
+    """
+    kge as in Gupta et al., 2009
+    https://doi.org/10.1016/j.jhydrol.2009.08.003
+    """
+    function kge(df::DataFrame;verbose=false)
         if (any(x->occursin("year|date|month",x),names(df)))
             ln = Symbol.(filter(x->!occursin(r"date|year|month"i,x),names(df)))
             df = select(df, ln)
@@ -914,7 +1093,17 @@ module wa
         r = cor(observed, simulated)
         α = std(simulated) / std(observed)
         β = mean(simulated) / mean(observed)
-        return 1 - sqrt((r - 1)^2 + (α - 1)^2 + (β - 1)^2)
+        kge = 1 - sqrt((r - 1)^2 + (α - 1)^2 + (β - 1)^2)
+        if verbose
+            println("simulated: ",names(df)[1])
+            println("observed: ",names(df)[2])
+            #(r, α, β) as per `Gupta et al., 2009
+            println("returning r, α, β, kge")
+            return DataFrame(r=r, α=α, β=β, kge=kge)
+        else
+            return kge
+        end
+        
     end
 
     function lplot(x::Regex)
@@ -981,9 +1170,17 @@ module wa
         return plt
     end
 
-    """adds first match and plots in log y-axis..."""
-    function dfl!(regex::Union{Regex,String})
-        df=readf(regex)
+    """adds first match and plots in log y-axis...
+    ```
+    dfl!(regex::Union{Regex,String,DataFrame};kw...)
+    ```
+    """
+    function dfl!(regex::Union{Regex,String,DataFrame};kw...)
+        if regex isa DataFrame
+            df = regex
+        else
+            df = readdf(regex)
+        end
         ti = try
             DataFrames.metadata(df)|>only|>last|>basename
         catch
@@ -993,19 +1190,19 @@ module wa
         println("adding $ti")
         if (any(x->occursin("year",x),names(df)))
             s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
-            @df df Plots.plot!(:year,cols(s),yaxis=:log,legend = :topright)
+            @df df Plots.plot!(:year,cols(s),yaxis=:log;kw...)
             Plots.annotate!([(20,5,text(ti, 12, :left, :top, :green))])
         else   
             s = Symbol.(filter(x->!occursin("date",x),names(df)))
-            @df df Plots.plot!(:date,cols(s),yaxis=:log, legend = :topright)
+            @df df Plots.plot!(:date,cols(s),yaxis=:log;kw...)
             Plots.annotate!([(20,5,text(ti, 12, :left, :top, :green))])
             end
     end
 
     function aplot(df::DataFrame)
         df = copy(df)
-        df[!,:year]=year.(df[!,:date]) ;
-        s = Symbol.(filter(x->!occursin("date",x),names(df)))
+        df[!,:year] = year.(df[!,:date])
+        s = Symbol.(filter(x->!occursin(r"date|year|month|time",x),names(df)))
         o = DataFrames.metadata(df)|>collect
         ti = "AndrewsPlot of "*basename(o[1][2])
         @df df andrewsplot(:year, cols(s), legend = :topleft,title=ti)
@@ -1130,14 +1327,14 @@ module wa
         return(nms)
     end
 
-    function vars()
-        InteractiveUtils.varinfo(;sortby=:size,minsize=1)
+    function vars(pt::Regex)
+        InteractiveUtils.varinfo(Main,pt;sortby=:size,minsize=1)
     end
 
     function vars(pt::AbstractString)
         #varinfo(Core,r".*field.*")
         #varinfo(Main,r".*load*")
-        InteractiveUtils.varinfo(Main,Regex(".*pt*"))
+        InteractiveUtils.varinfo(Main,Regex(".*$pt*"))
     end
 
 
@@ -1273,10 +1470,12 @@ module wa
     end
 
 
-    function dfp(mm::Union{Regex,String};leg = :outertopright)
-        """
-        plots wasim timeseries
-        """
+    
+    """
+    plots wasim timeseries
+    kwargs... passed to plot
+    """
+    function dfp(mm::Union{Regex,String};leg = :outertopright, kwargs...)
         if mm isa(String)
             try 
                 df = readdf(mm)
@@ -1302,7 +1501,7 @@ module wa
             @df df Plots.plot(:year,cols(s),legend = leg, title=ti)
         else    
         s = Symbol.(filter(x->!occursin("date",x),names(df)))
-        @df df Plots.plot(:date,cols(s),legend = leg, title=ti)
+        @df df Plots.plot(:date,cols(s),legend = leg, title=ti;kwargs...)
         end
     end
 
@@ -1310,7 +1509,7 @@ module wa
     selects first match and plots...
     dfp(df::DataFrame;leg = :outertopright)
     """
-    function dfp(df::DataFrame;leg = :outertopright)
+    function dfp(df::DataFrame;leg = :outertopright, kwargs...)
         #drawlegend::Union(Bool,Symbol) = :topright
         #ti = DataFrames.metadata(df)|>only|>last|>basename 
         ti = try
@@ -1321,18 +1520,18 @@ module wa
         end
         if (any(x->occursin("year",x),names(df)))
             s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
-            @df df Plots.plot(:year,cols(s),legend = leg, title=ti)
+            @df df Plots.plot(:year,cols(s),legend = leg, title=ti;kwargs...)
         else    
             s = Symbol.(filter(x->!occursin(r"date|year",x),names(df)))
-            @df df Plots.plot(:date,cols(s),legend = leg, title=ti)
+            @df df Plots.plot(:date,cols(s),legend = leg, title=ti;kwargs...)
         end
     end
 
     """
     selects first match and plots...
-    dfp(regex::AbstractString,dfs::Vector{DataFrame})
+    dfp(regex::AbstractString,dfs::Vector{DataFrame};kwargs...)
     """
-    function dfp(regex::AbstractString,dfs::Vector{DataFrame})
+    function dfp(regex::AbstractString,dfs::Vector{DataFrame};kwargs...)
         df = dfs[map(n->occursin(Regex(regex,"i"),n),
             map(x->basename(only(DataFrames.metadata(x))[2]),
             dfs))] |> first
@@ -1340,14 +1539,17 @@ module wa
         ti = basename(o[1][2])
         if (any(x->occursin("year",x),names(df)))
             s = Symbol.(filter(x->!occursin("year",x),names(df)))
-            @df df Plots.plot(:year,cols(s),legend = :topright, title=ti)
+            @df df Plots.plot(:year,cols(s),legend = :topright, title=ti;kwargs...)
         else    
         s = Symbol.(filter(x->!occursin("date",x),names(df)))
-        @df df Plots.plot(:date,cols(s),legend = :topright, title=ti)
+        @df df Plots.plot(:date,cols(s),legend = :topright, title=ti;kwargs...)
         end
     end
 
-    function dfp!(df::DataFrame)
+    """
+    df::DataFrame;kwargs... passed to plot
+    """
+    function dfp!(df::DataFrame;kwargs...)
         ti = try
                 DataFrames.metadata(df)|>only|>last|>basename
             catch
@@ -1356,14 +1558,14 @@ module wa
         end
         if (any(x->occursin("year",x),names(df)))
             s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
-            @df df Plots.plot!(:year,cols(s),legend = :topright, title=ti)
+            @df df Plots.plot!(:year,cols(s),legend = :topright, title=ti;kwargs...)
         else    
         s = Symbol.(filter(x->!occursin(r"date|year",x),names(df)))
-        @df df Plots.plot!(:date,cols(s),legend = :topright, title=ti)
+        @df df Plots.plot!(:date,cols(s),legend = :topright, title=ti; kwargs...)
         end
     end
 
-    function dfp!(str::String)
+    function dfp!(str::String;kwargs...)
         df = readdf(str)
         o = DataFrames.metadata(df)|>collect
         ti = basename(o[1][2])
@@ -1374,17 +1576,17 @@ module wa
 
         if (any(x->occursin("year",x),names(df)))
             s = Symbol.(filter(x->!occursin("year",x),names(df)))
-            @df df Plots.plot!(:year,cols(s),legend = :topright, title=ti)
+            @df df Plots.plot!(:year,cols(s),legend = :topright, title=ti;kwargs...)
         else    
         s = Symbol.(filter(x->!occursin("date",x),names(df)))
-        @df df Plots.plot!(:date,cols(s),legend = :topright, title=ti)
+        @df df Plots.plot!(:date,cols(s),legend = :topright, title=ti;kwargs...)
         end
     end
 
     """
     plots wasim timeseries
     """
-    function dfp!(mm::Regex)
+    function dfp!(mm::Regex;kwargs...)
         df = readdf(mm)
         o = DataFrames.metadata(df)|>collect
         ti = basename(o[1][2])
@@ -1396,10 +1598,10 @@ module wa
 
         if (any(x->occursin("year",x),names(df)))
             s = Symbol.(filter(x->!occursin("year",x),names(df)))
-            @df df Plots.plot!(:year,cols(s),legend = :topright, title=ti)
+            @df df Plots.plot!(:year,cols(s),legend = :topright, title=ti;kwargs...)
         else    
         s = Symbol.(filter(x->!occursin("date",x),names(df)))
-        @df df Plots.plot!(:date,cols(s),legend = :topright, title=ti)
+        @df df Plots.plot!(:date,cols(s),legend = :topright, title=ti;kwargs...)
         end
     end
 
@@ -1412,10 +1614,10 @@ module wa
         ti = basename(o[1][2])
         if (any(x->occursin("year",x),names(df)))
             s = Symbol.(filter(x->!occursin("year",x),names(df)))
-            @df df Plots.plot!(:year,cols(s),legend = :topright, title=ti)
+            @df df Plots.plot!(:year,cols(s),legend = :topright, title=ti;kwargs...)
         else    
         s = Symbol.(filter(x->!occursin("date",x),names(df)))
-        @df df Plots.plot!(:date,cols(s),legend = :topright, title=ti)
+        @df df Plots.plot!(:date,cols(s),legend = :topright, title=ti;kwargs...)
         end
     end
 
@@ -1533,12 +1735,12 @@ module wa
     old, but working version
     newer see wawrite
     """
-    function writewa(file::AbstractString, df::DataFrame)
+    function writewa(file::AbstractString, df::DataFrame;hourstep::Int64=24)
         dout = copy(df)
         dout.YY = map(x ->year(x),dout.date)
         dout.MM = map(x ->month(x),dout.date)
         dout.DD = map(x ->day(x),dout.date)
-        dout[!, "HH"] .= 0
+        dout[!, "HH"] .= hourstep
         #df = select!(df,Symbol.(filter(x->!occursin("date",x), names(df))))
         #dout = select(df, Not(:date))
         #dout = dout[!,Cols([:YY,:MM,:HH,:DD],1:end-4)]
@@ -1550,9 +1752,13 @@ module wa
     end
 
     """
+    write a df to WaSiM format
     newer version with copy df and switched func positions
+    ```
+    wawrite(df::DataFrame,file::AbstractString;HH::Int64=24,dtcol::Symbol=:date,delim::String="\\t")
+    ```
     """
-    function wawrite(df::DataFrame,file::AbstractString;HH::Int64=0)
+    function wawrite(df::DataFrame,file::AbstractString;HH::Int64=24,dtcol::Symbol=:date,delim::String="\t")
         dout = copy(df)
         if in("year",names(dout))
             @warn "yearcol found!"
@@ -1560,13 +1766,15 @@ module wa
             transform = (col, val) -> something(val, missing), delim="\t")  
             return
         end
-        dout.YY = map(x ->year(x),dout.date)
-        dout.MM = map(x ->month(x),dout.date)
-        dout.DD = map(x ->day(x),dout.date)
+        dout.YY = map(x ->Dates.year(x),dout[!,dtcol])
+        dout.MM = map(x ->Dates.month(x),dout[!,dtcol])
+        dout.DD = map(x ->Dates.day(x),dout[!,dtcol])
         dout[!, "HH"] .= HH
-        dout = dout[!,Cols([:YY,:MM,:DD,:HH],Not(Cols(r"date")))]
+        dout = dout[!,Cols([:YY,:MM,:DD,:HH],Not(Cols(Regex(string(dtcol)))))]
+        select!(dout,Not(Cols(r"time|date"i)))
         CSV.write(file, dout, 
-        transform = (col, val) -> something(val, missing), delim="\t")  
+        transform = (col, val) -> something(val, missing), 
+        delim=delim)  
         nothing
     end
 
@@ -1594,13 +1802,15 @@ module wa
     #wc -l in julia:
     function wcl(x::AbstractString)
         files = filter(file -> occursin(Regex(x,"i"),file), readdir())
+        m = DataFrame(name = String[], lines = Int[])
         for file in files
             open(file) do f
-                ct=(count(_ -> true, eachline(f)))
-                #println(file,ct)
-                println("$file:\t $ct")
+                ct = count(_ -> true, eachline(f))
+                println(rpad(file,35), lpad(ct,15))
+                push!(m, Dict(:name => file, :lines => ct))
             end
         end
+        return m #reduce(vcat,m)
     end
 
     #faster and pure julia:
@@ -1621,6 +1831,88 @@ module wa
             end
         end
     end
+
+    """
+    ``` 
+    vgjl(snippet::Union{AbstractString,Symbol};searchpath=nothing) 
+    ```
+    """
+    function vgjl(snippet::Union{AbstractString,Symbol};searchpath=nothing)
+        owd = abspath(pwd())
+        if snippet isa Symbol
+            snippet = string(snippet)
+        end
+        if isnothing(searchpath)
+            script_dir = src_path        
+        else
+            script_dir = searchpath
+            printstyled("looking for jl files in $script_dir ...\n",color=:yellow)
+        end
+        
+        cd(script_dir)
+
+        files = []
+        if (any(x->isdir(x),readdir()))
+            for (looproot, dirs, filenames) in walkdir(script_dir)
+                for filename in filenames
+                    if (occursin(r"jl$",filename))
+                        push!(files, joinpath(looproot, filename)) 
+                    end
+                end
+            end
+        else
+            printstyled("no dirs in $script_dir !\n",color=:light_red)
+            for filename in (filter(x->isfile(x),readdir(;join=false)))
+                    if (occursin(r"jl$",filename))
+                    push!(results, filename) 
+                end
+            end
+        end
+        
+        for file in files
+            open(file) do f
+                counter = 0 # Initialize the counter
+                for line in eachline(f)
+                    counter += 1 # Increment the counter
+                    if Base.contains(line, snippet)
+                        printstyled("$counter:\t", color=:light_red)
+                        printstyled("$file:\t", color=:light_magenta, underline=true, blink=false, bold=true)
+                        printstyled("$line\n", color=:green, bold=true)
+                    end
+                end
+            end
+        end
+        
+        cd(owd)
+    end
+
+    """
+    recursive grep
+    ```
+    vgjlrec(snippet::AbstractString;owd = src_path)
+    ```
+    """
+    function vgjlrec(snippet::AbstractString;owd = src_path)    
+        for (root, dirs, files) in walkdir(owd)
+            for file in files 
+                if (endswith(file, ".jl"))
+                    pt=(joinpath(root, file))
+                    open(pt) do f
+                        counter = 0 # Zähler initialisieren
+                        for line in eachline(f)
+                            counter += 1 # Zähler erhöhen
+                            if contains(line,snippet)
+                                printstyled("$counter:\t",color=:light_red) 
+                                printstyled("$pt:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
+                                printstyled("$line\n",color=:green,bold=true) 
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
 
     function vg(snippet::AbstractString, file_ending::AbstractString)
         files = filter(file -> endswith(file, file_ending), readdir())
@@ -1643,179 +1935,21 @@ module wa
         end
     end
 
-    function vgjl(snippet::AbstractString)
-        owd = abspath(pwd())
-        platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-        
-        if platform == "windows"
-            script_dir = "C:/Users/Public/Documents/Python_Scripts/julia"
-        else
-            # Assuming you want to use a different path for Linux/WSL, adjust as needed
-            script_dir = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
-        end
-        
-        cd(script_dir)
-        
-        # files = []
-        files = filter(file -> endswith(file, ".jl"), readdir())
-        fwin = filter(file -> endswith(file, ".jl"), 
-            readdir(script_dir*"/win", join=true))
-        files = vcat(files,fwin)
-        #files = wa.rglob(r"[.]jl$")
-        # rootdir=script_dir
-        # suffix = r"[.]jl$"
-        # files = []
-        # for (looproot, dirs, filenames) in walkdir(rootdir)
-        #     for filename in filenames
-        #         if (occursin(suffix,filename))
-        #             push!(files, joinpath(looproot, filename)) 
-        #         end
-        #     end
-        # end
-        
-        for file in files
-            open(file) do f
-                counter = 0 # Initialize the counter
-                for line in eachline(f)
-                    counter += 1 # Increment the counter
-                    if Base.contains(line, snippet)
-                        printstyled("$counter:\t", color=:light_red)
-                        printstyled("$file:\t", color=:light_magenta, underline=true, blink=false, bold=true)
-                        printstyled("$line\n", color=:green, bold=true)
-                    end
-                end
-            end
-        end
-        
-        cd(owd)
-    end
-    
-
-
-
-    # for (root, dirs, files) in walkdir(owd)
-    #     z = filter(file -> (endswith(file, ".jl")) && isfile(file), files)
-    #     println(z)   
-    # end
-
     """
-    recursive grep
+    ``` 
+    vgpy(snippet::AbstractString) 
+    vgpy(String(:head)) #searches for head in all python files
+    ```
     """
-    function vgjlrec(snippet::AbstractString)
-        owd=src_path
-        for (root, dirs, files) in walkdir(owd)
-            for file in files 
-                if (endswith(file, ".jl"))
-                    pt=(joinpath(root, file))
-                    open(pt) do f
-                        counter = 0 # Zähler initialisieren
-                        for line in eachline(f)
-                            counter += 1 # Zähler erhöhen
-                            if contains(line,snippet)
-                                printstyled("$counter:\t",color=:light_red) 
-                                printstyled("$pt:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                                printstyled("$line\n",color=:green,bold=true) 
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    #vgjl("wsl")
-
-    function vgro(snippet::AbstractString)
-        owd=pwd()
-        cd("D:/Fernerkundungsdaten/Klassifikation/R-Sessions")
-        files = filter(file -> endswith(file, ".R"), readdir())
-        for file in files
-            open(file) do f
-                counter = 0 # Zähler initialisieren
-                for line in eachline(f)
-                    counter += 1 # Zähler erhöhen
-                    if contains(line,snippet)
-                        printstyled("$counter:\t",color=:light_red) 
-                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled("$line\n",color=:green,bold=true) 
-                    end
-                end
-            end
-        end
-        cd(owd)
-    end
-
-    function vgr(snippet::AbstractString)
-        #owd = abspath(pwd())
-        platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-        
-        if platform == "windows"
-            script_dir = "D:/Fernerkundungsdaten/Klassifikation/R-Sessions"
-        else
-            # Assuming you want to use a different path for Linux/WSL, adjust as needed
-            script_dir = "/mnt/d/Fernerkundungsdaten/Klassifikation/R-Sessions"
-        end
-    
-        files = filter(file -> endswith(file, ".R"), readdir(script_dir,join=true))
-        for file in files
-            open(file) do f
-                counter = 0 # Zähler initialisieren
-                for line in eachline(f)
-                    counter += 1 # Zähler erhöhen
-                    if contains(line,snippet)
-                        printstyled("$counter:\t",color=:light_red) 
-                        printstyled(rpad("$file:",50),color=:light_magenta)
-                        #printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled(lpad("$line\n",30),color=:green,bold=true)
-                        #underline = true 
-                    end
-                end
-            end
-        end
-    end
-    
-    function vgpyo(snippet::AbstractString)
-        owd = abspath(pwd())
-        # platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-        
-        # if platform == "windows"
-        #     script_dir = "src_path/Public/Documents/Python_Scripts"
-        # else
-        #     # Assuming you want to use a different path for Linux/WSL, adjust as needed
-        #     script_dir = "/mnt/c/Users/Public/Documents/Python_Scripts"
-        # end
-        
-        cd(src_path) #from global x 
-    
-    
-        files = filter(file -> endswith(file, ".py"), readdir())
-        for file in files
-            open(file) do f
-                counter = 0 # Zähler initialisieren
-                for line in eachline(f)
-                    counter += 1 # Zähler erhöhen
-                    if contains(line,snippet)
-                        printstyled("$counter:\t",color=:light_red) 
-                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled("$line\n",color=:green,bold=true) 
-                    end
-                end
-            end
-        end
-        cd(owd)
-    end
-    
     function vgpy(snippet::AbstractString)
         #owd = abspath(pwd())
-        # platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
-        
+        # platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform    
         # if platform == "windows"
-        #     script_dir = "src_path/Public/Documents/Python_Scripts"
+        #     script_dir = dirname(src_path)
         # else
         #     # Assuming you want to use a different path for Linux/WSL, adjust as needed
-        #     script_dir = "/mnt/c/Users/Public/Documents/Python_Scripts"
+        #     script_dir = towsl(dirname(src_path))
         # end
-
         script_dir = dirname(src_path)
         
         files = filter(file -> endswith(file, ".py"), readdir(script_dir,join=true))
@@ -1824,7 +1958,7 @@ module wa
                 counter = 0 # Zähler initialisieren
                 for line in eachline(f)
                     counter += 1 # Zähler erhöhen
-                    if contains(line,snippet)
+                    if Base.contains(line,snippet)
                         printstyled("$counter:\t",color=:light_red) 
                         printstyled(rpad("$file:",50),color=:light_magenta)
                         #printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
@@ -1835,7 +1969,64 @@ module wa
             end
         end
     end
+    
+    function vgrfiles(snippet::AbstractString)
+        # platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
+        
+        # if platform == "windows"
+        #     script_dir = rsrc_path
+        # else
+        #     # Assuming you want to use a different path for Linux/WSL, adjust as needed
+        #     script_dir = towsl(rsrc_path)
+        # end
 
+        script_dir = rsrc_path
+    
+        files = filter(file -> endswith(file, ".R"), readdir(script_dir,join=true))
+        for file in files
+            open(file) do f
+                counter = 0 # Zähler initialisieren
+                for line in eachline(f)
+                    counter += 1 # Zähler erhöhen
+                    if Base.contains(line,snippet)
+                        printstyled("$counter:\t",color=:light_red) 
+                        printstyled(rpad("$file:",50),color=:light_magenta)
+                        #printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
+                        printstyled(lpad("$line\n",30),color=:green,bold=true)
+                        #underline = true 
+                    end
+                end
+            end
+        end
+    end
+       
+    function vgrr(snippet::AbstractString;script_dir::String="$(dirname(src_path))/rfile")
+        #owd = abspath(pwd())
+        platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
+        
+        if platform == "windows"
+            script_dir = script_dir
+        else
+            # Assuming you want to use a different path for Linux/WSL, adjust as needed
+            script_dir = towsl(script_dir)
+        end
+    
+        files = filter(file -> endswith(file, ".R"), readdir(script_dir,join=true))
+        for file in files
+            open(file) do f
+                counter = 0 # Zähler initialisieren
+                for line in eachline(f)
+                    counter += 1 # Zähler erhöhen
+                    if Base.contains(line,snippet)
+                        printstyled("$counter:\t",color=:light_red) 
+                        printstyled(rpad("$file:",50),color=:light_magenta)
+                        printstyled(lpad("$line\n",30),color=:green,bold=true)
+                    end
+                end
+            end
+        end
+    end
+    
 
     """
     Usage: vgctl("set \$TS")
@@ -1897,33 +2088,82 @@ module wa
         filter(file -> occursin(x,file), readdir())
     end
 
+    # function rglob(prefix::AbstractString)
+    #     rootdir=pwd();
+    #     results = []
+    #     if (any(x->isdir(x),readdir()))
+    #         for (looproot, dirs, filenames) in walkdir(rootdir)
+    #             for filename in filenames
+    #                 #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
+    #                 if (occursin(Regex(prefix,"i"),filename))
+    #                     push!(results, joinpath(looproot, filename)) 
+    #                 end
+    #             end
+    #         end
+    #     else
+    #         printstyled("no dirs in $rootdir !\n",color=:light_red)
+    #         for filename in (filter(x->isfile(x),readdir(;join=false)))
+    #             #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
+    #             if (occursin(Regex(prefix,"i"),filename))
+    #                 push!(results, filename) 
+    #             end
+    #         end
+    #     end
+    #     return results
+    # end
+    
+    # function rglob(prefix::Regex)
+    #     rootdir="."
+    #     results = []
+    #     for (looproot, dirs, filenames) in walkdir(rootdir)
+    #         for filename in filenames
+    #             if (occursin(prefix,filename))
+    #                 push!(results, joinpath(looproot, filename)) 
+    #             end
+    #         end
+    #     end
+    #     return results
+    # end
 
-    function rglob(prefix::String)
-        rootdir="."
+    """
+    function rglob(pattern::Union{AbstractString, Regex}, rootdir::AbstractString=pwd())
+    """
+    function rglob(pattern::Union{AbstractString, Regex}, rootdir::AbstractString=pwd())
+        #check it rootdir is a dir
+        rootdir = isdir(rootdir) ? rootdir : throw(ArgumentError("rootdir is not a directory!"))    
         results = []
-        for (looproot, dirs, filenames) in walkdir(rootdir)
-            for filename in filenames
-                #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
-                if (occursin(Regex(prefix,"i"),filename))
-                    push!(results, joinpath(looproot, filename)) 
+        # checks if all items in rootdir are directories
+        if (any(x->isdir(joinpath(rootdir, x)), readdir(rootdir)))
+            for (looproot, dirs, filenames) in walkdir(rootdir)
+                for filename in filenames
+                    if pattern isa AbstractString
+                        if (occursin(Regex("$(pattern)", "i"), filename))
+                            push!(results, joinpath(looproot, filename)) 
+                        end
+                    else
+                        if (occursin(pattern, filename))
+                            push!(results, joinpath(looproot, filename)) 
+                        end
+                    end
+                end
+            end
+        else
+            printstyled("no dirs in $rootdir !\n", color=:light_red)
+            for filename in (filter(x->isfile(x), readdir(rootdir; join=true)))
+                if pattern isa AbstractString
+                    if (occursin(Regex("$(pattern)", "i"), filename))
+                        push!(results, filename) 
+                    end
+                else
+                    if (occursin(pattern, filename))
+                        push!(results, filename) 
+                    end
                 end
             end
         end
         return results
     end
 
-    function rglob(prefix::Regex)
-        rootdir="."
-        results = []
-        for (looproot, dirs, filenames) in walkdir(rootdir)
-            for filename in filenames
-                if (occursin(prefix,filename))
-                    push!(results, joinpath(looproot, filename)) 
-                end
-            end
-        end
-        return results
-    end
 
     #go dir up
     function cdb()
@@ -2111,7 +2351,7 @@ module wa
 
     """
     reads, reduces + merges by date and plots
-    wa.pall(glob(r"qges|qbas|qd"))
+    pall(glob(r"qges|qbas|qd"))
     """
     function dfpall(files::Vector{String})
         dfs = DataFrame[]
@@ -2158,7 +2398,7 @@ module wa
     reads, reduces + merges by date
     ds = innerjoin(unique.(dfs, xcol)..., on = xcol, makeunique=true)
     example:
-    df = wa.mall(glob(r"qges|qbas|qd"))
+    df = mall(glob(r"qges|qbas|qd"))
     """
     function mall(files::Vector{String};xcol=:date)
         #files
@@ -2248,6 +2488,12 @@ module wa
         :lighttest];
 
        
+
+    
+    """
+    resample by date
+    `DataFrames.combine(DataFrames.groupby(df, :year), y .=> sum .=> y)`
+    """
     function yrsum(x::String)
         df = readdf(x)
         y = filter(x->!occursin("date",x),names(df))
@@ -2259,7 +2505,7 @@ module wa
             ti = raw""
         end
         df[!, :year] = year.(df[!,:date]);
-        df_yearsum = DataFrames.combine(groupby(df, :year), y .=> sum .=> y);
+        df_yearsum = DataFrames.combine(DataFrames.groupby(df, :year), y .=> sum .=> y);
         return(df_yearsum)
     end
 
@@ -2274,22 +2520,26 @@ module wa
             ti = raw""
         end
         df[!, :year] = year.(df[!,:date]);
-        df_yearsum = DataFrames.combine(groupby(df, :year), y .=> sum .=> y);
+        df_yearsum = DataFrames.combine(DataFrames.groupby(df, :year), y .=> sum .=> y);
         return(df_yearsum)
     end
 
     function yrsum(x::DataFrame)
         df = copy(x)
-        y = filter(x->!occursin("date",x),names(df))
-        s = map(y -> Symbol(y),y)
-            ti = try
-            DataFrames.metadata(df)|>only|>last|>basename
-        catch
-            @warn "No basename in metadata!"
-            ti = raw""
+        if filter(x->occursin("year",x),names(df))
+            @warn "year column already exists! removing..."
+            df = select(df, Not(:year))
         end
+        y = filter(x->!occursin("date",x),names(df))
+        # s = map(y -> Symbol(y),y)
+        # ti = try
+        #     DataFrames.metadata(df)|>only|>last|>basename
+        # catch
+        #     @warn "No basename in metadata!"
+        #     raw""
+        # end
         df[!, :year] = year.(df[!,:date]);
-        df_yearsum = DataFrames.combine(groupby(df, :year), y .=> sum .=> y);
+        df_yearsum = DataFrames.combine(DataFrames.groupby(df, :year), y .=> sum .=> y);
         return(df_yearsum)
     end
 
@@ -2304,7 +2554,7 @@ module wa
             ti = raw""
         end
         df[!, :year] = year.(df[!,:date]);
-        df_yrmean = DataFrames.combine(groupby(df, :year), y .=> mean .=> y);
+        df_yrmean = DataFrames.combine(DataFrames.groupby(df, :year), y .=> mean .=> y);
         return(df_yrmean)
     end
 
@@ -2319,7 +2569,7 @@ module wa
             ti = raw""
         end
         df[!, :year] = year.(df[!,:date]);
-        df_yearsum = DataFrames.combine(groupby(df, :year), y .=> mean .=> y);
+        df_yearsum = DataFrames.combine(DataFrames.groupby(df, :year), y .=> mean .=> y);
         return(df_yearsum)
     end
 
@@ -2334,11 +2584,9 @@ module wa
             ti = raw""
         end
         df[!, :year] = year.(df[!,:date]);
-        df_yearsum = DataFrames.combine(groupby(df, :year), y .=> mean .=> y);
+        df_yearsum = DataFrames.combine(DataFrames.groupby(df, :year), y .=> mean .=> y);
         return(df_yearsum)
-    end
-
-    
+    end   
 
     function bardf(x::String)
         "with String"
@@ -2353,7 +2601,7 @@ module wa
             ti = raw""
         end
         df[!, :year] = year.(df[!,:date]);
-        df_yearsum = DataFrames.combine(groupby(df, :year), y .=> sum .=> y);
+        df_yearsum = DataFrames.combine(DataFrames.groupby(df, :year), y .=> sum .=> y);
         @df df_yearsum Plots.plot(:year,
             cols(s),
             legend = :topright, 
@@ -2374,7 +2622,7 @@ module wa
             ti = raw""
         end
         df[!, :year] = year.(df[!,:date]);
-        df_yearsum = DataFrames.combine(groupby(df, :year), y .=> sum .=> y);
+        df_yearsum = DataFrames.combine(DataFrames.groupby(df, :year), y .=> sum .=> y);
         @df df_yearsum Plots.plot(:year,
             cols(s),
             legend = :topright, 
@@ -2394,7 +2642,7 @@ module wa
             ti = raw""
         end
             df[!, :year] = year.(df[!,:date]);
-            df_yearsum = DataFrames.combine(groupby(df, :year), y .=> sum .=> y);
+            df_yearsum = DataFrames.combine(DataFrames.groupby(df, :year), y .=> sum .=> y);
             @df df_yearsum Plots.plot(:year,
                 cols(s),
                 legend = :topright, 
@@ -2414,7 +2662,7 @@ module wa
             ti = raw""
         end
         df[!, :year] = year.(df[!,:date]);
-        meandf = DataFrames.combine(groupby(df, :year), y .=> mean .=> y);
+        meandf = DataFrames.combine(DataFrames.groupby(df, :year), y .=> mean .=> y);
         @df meandf Plots.plot(:year,
             cols(s),
             legend = :topright, 
@@ -2434,7 +2682,7 @@ module wa
             ti = raw""
         end
         df[!, :year] = year.(df[!,:date]);
-        df_yearsum = DataFrames.combine(groupby(df, :year), y .=> mean .=> y);
+        df_yearsum = DataFrames.combine(DataFrames.groupby(df, :year), y .=> mean .=> y);
         @df df_yearsum Plots.plot(:year,
             cols(s),
             legend = :topright, 
@@ -2454,7 +2702,7 @@ module wa
             ti = raw""
         end
             df[!, :year] = year.(df[!,:date]);
-            df_yearsum = DataFrames.combine(groupby(df, :year), y .=> mean .=> y);
+            df_yearsum = DataFrames.combine(DataFrames.groupby(df, :year), y .=> mean .=> y);
             @df df_yearsum Plots.plot(:year,
                 cols(s),
                 legend = :topright, 
@@ -2474,7 +2722,7 @@ module wa
             ti = raw""
         end
             df[!, :year] = year.(df[!,:date]);
-            df_yearsum = DataFrames.combine(groupby(df, :year), y .=> mean .=> y);
+            df_yearsum = DataFrames.combine(DataFrames.groupby(df, :year), y .=> mean .=> y);
             @df df_yearsum Plots.plot!(:year,
                 cols(s),
                 legend = :topright, 
@@ -2545,14 +2793,14 @@ module wa
             dfs))]
     end
 
+    """
+    for namestring, see as dfilter
+    selects df from dfvector...
+    same as getdf
+    example:
+    filterdf("clou",dfs)|>bardfm 
+    """
     function filterdf(str::AbstractString,dfs::Vector{DataFrame})
-        """
-        for namestring, see as dfilter
-        selects df from dfvector...
-        same as getdf
-        example:
-        filterdf("clou",dfs)|>bardfm 
-        """
         df = dfs[map(n->occursin(Regex(str,"i"),n),
             map(x->basename(only(DataFrames.metadata(x))[2]),
             dfs))] |> first
@@ -2672,7 +2920,7 @@ module wa
         y = filter(x->!occursin("date",x),names(df))
         s = map(y -> Symbol(y),y)
         df[!, :month] = month.(df[!,:date]);
-        df_monthsum = DataFrames.combine(groupby(df, :month), y .=> sum .=> y);
+        df_monthsum = DataFrames.combine(DataFrames.groupby(df, :month), y .=> sum .=> y);
         return(df_monthsum)
     end
 
@@ -2681,7 +2929,7 @@ module wa
         y = filter(x->!occursin("date",x),names(df))
         s = map(y -> Symbol(y),y)
         df[!, :month] = month.(df[!,:date]);
-        df_monthsum = DataFrames.combine(groupby(df, :month), y .=> sum .=> y);
+        df_monthsum = DataFrames.combine(DataFrames.groupby(df, :month), y .=> sum .=> y);
         return(df_monthsum)
     end
 
@@ -2690,16 +2938,19 @@ module wa
         y = filter(x->!occursin("date",x),names(df))
         s = map(y -> Symbol(y),y)
         df[!, :month] = month.(df[!,:date]);
-        dmean = DataFrames.combine(groupby(df, :month), y .=> mean .=> y);
+        dmean = DataFrames.combine(DataFrames.groupby(df, :month), y .=> mean .=> y);
         return(dmean)
     end
 
+    """
+    DataFrames.combine(DataFrames.groupby(df, :month), y .=> mean .=> y)
+    """
     function monmean(x::DataFrame)
         df = copy(x)
         y = filter(x->!occursin("date",x),names(df))
         s = map(y -> Symbol(y),y)
         df[!, :month] = month.(df[!,:date]);
-        dmean = DataFrames.combine(groupby(df, :month), y .=> mean .=> y);
+        dmean = DataFrames.combine(DataFrames.groupby(df, :month), y .=> mean .=> y);
         return(dmean)
     end
 
@@ -2707,7 +2958,7 @@ module wa
     running monthly mean...
     rmm(x::DataFrame;fun=mean)
     can also be sum. 
-    dfr(r"qbas")|>i->wa.rmm(i;fun=sum)|>cmk.dfp
+    dfr(r"qbas")|>i->rmm(i;fun=sum)|>cmk.dfp
     """
     function rmm(x::DataFrame;fun=mean)
         # Ensure the date column is of type Date
@@ -2900,11 +3151,19 @@ module wa
         #cd(owd)
     end
 
-    function reorder_df(df::DataFrame)
-        """
-        date to last position
-        """
-        df = hcat(df[!,Not(Cols(r"date"))],df[:,Cols(r"date")])
+    
+    
+    """
+    date to last/first position
+    df = select(df, Not(:date), :)
+    """
+    function reorder_df(df::DataFrame,tofirst::Bool=false)
+        if tofirst
+            df = select(df, :date, :)
+        else
+            df = select(df, Not(:date), :)
+        end
+        #df = hcat(df[!,Not(Cols(r"date"))],df[:,Cols(r"date")])
         return(df)
     end
 
@@ -3016,6 +3275,9 @@ module wa
         end
     end
 
+    """
+    reads qgko files and returns a vector of DataFrames
+    """
     function qall(;recursive=false)
         if recursive
             files = rglob("qgko")
@@ -3138,10 +3400,10 @@ module wa
         return p
     end
 
+    """
+    sim obs plot rglob regex
+    """
     function theplot(x::Regex)
-        """
-        sim obs plot rglob regex
-        """
         x = first(rglob(x))
         df = DataFrame(CSV.File(x))
         nm=names(df)[end-1] #lastbefore column (qobs)
@@ -3234,7 +3496,7 @@ module wa
         #@printf("Searching for KGE values > 0.3 in files matching pattern %s\n", path)
         for file in filter(file -> endswith(file, "_output.txt"), readdir(path))
             #output = read(file, String)
-            output = DelimitedFiles.readdlm(file,'\t', String)
+            output = readdlm(file,'\t', String)
             #match = occursin(r"KGE.*[0-9].[3-9]", output)
             match = Grep.grep(r"KGE.*[0-9].[3-9]",output)
             if !isempty(match)
@@ -3256,7 +3518,7 @@ module wa
         files = rglob(r"_output.txt|_outputjl") #recurse
         @printf("Searching for KGE values > 0.3 in files matching pattern %s\n", path)
         for file in filter(file -> endswith(file, "_output.txt"), files)
-            output = DelimitedFiles.readdlm(file,'\t', String)
+            output = readdlm(file,'\t', String)
             match = Grep.grep(r"KGE.*[0-9].[3-9]",output)
             if !isempty(match)
                 fn = first(split(file,"_qout"))
@@ -3274,7 +3536,7 @@ module wa
         files = rglob(r"_output.txt|_outputjl") #recurse
         @printf("Searching for NSE values > 0.3 in files matching pattern %s\n", path)
         for file in filter(file -> endswith(file, "_output.txt"), files)
-            output = DelimitedFiles.readdlm(file,'\t', String)
+            output = readdlm(file,'\t', String)
             match = Grep.grep(r"NSE.*[0-9].[3-9]",output)
             if !isempty(match)
                 fn = first(split(file,"_qout"))
@@ -3291,7 +3553,7 @@ module wa
         path = pwd()
         files = glob(r"_output.txt|_outputjl") #non-recurse
         for file in filter(file -> endswith(file, "_output.txt"), files)
-            output = DelimitedFiles.readdlm(file, '\t', String)
+            output = readdlm(file, '\t', String)
             match = Grep.grep(r"mNSE", output)
             if !isempty(match)
                 fn = first(split(file, "_qout"))
@@ -3378,7 +3640,7 @@ module wa
         try
             for file in filter(file -> endswith(file, "_output.txt"), readdir(path))
                 #output = read(file, String)
-                output = DelimitedFiles.readdlm(file,'\t', String)
+                output = readdlm(file,'\t', String)
                 #match = occursin(r"KGE.*[0-9].[3-9]", output)
                 match = Grep.grep(r"KGE.*[0-9].[3-9]",output)
                 if !isempty(match)
@@ -3425,8 +3687,10 @@ module wa
         #files = [file for file in readdir() if occursin(regex, file)]
     end
 
+    """
+    reads, reduces + merges by date and plots log y-axis
+    """
     function ldfpall(x::Regex)
-        "reads, reduces + merges by date and plots log y-axis"
         files = rglob(x)
         dfs = DataFrame[]
         for file in files
@@ -3471,10 +3735,11 @@ module wa
             end
     end
     
+    """
+    rglob qgko
+    return a vector of DFs
+    """
     function qbb()
-        """
-        return a vector of DFs
-        """
         files = rglob("qgko")
         dfs = []
         for file in files
@@ -3682,7 +3947,7 @@ module wa
         y = filter(x->!occursin(r"date",x),names(df))
         df[!, :year] = year.(df[!,:date]);
         df = df[!,Not(:date)]
-        dy = DataFrames.combine(groupby(df, :year), y .=> sum .=> y);
+        dy = DataFrames.combine(DataFrames.groupby(df, :year), y .=> sum .=> y);
         for row in eachrow(dy)
             pot=row[2]
             real=row[3]
@@ -3849,65 +4114,10 @@ module wa
         # return the modified dataframe
         return df
     end
-    #name1="Brend_Brend_24431002_Unterweissenbrunn_"
-    #replace(name1, r"(\w+)[ _]\1" => s"\1")
-    #replace(name1, r"(\w+)[ _]\1" => s"\1" , "_"=>"-")
 
-    # function tff2(x::Union{Vector{Any},Vector{String}})
-    #     for filename in x
-    #         b = Dict{String, Float64}()
-    #         m = Dict{String, Float64}()
-    #         h = Dict{String, Float64}()
-    #         cnte = Dict{String, Int64}()
-    #         ncols = 0
-
-    #         open(filename) do file
-    #             first_line = true
-                
-
-    #             for (i, line) in enumerate(eachline(file))
-    #                 fields = split(line)
-    #                 if first_line
-    #                     println("filename: $filename")
-    #                     ncols = length(fields)
-    #                     println("no of fields: $ncols")
-    #                     println("year\t$(join(fields[5:end], "\t"))")
-    #                     first_line = false
-    #                     continue
-    #                 end
-
-    #                 if match(r"^\d{4}$", fields[1]) != nothing
-    #                     cnte[match(r"^\d+", fields[1]).match] = get(cnte, match(r"^\d+", fields[1]).match, 0) + 1
-    #                     b[fields[1]] = get(b, fields[1], 0.0) + parse(Float64, replace(fields[5], r"-9999" => "0"))
-    #                     m[fields[1]] = get(m, fields[1], 0.0) + parse(Float64, replace(fields[end-1], r"-9999" => "0"))
-    #                     h[fields[1]] = get(h, fields[1], 0.0) + parse(Float64, replace(fields[end], r"-9999" => "0"))
-    #                 end
-    #             end
-    #         end
-
-    #         if ncols <= 5
-    #             for key in sort(collect(keys(b)))
-    #                 println("$key\t$(@sprintf("%.2f", h[key]))\t| means: $(@sprintf("%.2f", h[key] / cnte[key]))\t| counts: $(cnte[key])")
-    #             end
-    #         elseif ncols == 6
-    #             for key in sort(collect(keys(b)))
-    #                 println("$key\t$(@sprintf("%.2f", b[key]))\t$(@sprintf("%.2f", h[key]))\t| means: $(@sprintf("%.2f", b[key] / cnte[key]))\t$(@sprintf("%.2f", h[key] / cnte[key]))\t| counts: $(cnte[key])")
-    #             end
-    #         elseif ncols >= 7
-    #             for key in sort(collect(keys(b)))
-    #                 println("$key\t$(@sprintf("%.2f", b[key]))\t$(@sprintf("%.2f", m[key]))\t$(@sprintf("%.2f", h[key]))\t| means: $(@sprintf("%.2f", b[key] / cnte[key]))\t$(@sprintf("%.2f", m[key] / cnte[key]))\t$(@sprintf("%.2f", h[key] / cnte[key]))\t| counts: $(cnte[key])")
-    #             end
-    #         end
-    #     end
+    # function ssup()
+    #     include(src_path*"/smallfuncs.jl")
     # end
-
-    #  # f = glob("so")
-    # tff2(f[1:3])
-    # tff2(f[5:10])
-
-    function ssup()
-        include(src_path*"/win/smallfuncs.jl")
-    end
 
     function gofbatch_nosvg()
         println("batch R Script for GOF")
@@ -3933,6 +4143,7 @@ module wa
             display(dfp(df))
             return
         end
+        rename!(df,map(x->replace(x,r"_"=>" "),names(df)))
         ndf = copy(df)
         # rename!(ndf,3=>"date")
         # @warn "last col renamed! !"
@@ -3971,14 +4182,17 @@ module wa
         return p
     end
 
+    """
+    wrapper for kge_read(pwd(),"outjl")
+    """
     function kge_fread()
         kge_read(pwd(),"outjl");
     end
 
-    function baryrsum(df::Regex)
-        """
-        automatically sums if only datecolumn is available
-        """
+    """
+    automatically sums if only datecolumn is available
+    """
+    function baryrsum(df::Regex;leg=:outertopright,kw...)
         #getm(waread)
         df = waread(df)
         v = map(
@@ -3998,17 +4212,26 @@ module wa
             @warn "No basename in metadata!"
             ti = "Series of "*basename(pwd())
         end
+
+        if length(df.year) > 20
+            lentime = size(df,1)
+            slice_dates = range(1, lentime, step=lentime ÷ 8)
+            yrticks = (slice_dates, df.year[slice_dates])
+        else
+            yrticks = df.year
+        end
+
         @df df groupedbar(df.year,cols(s), 
-        legend = :outertopright,
-        xticks = df.year,
+        legend = leg,
+        xticks = yrticks[2],
         xrotation = 45,
-        xlabel = "", ylabel = "[mm]", title = ti)
+        xlabel = "", ylabel = "[mm]", title = ti;kw...)
     end
 
-    function baryrsum(df::DataFrame)
-        """
-        automatically sums if only datecolumn is available
-        """
+    """
+    automatically sums if only datecolumn is available
+    """
+    function baryrsum(df::DataFrame;leg=:outertopright,kw...)
         v = map(
             (x->occursin(r"date", x) & !occursin(r"year", x)),
             (names(df))
@@ -4021,7 +4244,7 @@ module wa
             # inplace yrsum:
             # y = filter(x->!occursin("date",x),names(df))
             # df[!, :year] = year.(df[!,:date])
-            # df = DataFrames.combine(groupby(df, :year), 
+            # df = DataFrames.combine(DataFrames.groupby(df, :year), 
             #     y .=> sum .=> y)
         end
         
@@ -4031,13 +4254,25 @@ module wa
             basename(pwd())*" $z"
         catch
             @warn "No basename in metadata!"
-            ti = "Series of "*basename(pwd())
+            "Series of "*basename(pwd())
         end
+
+        if length(df.year) > 20
+            lentime = size(df,1)
+            slice_dates = range(1, lentime, step=lentime ÷ 8)
+            yrticks = (slice_dates, df.year[slice_dates])
+            #hacky.
+            #yrticks = vcat(yrticks[2],last(df.year))
+        else
+            yrticks = df.year
+        end
+        
         @df df groupedbar(df.year,cols(s), 
-        legend = :outertopright,
-        xticks = df.year,
+        legend = leg,
+        xticks = yrticks[2],
         xrotation = 45,
-        xlabel = "", ylabel = "[mm]", title = ti)
+        xlabel = "", ylabel = "[mm]", title = ti;kw...)
+        #xticks!(df.year,yrticks)
     end
 
     function baryr(df::DataFrame)
@@ -4058,10 +4293,18 @@ module wa
             @warn "No basename in metadata!"
             ti = "Series of "*basename(pwd())
         end
+        
+        if length(df.year) > 20
+            lentime = size(df,1)
+            slice_dates = range(1, lentime, step=lentime ÷ 8)
+            yrticks = (slice_dates, df.year[slice_dates])
+        else
+            yrticks = df.year
+        end
+
         @df df groupedbar(df.year,cols(s), 
-        #group = s,#repeat(s, outer = size(df, 1)),
         legend = :outertopright,
-        xticks = df.year,
+        xticks = yrticks[2],
         xrotation = 45,
         xlabel = "", ylabel = "[mm]", title = ti)
     end
@@ -4125,10 +4368,14 @@ module wa
         return df
     end
 
+    """
+    non-recursive kge read
+    ```
+    df = kge_df3()
+    dsbar(df)
+    ```
+    """
     function kge_df3()
-        """
-        should be non-recursive
-        """
         x1=r"qoutjl"
         files = filter(file -> occursin(x1,file),
             readdir()[
@@ -4159,14 +4406,26 @@ module wa
         end
         return(v)
     end
-
+    
+    """
+    ```
+    df = kge_df3()
+    dsbar(df)
+    ```
+    """
     function dsbar(ds::DataFrame)
-        ds.name=map(x->replace(x,r"-qoutjl*" => ""),ds.name)
+        ds.name=map(x->replace(x,
+            r"-qoutjl*" => "",
+            r"_"=>" "),
+            #r"_*."=>""),
+            ds.name)
         ann = map(x->string.(round(x;sigdigits=1)),ds.KGE)
         bar(ds.name, ds.KGE, xlabel = "Name", ylabel = "KGE", legend = false, 
-            title = splitpath(pwd())|>last, xrotation = 45, fmt = :png, size = (800, 600), 
+            title = splitpath(pwd())|>last, xrotation = 45, 
+            #fmt = :png, 
+            size = (800, 600), 
             fillcolor = ifelse.(ds.KGE .> 0, "cornflowerblue", "coral2"),
-            annotations = (ds.name,ds.KGE, ann, :top),
+            annotations = (ds.name, ds.KGE, ann),
             bar_width = 0.6)
     end
 
@@ -4758,12 +5017,28 @@ module wa
     ##nope, bad idea
     # run(`cmd \c pwd";" exit`)
 
+    function kgegrep()
+        #files = glob(r"_output.txt|_outputjl") #non-recurse
+        for file in filter(file -> endswith(file, "_output.txt"), readdir())
+            match = grep(r"KGE", readlines(file))
+            if !isempty(match)
+                fn = first(split(file, "_qout"))
+                for line in sort(match, by = x -> parse(Float64, split(x)[end]);rev=true)
+                    line = strip(line)  # remove leading and trailing whitespace
+                    line = join(split(line), " ")  ##remove inner whitespaces
+                    printstyled(rpad("$fn:", 45), lpad("$line\n", 10), color = :green)
+                end
+            end
+        end
+    end
+
+
     function rsqgrep()
         path = pwd()
         files = glob(r"_output.txt|_outputjl")
         @printf("Searching for R² values > 0.3 in files matching pattern %s\n", path)
         for file in filter(file -> endswith(file, "_output.txt"), files)
-            output = DelimitedFiles.readdlm(file, '\t', String)
+            output = readdlm(file, '\t', String)
             match = Grep.grep(r"R2.*[0-9].[3-9]", output)
             if !isempty(match)
                 fn = first(split(file, "_qout"))
@@ -4776,73 +5051,11 @@ module wa
         end
     end
 
-    #rsqgrep()
+
     function rsq(x::AbstractVector, y::AbstractVector)
         cor(x, y)^2
     end
-
-    function kgegrep()
-        path = pwd()
-        files = glob(r"_output.txt|_outputjl") #non-recurse
-        #@printf("Searching for KGE values > 0.3 in files matching pattern %s\n", path)
-        for file in filter(file -> endswith(file, "_output.txt"), files)
-            output = DelimitedFiles.readdlm(file, '\t', String)
-            #match = Grep.grep(r"KGE.*[0-9].[3-9]", output)
-            match = Grep.grep(r"KGE", output)
-            if !isempty(match)
-                fn = first(split(file, "_qout"))
-                for line in sort(match, by = x -> parse(Float64, split(x)[end]);rev=true)
-                    line = strip(line)  # remove leading and trailing whitespace
-                    line = join(split(line), " ")  ##remove inner whitespaces
-                    printstyled(rpad("$fn:", 45), lpad("$line\n", 10), color = :green)
-                end
-            end
-        end
-    end
-
-    # function nsegrep()
-    #     """
-    #     ...sort try... but... hmm
-    #     When j=1, the modified NSeff is not inflated by the squared values 
-    #     of the differences, because the squares are replaced 
-    #     by absolute values.
-    #     """
-    #     path = pwd()
-    #     #match = Dict(SubString{String}, Vector{String})
-    #     match = []
-    #     files = glob(r"_output.txt|_outputjl") #non-recurse
-    #     #@printf("Searching for values > 0.3 in files matching pattern %s\n", path)
-    #     for file in filter(file -> endswith(file, "_output.txt"), files)
-    #         output = DelimitedFiles.readdlm(file, '\t', String)
-    #         DataFrame(output[4:end,:],:auto)
-
-
-    #         fn = first(split(file, "_qout"))
-    #         #append!(match,fn)
-    #         m = [fn,Grep.grep(r"mNSE", output)]
-    #         append!(match,m)
-    #     end
-    #         if !isempty(match)
-    #             split_elements = [split(string(item[1])) for item in match]
-    #             sort!(split_elements, by = x -> parse(Float64, x[end]);rev=true)
-    #             # Combine the sorted elements into a string
-    #             #combined_string = join([join(item, "     ") for item in split_elements], "\n")
-    #             combined_string = [join(item, "     ") for item in split_elements]
-    #             for line in combined_string
-    #                 line = strip(line)  # remove leading and trailing whitespace
-    #                 line = join(split(line), " ")  ##remove inner whitespaces
-    #                 printstyled(rpad("$fn:", 55), lpad("$line\n", 10), color = :green)
-    #             end
-    #         end
-    #     #end
-    # end
-
-    # z=glob(r"_output.txt|_outputjl")|>first
-    # m=Grep.grep(r"mNSE", DelimitedFiles.readdlm(z, '\t', String))
-    # m=only(m)
-    # parse(Float64, split(m)[end])
-
-
+ 
     function baryrsum(df::Regex)
         """
         automatically sums if only datecolumn is available
@@ -4901,10 +5114,10 @@ module wa
         xlabel = "", ylabel = "[mm]", title = ti)
     end
 
+    """
+    automatically sums if only datecolumn is available
+    """
     function baryrmean(df::DataFrame;leg=:outertopright)
-        """
-        automatically sums if only datecolumn is available
-        """
         v = try map(
             (x->occursin(r"date", x) & !occursin(r"year", x)),
             (names(df))
@@ -4934,19 +5147,22 @@ module wa
     end
 
     """
-    kge barplot 
+    kge barplot, whith color threshold
+    ```	
+    ds = kge_df3()
+    kgeval(ds::DataFrame;threshold::Float64=0.41)
+    ```
     """
-    function kgeval()
-        ds = kge_df3()
+    function kgeval(ds::DataFrame;threshold::Float64=0.41,miny::Float64=-1.0,maxy::Float64=0.5)
         ds.name=map(x->replace(x,r"-qoutjl.*" =>"","_" => " "),ds.name)
         ann = map(x->string.(round(x;sigdigits=2)),ds.KGE)
         p1 = Plots.bar(ds.name, ds.KGE, xlabel = "Name", ylabel = "KGE", legend = false, 
             title = splitpath(pwd())|>last, 
             xrotation = 45, 
             #fmt = :png,
-            ylims = (extrema(ds.KGE) .+ [-1.0, 0.5]),  
+            ylims = (extrema(ds.KGE) .+ [miny,maxy]),  
             size = (800, 600), 
-            fillcolor = ifelse.(ds.KGE .> 0, "cornflowerblue", "coral2"),
+            fillcolor = ifelse.(ds.KGE .> threshold, "cornflowerblue", "coral2"),
             #annotations = (ds.name,ds.KGE, ann, :top),
             xaxis = "",
             left_margin = 10mm,
@@ -4961,39 +5177,10 @@ module wa
         return p1
     end
 
-    # """
-    # kge barplot 
-    # takes Vector{Any} as input from wa.pout
-    # """
-    # function kgdf(ds::Vector{Any})
-        
-    #     ds.name=map(x->replace(x,r"-qoutjl.*" =>"","_" => " "),ds.name)
-    #     ann = map(x->string.(round(x;sigdigits=2)),ds.KGE)
-    #     p1 = Plots.bar(ds.name, ds.KGE, xlabel = "Name", ylabel = "KGE", legend = false, 
-    #     title = splitpath(pwd())|>last, 
-    #     xrotation = 45, 
-    #     fmt = :png, 
-    #     size = (800, 600), 
-    #     fillcolor = ifelse.(ds.KGE .> 0, "cornflowerblue", "coral2"),
-    #     #annotations = (ds.name,ds.KGE, ann, :top),
-    #     xaxis = "",
-    #     left_margin = 10mm,
-    #     bottom_margin = 15mm, 
-    #     bar_width = 0.6);
-
-    #     for i in 1:length(ds.name)
-    #         Plots.annotate!(ds.name[i],ds.KGE[i],(ann[i],11,
-    #             :center,:top,:black))
-    #         #println(ann[i]*" added")
-    #     end
-    #     return p1
-    # end
-
-
+    """
+    nse barplot with values > 0
+    """
     function nseval()
-        """
-        nse barplot with values > 0
-        """
         ds = kge_df3()
         ds.name=map(x->replace(x,r"-qoutjl.*" =>"","_" => " "),ds.name)
         dfi = filter(row -> row.NSE .> 0, ds)
@@ -5071,12 +5258,12 @@ module wa
     """
     calculates water balance and displays
     """
-    function waba2()
+    function waba2(;ann=true,returnDF=false)
         begin
             af = filter(x -> occursin(r"^so_", x), readdir(pwd()))
             if length(af) <= 2 || any(ismissing.(af))
                 error("match failed \n ... abort.\nno special output files present!")
-                exit(86)
+                return #exit(86)
             end
         
             println("calculating yearly water balance of WaSiM special output data..\n
@@ -5146,12 +5333,23 @@ module wa
         ti="water-balance of "*basename(pwd())
         #theme(:vibrant)
         #theme(:wong)
-        #theme(:dao)       #latex fonts.
-        theme(:mute)
+        #Plots.theme(:dao)       #latex fonts.
+        #theme(:mute)
         #theme(:sand)
-        ann = map(x->string.(round(x;sigdigits=3))*" [mm]",bw.bw)
+        
         fact=.60
         plotsize = (1600*fact,800*fact)
+        #yrticks = nrow(bw) > 20 ? bw.year[bw.year .% 5 .== 0] : bw.year
+        
+        if length(bw.year) > 20
+            lentime = size(bw,1)
+            slice_dates = range(1, lentime, step=lentime ÷ 8)
+            yrticks = (slice_dates, bw.year[slice_dates])
+        else
+            yrticks = bw.year
+        end
+        
+        
         p1 = @df bw Plots.plot(
             :year,:bw,
             #annotations =(bw.year, bw.bw, ann, :top),
@@ -5159,7 +5357,10 @@ module wa
             #annotations = (bw.year, bw.bw, ann, 8, :left, :top, :black),
             legend = false, 
             seriestype=:bar,
-            xticks = bw.year,
+            #xticks = bw.year,
+            # more than 20 years, every 5th year one tick
+            xticks = yrticks,            
+            #xticks = ifelse.(nrow(bw)>20, bw.year .% 5,bw.year),            
             xtickfont = 12,
             xlabel = "",
             ylabel = "[mm]",
@@ -5173,15 +5374,21 @@ module wa
             #bottom_margin = 10px, 
             xrotation = 45)
             
-        #Plots.annotate!(bw.year,bw.bw,(ann,10,:left,:top,:black))
-                    #text("hey", 14, :left, :top, :green)
-        for i in 1:length(bw.year)
-            Plots.annotate!(bw.year[i],bw.bw[i],(ann[i],10,:center,:top,:black))
-            #println(ann[i]*" added")
+        if ann
+            annot = map(x->string.(round(x;sigdigits=3))*" [mm]",bw.bw)
+            for i in 1:length(bw.year)
+                Plots.annotate!(bw.year[i],bw.bw[i],(annot[i],10,:center,:top,:black))
+                #println(ann[i]*" added")
+            end
         end
         #display(p1)
-        #return(bw)
-        return p1
+        if returnDF
+            display(p1)
+            return(bw)
+        else
+            return p1
+        end
+
     end
 
     # ##very nice meta programming... move to smallfuncs.jl
@@ -5219,6 +5426,23 @@ module wa
                     line = readline(io)
                     if contains(line, stop)
                         skip(io, length(line))
+                        break
+                    end
+                    push!(output, line)
+                end
+                break
+            end
+        end
+        return output
+    end
+
+    function readbetween(input::String, start::Union{Regex,String}, stop::Union{Regex,String})
+        output = Vector{String}()
+        for line in eachline(input)
+            if occursin(start,line)
+                push!(output, line)
+                for line in eachline(input)
+                    if occursin(stop,line)
                         break
                     end
                     push!(output, line)
@@ -5549,7 +5773,7 @@ module wa
         results = DataFrame(File = String[], KGE = Float64[])  # Create an empty DataFrame to store the results
         
         for file in filter(file -> endswith(file, "_output.txt"), files)
-            output = DelimitedFiles.readdlm(file, '\t', String)
+            output = readdlm(file, '\t', String)
             match = Grep.grep(r"KGE", output)
             
             if !isempty(match)
@@ -5599,11 +5823,11 @@ module wa
 
     #ctlg(pwd(),"txt","weiss")
 
+    """ 
+    renamer - remove beginning char _   
+    and replace it with C
+    """
     function renamer(df::DataFrame)
-        """ 
-        renamer - remove beginning char _   
-        and replace it with C
-        """
         for x in names(df)
             if startswith(x,"_")
             newname=replace(x,"_"=>"C", count=1)
@@ -5618,89 +5842,25 @@ module wa
         return line[1:end-length(flag)]
     end
 
-    # function findindf(df::DataFrame,col,x)
-    #     #filter(row -> contains(col,x), df)
-    #     filter(row -> occursin(Regex(x,"i"),col), df)
-    # end
-    # #filter(row -> contains(row.name,"_qout"), ds)
-    # findindf(df,"name","E")
-    # x="Et"
-    # col="name"
-    # filter(row -> occursin(Regex(x,"i"),df[!,col]), df)
-
-    function findindf(df::DataFrame, x)
-        """
-        like Grep.grep("x",df)
-        Regex(x, "i"), 
-        """
-        filter(row -> any(occursin(x,
-            string(value)) for value in row), 
-                eachrow(df))
-    end
-
-    function findindf(df::DataFrame, x::Regex)
-        """
-        like Grep.grep("x",df)
-        """
+    """
+    like Grep.grep("x",df)
+    """
+    function findindf(df::DataFrame, x::Union{AbstractString,Regex})
         filter(row -> any(occursin(x, 
             string(value)) for value in row), 
                 eachrow(df))
-    end
-
-    # findindf(df,"Et")
-    # findindf(df,"15")
-    # findindf(df,"-")
-    # Grep.grep(r"Et",df.name)
-    # Grep.grep(r"Et",df)
-    # Grep.grep("Et",df)
-
-
-    function agjson(jsonfile::AbstractString)
-        """
-        reads json and transforms points...
-        but AG transformation is wrong :(
-
-
-        ERROR: type UnionAll has no field read
-        works only in WSL
-        """
-        #const AG = ArchGDAL
-
-        geojson_file=jsonfile
-        jsonbytes = read(geojson_file) # read the geojson file as bytes
-        fc = GeoJSON.read(jsonbytes)
-        pts=[]
-        for geom in fc.geometry
-            xc = [(x) for x in geom]|>first|>first
-            yc = [(x) for x in geom]|>first|>last
-            pt = ArchGDAL.createpoint(xc,yc)
-            pt = ArchGDAL.reproject(pt,EPSG(25832),ProjString("+proj=longlat +datum=WGS84 +no_defs"))
-            push!(pts,pt)
-        end
-        # df = [] ##geht auch
-        # for x in pts
-        #     x1 = AG.getpoint(x,0)
-        #     tmp = DataFrame(x=[x1[1]], y=[x1[2]])
-        #     push!(df,tmp)
-        # end
-        # df = reduce(vcat, df) 
-        #Plots.plot(df.x, df.y, seriestype=:scatter)
-        df = DataFrame( 
-            "x" => [AG.getpoint(x,0)[1] for x in pts],
-            "y" => [AG.getpoint(x,0)[2] for x in pts] )
-        return(df)
     end
 
     # works only in current REPL -> see pwc()
     # import InteractiveUtils.clipboard as cb
     # wslpath()|>cb
 
+    """
+    import InteractiveUtils.clipboard
+    wslpath()|>clipboard
+    cb(wslpath())
+    """
     function wslpath()
-        """
-        import InteractiveUtils.clipboard
-        wslpath()|>clipboard
-        cb(wslpath())
-        """
         # Run the `wslpath` command to convert the current directory to a WSL path
         #wsl_cmd = `wsl wslpath -a $(pwd)`
         wsl_cmd = `wsl wslpath -a .`
@@ -5709,10 +5869,10 @@ module wa
         return wsl_path
     end
 
+    """
+    cb(pwd())
+    """
     function pw()
-        """
-        cb(pwd())
-        """
         pt = replace(pwd(),"\\"=> "/")
         println("$pt in clipoard...")
         pt |> clipboard
@@ -5743,10 +5903,10 @@ module wa
         return wsl_path
     end
 
+    """
+    takes first line as header and drops r"[A-z]"
+    """
     function xread(filename::String)
-        """
-        takes first line as header and drops r"[A-z]"
-        """
         ms=["-9999","lin","log","--"]
         df = CSV.read(filename,DataFrame, 
             delim="\t",
@@ -5769,13 +5929,13 @@ module wa
         end
     end  
 
+    """
+    grabs methods
+    asin|>getm  
+    ?asin
+    @code_llvm readf|>getm|>first 
+    """
     function getm(s::Any)
-        """
-        grabs methods
-        asin|>getm  
-        ?asin
-        @code_llvm readf|>getm|>first 
-        """
         methods(s);
     end
 
@@ -5832,11 +5992,11 @@ module wa
     end
 
 
+    """
+    names and size in MB via readdir
+    sorts and stores in df -> biggest files
+    """
     function pfix(m::String)
-        """
-        names and size in MB via readdir
-        sorts and stores in df -> biggest files
-        """
         files = filter(x -> occursin(Regex(m,"i"), x), readdir())
         fzs = [(file, filesize(file) / 2^20) for file in files]
         tot = round(sum(map(x->x[2],fzs));digits=3)
@@ -5846,11 +6006,11 @@ module wa
         return(df)
     end
     
+    """
+    names and size in MB via readdir
+    sorts and stores in df -> biggest files
+    """
     function pfix()
-        """
-        names and size in MB via readdir
-        sorts and stores in df -> biggest files
-        """
         files = readdir()
         fzs = [(file, filesize(file) / 2^20) for file in files]
         tot = round(sum(map(x->x[2],fzs));digits=3)
@@ -5914,7 +6074,10 @@ module wa
     end
 
 
-    function dfbar(df::DataFrame)
+    """
+    retruns df groupedbar(df.date,cols(s),...)
+    """
+    function dfbar(df::DataFrame;kwargs...)
         ti = try
                 DataFrames.metadata(df)|>only|>last|>basename
             catch
@@ -5928,7 +6091,9 @@ module wa
         else    
         s = Symbol.(filter(x->!occursin(r"date|year",x),names(df)))
         #@df df Plots.bar(:date,cols(s),legend = :topright, title=ti)
-        @df df groupedbar(df.date,cols(s), legend = :outertopright, title=ti)
+        @df df groupedbar(df.date,cols(s), 
+            xrotation = 45,
+            legend = :outertopright, title=ti;kwargs...)
         end
     end
 
@@ -5975,7 +6140,7 @@ module wa
     no header column
     """
     function wread(x::String;skip=3)
-        df = DelimitedFiles.readdlm(x, '\t', Float64, '\n';
+        df = readdlm(x, '\t', Float64, '\n';
             header=false,skipstart=skip)
         df = DataFrame(df,:auto)
         for i in 5:size(df,2)
@@ -6000,7 +6165,7 @@ module wa
     function wread(x::Regex;skip=3)
         rgx = glob(x)|>first
         println("loading $rgx ...")
-        df = DelimitedFiles.readdlm(rgx, '\t', Float64, '\n';
+        df = readdlm(rgx, '\t', Float64, '\n';
             header=false,skipstart=skip)
         df = DataFrame(df,:auto)
         for i in 5:size(df,2)
@@ -6018,7 +6183,6 @@ module wa
         metadata!(df, "filename", x, style=:note);
     end
     
-    dfr = waread
 
     """
     grep recursive and looks for matches in files \n
@@ -6093,7 +6257,6 @@ module wa
                 :blue for x in v ./ max_val]  # normalize v here
     end
 
-
     """
     annotated boxplot with monthly mean
     mbx(selt(df,4))
@@ -6123,7 +6286,7 @@ module wa
             whisker_width = :match,
             legend=false)
         xticks!(0.5:11.5 , month_abbr)
-        means = DataFrames.combine(groupby(df,:Month), ln[1] => fun)
+        means = DataFrames.combine(DataFrames.groupby(df,:Month), ln[1] => fun)
         
         for i in eachrow(means)
             m = i[2]
@@ -6206,7 +6369,9 @@ module wa
     end
 
  
-    
+    """
+    DataFrames.combine(df, names(df) .=> sum)
+    """
     function rowsums(df::DataFrame)
         return DataFrames.combine(df, names(df) .=> sum)
     end
@@ -6290,12 +6455,14 @@ module wa
 
     function irfan(fl::String)
         opener="C:/Program Files/IrfanView/i_view64.exe"
-        run(`$opener $fl`)
+        fl_escaped = realpath(fl)
+        cmd = pipeline(`$opener $fl_escaped`)
+        run(cmd)
     end
 
-    function extract_duration_from_xml(xml_file::AbstractString)
-        finished_timestamp = ""
-        start_timestamp = ""
+    function extract_duration_from_xml(xml_file::AbstractString;tocb=true)
+        finished_timestamp = raw""
+        start_timestamp = raw""
     
         # Read the content of the XML file
         content = readlines(xml_file)
@@ -6325,7 +6492,18 @@ module wa
             duration_hours = div(duration_milliseconds, 3_600_000)  # 1 hour = 3,600,000 milliseconds
             duration_minutes = div(rem(duration_milliseconds, 3_600_000), 60_000)  # 1 minute = 60,000 milliseconds
     
-            return (duration_hours, duration_minutes)
+            hrs,min = (duration_hours, duration_minutes)
+
+            if tocb
+                message = "# run took $hrs hrs and $min min..."
+                println(message)
+                clipboard(message)
+                printstyled("msg in clipboard! \n",color=:green)
+                return nothing
+            else
+                return hrs, min
+            end
+                        
         else
             return nothing
         end
@@ -6466,7 +6644,7 @@ module wa
         matched_lines = Vector{String}()
         
         for file in filter(file -> endswith(file, "_output.txt"), files)
-            output = DelimitedFiles.readdlm(file, '\t', String)
+            output = readdlm(file, '\t', String)
             match = Grep.grep(r"KGE", output)
             if !isempty(match)
                 fn = first(split(file, "_qout"))
@@ -6544,7 +6722,7 @@ module wa
     reduces + merges by date + plots all
     pall(files::Vector{DataFrame};toyr=true,leg=:outertopright)
     """
-    function pall(files::Vector{DataFrame};toyr=true,leg=:outertopright)
+    function pall(files::Vector{DataFrame};toyr=true,leg=:outertopright,draw_title=true)
         #files = dfs
         bns = try
             broadcast(x->DataFrames.metadata(x)|>only|>last|>basename,files)
@@ -6588,22 +6766,26 @@ module wa
         end
         
         
-        ti = try
-            #DataFrames.metadata(df)|>only|>last|>basename
-            z = map(x->split(x,".")|>first,bns)
-            if length(z)>5
-                z = z[1:5]
-                "Merged Series"
+        if draw_title
+            ti = try
+                #DataFrames.metadata(df)|>only|>last|>basename
+                z = map(x->split(x,".")|>first,bns)
+                if length(z)>5
+                    z = z[1:5]
+                    "Merged Series"
+                end
+                #"Series of "*join(z," ")
+                join(z," ")
+            catch
+                @warn "No basenames for title"
+            ti = raw""
+                end
+        
+            if length(ti)>30
+                ti = ti[1:30]*"..."
             end
-            #"Series of "*join(z," ")
-            join(z," ")
-        catch
-            @warn "No basenames for title"
-        ti = raw""
-            end
-    
-        if length(ti)>30
-            ti = ti[1:30]*"..."
+        else
+            ti = raw""
         end
     
         if all_values_equal(df[!,Not(Cols(r"date|year|month|day"))])==true
@@ -6640,7 +6822,7 @@ module wa
     """
     climateplot(r"^tem",r"^pre")
     col = subbasin of interest
-    wa.climateplot(r"^temp",r"pre";col="tot_average")
+    climateplot(r"^temp",r"pre";col="tot_average")
     ws. prc and temp tauschen un opacity einstellen....
     """
     function climateplot(temp::Regex,prec::Regex;col="tot_average")
@@ -6701,12 +6883,13 @@ module wa
     col::String name of 
     twinx() dreht komplett alles.
     """
-    function climateplot(temp::DataFrame,prec::DataFrame;col::AbstractString)
-        #col = propertynames(temp)[col]
-        #temp = t
-        
-        #col = first(Symbol.(filter(x->occursin(r"$col"i,x),names(temp))))
-        #prec = pr
+    function climateplot(temp::Union{DataFrame,String},prec::Union{DataFrame,String},col::Union{Symbol,Int,String} = 1)
+        if typeof(temp)==String
+            temp = waread(temp)
+        end
+        if typeof(prec)==String
+            prec = waread(prec)
+        end
         yrs = year.(prec.date)|>unique|>length
         prec = monsum(prec)
         precvec = vec(Matrix(select(prec, col)))
@@ -6893,6 +7076,17 @@ module wa
         return vec(Matrix(df))
     end
 
+    """
+    Get the last column of a DataFrame 
+    Column to a Vector
+    """
+    function lastcol(x::DataFrame)
+        df = x[:, [end]]
+        println(names(df))
+        return vec(Matrix(df))
+    end
+    
+
     # """
     # prints out the function definition
     # """
@@ -6942,7 +7136,7 @@ module wa
             return(a)
         end
         
-        #output = DelimitedFiles.readdlm(filename,';', String)
+        #output = readdlm(filename,';', String)
         data = Grep.grep(r"^th.*|^[0-9]",data)
         data = broadcast(x -> replace(x,    
                 r"^#.*" => "",
@@ -6993,7 +7187,7 @@ module wa
     """
     function read_soildata_raw(filename::String)
 
-        data = DelimitedFiles.readdlm(filename,';', String)
+        data = readdlm(filename,';', String)
         data = Grep.grep(r"^th.*|^[0-9]",data)
         data = broadcast(x -> replace(x,    
                 r"^#.*" => "",
@@ -7301,58 +7495,6 @@ module wa
         end
     end
 
-    """
-    reads stationdata
-    """
-    function stp(fn::String;repro=false)
-        fl = CSV.read(fn,DataFrame;limit=4)
-        xc = fl[2,5:end]|>collect
-        yc = fl[3,5:end]|>collect
-        pts = ArchGDAL.IGeometry[]
-        if repro #projects to 4326
-            for i in 1:length(xc)
-                pt = ArchGDAL.createpoint([xc[i],yc[i]])
-                pt = ArchGDAL.reproject(pt,EPSG(25832),ProjString("+proj=longlat +datum=WGS84 +no_defs"))
-                push!(pts,pt)
-            end
-        else
-            for i in 1:length(xc)
-                pt = ArchGDAL.createpoint([xc[i],yc[i]])
-                #pt = AG.reproject(pt,EPSG(25832),ProjString("+proj=longlat +datum=WGS84 +no_defs"))
-                push!(pts,pt)
-            end
-        end
-        nd = DataFrame(geometry=pts, name=propertynames(fl)[5:end], xc=xc, yc=yc)
-        return nd
-    end
-
-    stread=stp
-
-    """
-    reads from stationdata, reprojects and plots
-    """
-    function stplot(fn::String)
-        fl = CSV.read(fn,DataFrame;limit=4)
-        xc = fl[2,5:end]|>collect
-        yc = fl[3,5:end]|>collect
-        pts = ArchGDAL.IGeometry[]
-        for i in 1:length(xc)
-            pt = ArchGDAL.createpoint([xc[i],yc[i]])
-            pt = ArchGDAL.reproject(pt,EPSG(25832),ProjString("+proj=longlat +datum=WGS84 +no_defs"))
-            push!(pts,pt)
-        end
-        od = DataFrame(geometry=pts, name=propertynames(fl)[5:end], xc=xc, yc=yc)
-        p = plot(od.geometry);
-        for (i, pt) in enumerate(od.geometry)
-            #x = od.xc[i]
-            x = ArchGDAL.getx(od.geometry[i], 0)
-            #y = od.yc[i]
-            y = ArchGDAL.gety(od.geometry[i], 0)
-            name = od.name[i]
-            annotate!(x, y, text(name, 8, :black, :bottom, :left))
-        end
-        return plot!(p)
-    end
 
     """
     runs inside REPL
@@ -7663,7 +7805,7 @@ module wa
         files = v[(broadcast(x->occursin(path,x),v))];
         dfs::Vector{DataFrame} = []
         for file in files
-            if isfile(file) && (!occursin(r"xml$|fzt$|ftz$|log$|ini$|^wq|yrly$|nc$|png$|svg$",file))
+            if isfile(file) && (!occursin(r"txt$|xml$|fzt$|ftz$|log$|ini$|^wq|yrly$|nc$|png$|svg$",file))
                 file_path = file
                 println("reading ",file_path,"...")
                 #p1 = waread(file_path)
@@ -7887,43 +8029,17 @@ module wa
     end
 
     """
-    adds points to an existing plot from a specfile
-    """
-    function addplot(specfile::String)
-        fl = CSV.read(specfile,DataFrame;limit=4)
-        xc = fl[2,5:end]|>collect
-        yc = fl[3,5:end]|>collect
-        pts = ArchGDAL.IGeometry[]
-        for i in 1:length(xc)
-            pt = ArchGDAL.createpoint([xc[i],yc[i]])
-            #pt = ArchGDAL.reproject(pt,EPSG(25832),ProjString("+proj=longlat +datum=WGS84 +no_defs"))
-            push!(pts,pt)
-        end
-        od = DataFrame(geometry=pts, name=propertynames(fl)[5:end], xc=xc, yc=yc)
-        Plots.plot!(od.geometry;c=:black,shape = :x) #:utriangle)
-        for (i,pt) in enumerate(od.geometry)
-            x = ArchGDAL.getx(od.geometry[i], 0)
-            y = ArchGDAL.gety(od.geometry[i], 0)
-            name = od.name[i]
-            #Plots.text(name,:consolas, 8, :black, :bottom, :left)
-            #Plots.annotate!(x, y, Plots.text(name, 8, :black, :bottom, :left))
-            Plots.annotate!(x, y, Plots.text(name, 8, :black, :bottom, :left))
-        end
-        Plots.plot!()
-    end
-
-    """
     plots a df and applies a function
-        default: monmean
-        monsum, yrsum, yrmean
-        mode can be :bar, :scatter, :line, :steppre, :steppost,
-        :hist, :box
+    default: monmean
+    monsum, yrsum, yrmean
+    mode can be :bar, :scatter, :line, :steppre, :steppost,
+    :hist, :box
 
-        wa.dfm(s;fun=yrsum,mode=:scatter,leg=false)
-        wa.dfm(s;fun=monmean,mode=:box,leg=false)
+    dfmo(s;fun=yrsum,mode=:scatter,leg=false)
+    dfmo(s;fun=monmean,mode=:box,leg=false)
 
     """
-    function dfmo(x::Union{Regex,String,DataFrame};leg = :topright, fun=wa.monmean,mode=:line)
+    function dfmo(x::Union{Regex,String,DataFrame};leg = :topright, fun=monmean,mode=:line)
         if isa(x,DataFrame)
             df = (x)
         else
@@ -7965,13 +8081,14 @@ module wa
                 1:12, monthabbr.(1:12))
         end
         return p1
-    end   
+    end
+    
     
     """
     takes first two cols of df and plots r2 QQ
     """
     function qplot(x::Regex, y::Regex)
-        df1,df2 = map(z->wa.waread(z),[x,y])
+        df1,df2 = map(z->waread(z),[x,y])
         # df1 = waread(x)
         # df2 = waread(y)
         
@@ -8011,11 +8128,6 @@ module wa
         #halign=:center, rotation=-35.0))
     end
 
-    """
-    uses plotly.R to plot a raster
-    takes first match in current folder
-    no nc filter!
-    """
     function jsrast(R::String)
         rpath="/mnt/d/Fernerkundungsdaten/Klassifikation/R-Sessions"
         run(`wsl -d Ubuntu-18.04 -e Rscript "$rpath/plotly_rast.R" $R`)
@@ -8072,8 +8184,6 @@ module wa
         end
     end
 
-
-
     """
     find LOG. R-SQUARE > .4 recursivley
     """
@@ -8122,8 +8232,10 @@ module wa
 
 
     
-    """with DataFrame input"""
-    function bardf(x::DataFrame;leg=:topright)
+    """
+    with DataFrame input
+    """
+    function bardf(x::DataFrame;leg=:topright, kw...)
             df = copy(x)
             y = filter(x->!occursin(r"date|year|month",x),names(df))
             s = map(y -> Symbol(y),y)
@@ -8134,7 +8246,7 @@ module wa
             ti = raw""
         end
             #df[!, :year] = year.(df[!,:date]);
-            #df_yearsum = DataFrames.combine(groupby(df, :year), y .=> sum .=> y);
+            #df_yearsum = DataFrames.combine(DataFrames.groupby(df, :year), y .=> sum .=> y);
         nm = filter(x->occursin(r"date|year|month",x),
             names(df))|>first
         
@@ -8142,7 +8254,7 @@ module wa
                 cols(s),
                 legend = leg, 
                 title = ti,
-                seriestype=:bar)
+                seriestype=:bar, kw...)
     end
 
     function colsums(df::DataFrame)
@@ -8225,17 +8337,19 @@ module wa
     - mode: Symbol - Plot mode, can be :bar, :scatter, :line, :steppre, :steppost, :hist, :box; default is :line.
     - log: Bool - Logarithmic y-axis, default is false.
     - title: Bool - Title of the plot, default is true.
+    kwargs... passed to plot
     Example Usage:
     dfm(s; fun=yrsum, mode=:scatter, leg=false)
     wa.dfm(r"qbas";mode=:steppre,leg=:outertopright,ann=false)
     """
     function dfm(x::Union{Regex, String, DataFrame}; 
-        ann = true, 
+        ann = false, 
         log = false, 
         title = true,
         leg = false,  
-        fun = wa.monmean, 
-        mode=:line)
+        fun = monmean, 
+        mode=:line,
+        kwargs...)
         if isa(x, DataFrame)
             df = x
         else
@@ -8268,7 +8382,7 @@ module wa
                 cols(ln),
                 legend = leg,
                 title = ti,
-                seriestype = mode)
+                seriestype = mode;kwargs...)
             #return p1
         else
             # Annotate column names along the lines
@@ -8455,15 +8569,16 @@ module wa
 
     """
     adds trendlines to plot
-    tline(df::DataFrame, date_col::Symbol;lab=true)
+    tline(df::DataFrame, dtcol::Symbol;lab=true)
     lab sets the trendline equation as label
     """
-    function tline(df::DataFrame, date_col::Symbol=:date;lab=true)
+    function tline(df::DataFrame, dtcol::Symbol=:date;lab=true)
         # Get the date column and column names for trendlines
-        date_data = df[!, date_col]
-        trendline_cols = setdiff(names(df), [string.(date_col)])
+        date_data = df[!, dtcol]
+        trendline_cols = setdiff(names(df), [string.(dtcol)])
     
-        p = plot()
+        # Create a new plot
+        p = Plots.plot();
     
         # Initialize an empty string to store the trendline equations
         trendline_equations = ""
@@ -8483,17 +8598,51 @@ module wa
             trendline(x) = intercept + slope * x
             # Add the trendline equation to the trendline_equations string
             #trendline_equations *= "$y_col: y = $(round(slope, digits=2))x + $(round(intercept, digits=2))\n"
-            if lab
+        if lab
                 trendline_equations = "$y_col\ny = $(round(slope; sigdigits=2))x + $(round(intercept, sigdigits=1))"
-            else
+        else
                 trendline_equations = false
-            end
+        end
     
-            # plot
-            plot!(p ,date_data, 
-                trendline.(1:length(date_data)), 
-                label=trendline_equations,
-                linewidth=2, linestyle=:dash)
+            # plot!(p, date_data, 
+            #     trendline.(1:length(date_data)), 
+            #     label=trendline_equations,
+            #     linewidth=2, linestyle=:dash)
+       
+
+            # Find the indices where the year changes
+    # change_indices = findall(diff(Dates.year.(date_data)) .!= 0)
+
+    # # Add the first index and the last index
+    # indices = [1; change_indices; length(date_data)]
+
+    # # Convert the years to strings
+    # yr_str = string.(Dates.year.(date_data)[indices])
+    
+    # Set the x-ticks to the indices where the year changes, and label them with the corresponding years
+    #xticks!(p, indices, yr_str; xrotation=45)
+         
+    Plots.plot!(p,date_data, 
+            trendline.(1:length(date_data)), 
+            label = trendline_equations,
+            #xticks = (indices,yr_str),
+            xlims = (minimum(date_data), maximum(date_data)),
+            linewidth=2, linestyle=:dash)
+
+        #     lentime = size(date_data,1)
+        # slice_dates = range(1, lentime, step=lentime ÷ 8)
+        # yrs = Dates.year.(date_data)
+        # yrticks = (slice_dates, yrs[slice_dates])
+
+
+        # # Find the indices where the year changes
+        # change_indices = findall(diff(Dates.year.(date_data)) .!= 0)
+        # # Add the first index and the last index
+        # indices = [1; change_indices; length(date_data)]
+        # # Convert the years to strings
+        # yr_str = string.(Dates.year.(date_data)[indices])
+        # # Set the x-ticks to the indices where the year changes, and label them with the corresponding years
+        # xticks!(p, indices, yr_str; xrotation=45)
     
             
         end
@@ -8503,11 +8652,12 @@ module wa
 
     """
     adds trendlines to existing plot
+    (df::DataFrame; dtcol=:date, lab=false)
     """
-    function tline!(df::DataFrame; date_col=:date)
+    function tline!(df::DataFrame; dtcol=:date, lab=false)
         # Get the date column and column names for trendlines
-        date_data = df[!, date_col]
-        trendline_cols = setdiff(names(df), [string.(date_col)])
+        date_data = df[!, dtcol]
+        trendline_cols = setdiff(names(df), [string.(dtcol)])
     
         # get the last viewed plot # yes.wrks.
         p = current()
@@ -8525,13 +8675,20 @@ module wa
     
             # Generate the trendline function using the linear equation
             trendline(x) = intercept + slope * x
+            if lab
+                trendline_equations = "$y_col\ny = $(round(slope; sigdigits=2))x + $(round(intercept, sigdigits=1))"
+            else
+                trendline_equations = false
+            end
+
     
             # Add the trendline to the plot
             p = Plots.plot!(date_data, 
                 trendline.(1:length(date_data)), 
-                #label="$y_col Trendline", 
-                label=false,
-                linewidth=2, linestyle=:dash)
+                label = trendline_equations, 
+                legend = :outertopright,
+                linewidth=2,
+                linestyle=:dash)
         end
     
         return p
@@ -8553,20 +8710,27 @@ module wa
                 d = collect(DataFrames.metadata(x))[1][2]
                 cd(dirname(d))
             catch
-                @error "no basename in $x !"
+                @error "no basename in present!"
+                return nothing
             end
         else
-            cd(dirname(x))
+            try
+                cd(dirname(x))
+            catch
+                @error "cd errored!"
+                return nothing
+            end
         end
         d=pwd()
         println("current dir: $d")
     end
+    
 
     """
     reads a DataFrame from a file w dlm and tryparse subsetting
     """
     function read_df(s::String)
-        data, colnames = DelimitedFiles.readdlm(s, '\t', String, '\n', header=true)
+        data, colnames = readdlm(s, '\t', String, '\n', header=true)
         df = DataFrame(Matrix{Any}(data), :auto)
         rename!(df,Symbol.(colnames)|>vec)
         df = df[map(x->!isnothing(x),tryparse.(Int,df[!,1])),:]
@@ -8594,7 +8758,7 @@ module wa
     using KernelDensity
     usage: kernelplot("route.txt")
     """
-    function kernelplot(df::Union{String,DataFrame})
+    function kernelplot(df::Union{String,DataFrame};ann=true)
         if df isa String
             ofl = "route.txt"
             df = CSV.read(ofl,DataFrame,header=false,skipto=8,delim="\t",footerskip=1,lazystrings=false)
@@ -8603,23 +8767,27 @@ module wa
             df.name=map(x->replace(x,r"_>.*" => ""),df.name)
         end
     
-        #dsu = wa.qbb()|>last #recursive
-        dsu = wa.qba()
+        #dsu = qbb()|>last #recursive
+        dsu = qba()
         M = parse.(Float64,dsu[!,Cols(2,4)])|>y->subset(y,1=> ByRow(>(0.)))|>Matrix
         mns = names(dsu[!,Cols(2,4)])
         B = kde(M)
         Plots.plot(B,legend=false,xlabel=mns[1],ylabel=mns[2])
-        dsu.basin  .= df.name
-        name_mapping = df    
+        #dsu.basin  .= df.name
+        rename!(dsu,:basin=>:sim)
+        dsu = innerjoin(dsu,df,on=:sim)
+        rename!(dsu,:name=>:basin)
         msk = @rsubset(parse.(Float64,dsu[!,Cols(2,4)]) .> 0)
         nmn = dsu[msk[!,1],:]
-        nmn.basin=map(x->replace(x,r"_" => " "),nmn.basin)
-        Plots.annotate!([(M[i,1], M[i,2], 
-            Plots.text(
-            nmn.basin[i], 
-            8, :left, 
-            halign=:center, 
-            rotation=-15.0)) for i in 1:size(nmn, 1)])
+        if ann
+            nmn.basin=map(x->replace(x,r"_" => " "),nmn.basin)
+            Plots.annotate!([(M[i,1], M[i,2], 
+                Plots.text(
+                nmn.basin[i], 
+                8, :left, 
+                halign=:center, 
+                rotation=-15.0)) for i in 1:size(nmn, 1)])
+            end
         Plots.plot!(legend=false)
     end
 
@@ -8670,16 +8838,16 @@ module wa
     """
     selects first dfcol (for so)
     dt annotations
-    wa.cmplot(;temp=r"^so_temper",prec=r"^so_prec")
+    cmplot(;temp=r"^so_temper",prec=r"^so_prec")
     see also:
     climateplot(r"^tem",r"^pre")
     col = subbasin of interest
-    wa.climateplot(r"^temp",r"pre";col="tot_average")
+    climateplot(r"^temp",r"pre";col="tot_average")
     ws. prc and temp tauschen un opacity einstellen....
     #function cmplot(;temp::Regex,prec::Regex,col=1)
     @doc CSV.read
     """
-    function cmplot(;temp=r"^so_temper",prec=r"^so_prec",col=1)
+    function cmplot(;temp::Union{Regex,String}=r"^so_temper",prec::Union{Regex,String}=r"^so_prec",col=1)
         #temp,prec,col = (r"^so_temper",r"^so_pre",1)
         #eig. braucht man das col argument bei so_ input nicht.
 
@@ -8741,8 +8909,7 @@ module wa
         for i in prec.month
             val = round(precvec[i]; digits=1)
             annotate!(i, precvec[i], 
-            Plots.text("$(val)",8,:bottom))
-            #;family="Computer Modern"))
+            Plots.text("$(val)",8,:bottom; family="Computer Modern"))
         end
         
         #font(family="serif", halign=:center, rotation=45.0)
@@ -8759,8 +8926,8 @@ module wa
                 8,
                 :left, 
                 #:red),
-                :black;),
-                #family="Computer Modern"), #maby
+                :black;
+                family="Computer Modern"),
                 #family="sans-serif"), #maby
                 tempvec)
         
@@ -8789,7 +8956,7 @@ module wa
     selects from dataframe date an column
     selt(x::DataFrame, col::Any;dtcol=:date)
     """
-    function selt(x::DataFrame, col::Any;dtcol=:date)
+    function selt(x::DataFrame, col::Any; dtcol=:date)
         df = select(x,Cols(col,dtcol))
         println(names(df))
         return df   #vec(Matrix(df))
@@ -8805,7 +8972,7 @@ module wa
             @warn "No basename in metadata!"
             raw""
         end
-        #df = wa.selt(df,4)
+        #df = selt(df,4)
         s = Symbol.(filter(x -> !occursin(r"date|year|month"i, x), names(df)))
         years = unique(Dates.year.(df[!,:date]))
         #Scale of the axis. 
@@ -8849,8 +9016,9 @@ module wa
 
     """
     hydrgraph monthly mean plot
+    hydromon(x::Union{Regex,String,DataFrame}, col = 1, leg = :outertopright, logy = false)
     """
-    function hydromon(x::Union{Regex,String,DataFrame}; col = 1, leg = :outertopright, logy = false)
+    function hydromon(x::Union{Regex,String,DataFrame}, col = 1, leg = :outertopright, logy = false)
         if isa(x,DataFrame)
             df = (x)
         else
@@ -9029,7 +9197,7 @@ module wa
     """
     tst of grouped barplot
     """
-    function bargroup(x::Union{Regex,String,DataFrame};leg = :topright,fun=wa.monsum, lcols=1)
+    function bargroup(x::Union{Regex,String,DataFrame};leg = :topright,fun=monsum, lcols=1)
         if isa(x,DataFrame)
             df = (x)
         else
@@ -9063,7 +9231,7 @@ module wa
             @warn "No basename in metadata!"
             raw""
         end
-        xt = wa.tovec(df,dt)
+        xt = tovec(df,dt)
         mx = round(findmax(df[!,Not(Cols(dt))]|>Matrix|>collect)[1];digits=0)
         minx = round(findmin(df[!,Not(Cols(dt))]|>Matrix|>collect)[1];digits=0)
         
@@ -9142,6 +9310,9 @@ module wa
         Plots.plot!()
     end
 
+    """
+    inserts winstring from clipboard and changes to wslpath
+    """
     function pe()
         try
             inp = clipboard()
@@ -9157,6 +9328,9 @@ module wa
         end
     end
 
+    """
+    inserts winstring from clipboard and changes backslashes to forward slashes
+    """
     function pew()
         try
             in = clipboard()
@@ -9178,10 +9352,62 @@ module wa
     end
 
     """
+    adds replace(fl,"control"=>"D:/Wasim/regio/control")
+    """
+    function ctl3()
+        # Loop through the current directory and its subdirectories
+        matches::Vector{Any} = []
+        for (root, dirs, files) in walkdir(".")
+        # Loop through each file name
+        for file in files
+            # If the file name ends with .xml
+            if endswith(file, ".xml")
+            # Join the root and file name to get the full path
+            path = joinpath(root, file)
+            # Open the file for reading
+            open(path) do f
+                # Loop through each line of the file
+                for line in eachline(f)
+                # If the line contains 'compiling symbols in control file '
+                if occursin("compiling symbols in control file ", line)
+                    # Split the line by whitespace and get the fields from index 9 to 15
+                    fields = split(line)[8:end] #," "
+                    # Join the fields by space and print them
+                    println(join(fields, " "))
+                    out=join(fields, " ")
+                    push!(matches,out)
+                end
+                end
+            end
+            end
+        end
+        end
+        fl = last(matches)
+        fl = split(fl)|>last
+        fl = split(fl,"\"")|>first
+        if (!occursin("regio",fl) && occursin("regio",pwd()))
+            fl = replace(fl,"control"=>"D:/Wasim/regio/control")
+        end
+        if (!occursin("sinn",fl) && occursin("sinn",pwd()))
+            fl = replace(fl,"control"=>"D:/Wasim/sinn/control")
+        end
+        if (!occursin("DEM",fl) && occursin("DEM",pwd()))
+            fl = replace(fl,"control"=>"D:/Wasim/Tanalys/DEM/Control")
+        end
+        if (!occursin("streu",fl) && occursin("streu",pwd()))
+            fl = replace(fl,"control"=>"D:/Wasim/streu/control")
+        end
+        
+        
+        return(string(fl))
+    end
+
+    """
     checks state of wasim routing table
+    isroute(ctl3()) 
     isroute(filename::AbstractString;match=r"timeoffset")
     """
-    function isroute(filename::AbstractString;match=r"timeoffset")
+    function isroute(;filename::String=ctl3(),match=r"timeoffset")
         START = false
     
         function process_line(line::AbstractString)
@@ -9191,6 +9417,10 @@ module wa
             end
             return m, false
         end
+
+        # if isnothing(filename)
+        #     filename = ctl3()
+        # end
     
         for (i, line) in enumerate(eachline(filename))
             if i > 100 && occursin(r"^\[routing_model]", line)
@@ -9206,6 +9436,9 @@ module wa
         end
     end
 
+    """
+    lpro projects from 25832 to 4326
+    """
     function lpro(x::Union{String,DataFrame})
         if x isa String
 
@@ -9234,6 +9467,10 @@ module wa
             pt = ArchGDAL.reproject(pt,
             GeoFormatTypes.EPSG(25832),
             GeoFormatTypes.EPSG(4326))
+            ##reverse cords.
+            ptc = tuple(GeoInterface.coordinates(pt)...)
+            prev = ptc[2],ptc[1]
+            pt = ArchGDAL.createpoint(prev)
             push!(pts,pt)
         end
         od = DataFrame(geometry=pts, name=propertynames(fl)[5:end], xc=xc, yc=yc)
@@ -9296,7 +9533,7 @@ module wa
         v = [size(yx,1) for yx in grp]|>unique
         println("unique counts: $(v)")
         if length(v) == 0
-            @info("Warning: no unique count!")
+            @info("No unique count present!")
             return
         else
             println("unique counts: $(v)")
@@ -9343,9 +9580,11 @@ module wa
     qrtr(pt::Union{String,DataFrame},
         fun=sum;agg=quarterofyear)
     example 
-     wa.qrtr(df;agg=year)|>dfp
-     wa.qrtr(df;fun=mean)|>dfp
-     wa.qrtr(wa.skipyr(df);fun=mean)|>dfp
+    ```
+     qrtr(df;agg=year)|>dfp
+     qrtr(df;fun=mean)|>dfp
+     qrtr(skipyr(df);fun=mean)|>dfp
+    ```
     """
     function qrtr(pt::Union{String,DataFrame};fun=sum,agg=quarterofyear)
 
@@ -9354,19 +9593,12 @@ module wa
         else
             x = pt
         end
-
-        yl = try
-            collect(DataFrames.metadata(df))[1][2]|>dirname|>splitpath|>last    
-        catch
-            @info "No basename in metadata!"
-            raw""
-        end
         
         df = copy(x)
         y = filter(x->!occursin("date",x), names(df))
-        s = map(y -> Symbol(y),y)
+        #s = map(y -> Symbol(y),y)
         df[!, :date] .= agg.(df[!,:date]);
-        df_agg = DataFrames.combine(groupby(df, :date), 
+        df_agg = DataFrames.combine(DataFrames.groupby(df, :date), 
             y .=> fun .=> y);
         return(df_agg)
     end
@@ -9406,7 +9638,7 @@ module wa
 
     """
     sums up Conda.ROOTENV
-    win.julia_conda:            3.06 GB
+    win.julia_conda:            3.03 GB
     """
     function condasize()
         cwd=Conda.ROOTENV
@@ -9427,11 +9659,11 @@ module wa
 
     """
     daily df input, yearly kge nse ve as DF
-    outd = readall(r"qoutjl\$")
+    outd = readall(r"qoutjl")
     ks = map(byear,outd)
 
-    for z in dfonly(r"qoutjl\$")
-        wa.byear(z)|>println
+    for z in dfonly(r"qoutjl")
+        byear(z)|>println
     end    
     """
     function byear(x::Union{String,Regex,DataFrame};)
@@ -9451,19 +9683,31 @@ module wa
         end
         
         df[!, :year] = year.(df[!,:date]);
-        nm = collect(DataFrames.metadata(df))[1][2]|>basename;
-        nm = replace.(nm,
+        nm = try 
+            tmp = collect(DataFrames.metadata(df))[1][2]|>basename;
+            replace.(tmp,
             r"_" => " ",
             r"-qoutjl|qout" => "",
             r"#" => "")
+        catch
+            @warn "No basename in metadata!"
+            raw""
+        end
+
 
         grouped_df = groupby(df, :year)
+        
         DataFrames.combine(grouped_df) do group
-            simulated, observed = vec(Matrix(group[!,Cols(1)])),vec(Matrix(group[!,Cols(2)]))
-            kge = wa.kge2(simulated, observed)
-            ve = wa.vef(simulated, observed)
-            nse = wa.nse(simulated, observed)
-            
+            #for i in names(group)
+            #getproperty(group,))
+            #make shure to select only 2 cols without date.
+            df = select(group, Not(:date))
+            simulated, observed = vec(Matrix(df[!,Cols(1)])),vec(Matrix(df[!,Cols(2)]))
+            #simulated, observed = vec(Matrix(df[!,1])),vec(Matrix(df[!,2]))
+            local kge = kge2(simulated, observed)
+            local nse = nse2(simulated, observed)
+            #local nse = (1 - (sum((simulated .- observed).^2) / sum((observed .- mean(simulated)).^2)))
+            local ve = vef(simulated, observed)
             #grouping key :year is returned as first column
             dout = DataFrame(kge=kge,nse=nse,ve=ve,nm=nm)
             return dout
@@ -9471,49 +9715,18 @@ module wa
     end
 
     """
-    lat lon reverse
+    RSQ Heatmap
+    kw passed to title
+        ´´´
+        heat(x::Union{String,Regex,DataFrame};ann=true,
+            cm::Union{String,Symbol}="RdBu",alpha=0.6,kw...)
+            
+        wa.heat(mydf[!,1:10],cm="Grays")
+        wa.heat(mym[!,6:14],cm=:greens,alpha=.4)
+        ´´´
     """
-    function reverse_coords(polygon)
-        # Extract the coordinates from the polygon
-        # crds = GeoInterface.coordinates.(polygon)
-        # # Reverse each pair of coordinates
-        # reversed_crds = [[[(lon, lat) for (lat, lon) in ring] for ring in polygon] for polygon in crds]
-        if polygon isa DataFrame
-            out = []
-            for i in 1:length(polygon.geometry)
-                # Get the coordinates of the polygon
-                coords = GeoInterface.coordinates(polygon.geometry[i])
-                # Flatten the list of points
-                ptc = coords[1]
-                ptc_tuples = [tuple(pt...) for pt in ptc]
-                prev = [(Y,X) for (X,Y) in ptc_tuples]
-                reversed_polygon = ArchGDAL.createpolygon(Vector(prev))
-                push!(out,reversed_polygon)       
-            end
-            pout = vcat(out...)   
-            return pout
-        end
-        # coords = GeoInterface.coordinates.(gd.geometry)
-        coords = GeoInterface.coordinates(polygon)
-        # Flatten the list of points
-        #points = reduce(vcat, coords[1])
-        ptc = coords[1]
-        #ptc = GeoInterface.coordinates.(points)
-        ptc_tuples = [tuple(pt...) for pt in ptc]
-        prev = [(Y,X) for (X,Y) in ptc_tuples]
-        #
-        #rpt = ArchGDAL.createpoint.(prev)
-        #reversed_polygon = ArchGDAL.createpolygon(coords)
-        reversed_polygon = ArchGDAL.createpolygon(Vector(prev))
-        
-        # Create a new polygon with the reversed coordinates
-        #reversed_polygon = ArchGDAL.createpolygon.(reversed_crds)
-        #reversed_polygon = ArchGDAL.createpolygon.(prev)
-    
-        return reversed_polygon
-    end
-
-    function heat(x::Union{String,Regex,DataFrame};ann=true,kw...)
+    function heat(x::Union{String,Regex,DataFrame};ann=true,
+            cm::Union{String,Symbol}="RdBu",alpha=0.6,kw...)
         if x isa String
             printstyled("reading $x\n",color=:light_red)
             df = waread2(x;silencewarnings=false)
@@ -9537,30 +9750,52 @@ module wa
             @warn "more than 20 columns, heatmap will be unreadable!"
             return
         end
-        #md = cor(Matrix(df[:, Not(:date)])).^2
-        #md = Matrix(select(df, Not(Cols(r"date|year|month|day"))))
-        md = cor(Matrix(select(df, Not(Cols(r"date|year|month|day"))))).^2
+        
+        #df = df[!, [i for i in names(df) if occursin("_C",i)] ∪ [i for i in names(df) if !occursin("_C",i)]]
+        #reorder columns: put all containig _C and following by Number in front
+        select!(df, r"_C\d+", Not(r"_C\d+"))
+       
+        
+        
+        md = cor(
+                Matrix(select(df, 
+                    Not(Cols(r"date|year|month|day"))))
+                    ).^2
         md = convert(Matrix{Union{Float64, Missing}}, md)
-        #md = cor(md)^2
+        
         replace!(md, 1.0 => missing)
         replace!(md, 0.0 => missing)
+        # l = @layout [a{0.95w} b{0.05w}]
+        # Bar = heatmap([NaN;;], framestyle=:none, 
+        # clims=extrema(md|>skipmissing), 
+        # cbar=true,title = "RSQ")
+
+        if cm isa Symbol
+            clr = cm #(cm,alpha)
+        else
+            clr = Plots.colormap(cm,
+                    size(md, 1)*1000;
+                    mid=0.25,
+                    logscale=false)
+        end
 
         p = heatmap(md, 
             #c=:balance, 
-            #c=:lightrainbow, grep(r"gr",cs)
+            #c=:lightrainbow, grep(r"gr",wa.cs)
             #c=:grays,
-            #c = Plots.colormap("RdBu",nrow(df);logscale=true),
-            c = Plots.colormap("RdBu",size(md, 1),mid=0.2),
+            alpha = alpha,
+            c = clr,
             linewidth=0.8, 
+            #cbar=false,
             cbar=true,
-            colorbar_title = "RSQ",
+            #colorbar_title = "RSQ",
             margins=5mm,
             xticks =false,
             yticks =false,
             grid = :false,
             # legend = :outertopright,
             # legendtext = string(names(df[:, Not(:date)])),#xlabel="", #ylabel="", 
-            title="Correlation Heatmap";kw...)
+            title="RSQ Correlation Heatmap";kw...);
         if ann
             for i in 1:size(md, 1)
                 for j in 1:size(md, 2)
@@ -9569,7 +9804,7 @@ module wa
                     #color = value==1.0 ? :transparent : :black
                     Plots.annotate!(j, i, 
                         Plots.text(string(value), 9, color, :center, 
-                        halign=:center, rotation=-35.0))
+                        halign=:center, rotation=-35.0,family="Computer Modern"))
                     # annotate!(j - 0.5, i,
                     #     text(value, 
                     #         8, color, :center))
@@ -9585,8 +9820,20 @@ module wa
             r"#" => "")
         Plots.xticks!(1:length(nm), nm) #reverse(nm)
         Plots.yticks!(1:length(nm), nm;rotation=-35)
+        # Add a diagonal line
+        Plots.plot!(p, 
+            1:size(md, 1), 
+            1:size(md, 2), 
+            label = false,
+            color=:black,
+            linestyle=:dash, 
+            linewidth=0.75)
+            #ticks=false)        
 
         return(p)
+        #return plot(p, Bar, layout=l)
+
+
     end
 
     """
@@ -9624,7 +9871,7 @@ module wa
                 color=:black
             )
     
-            dx = wa.monsum(df)
+            dx = monmean(df)
             y_offset = dx[!,2]
             anns = map(x->string.(round(x,digits=2)), y_offset)
             xans = map(x->Plots.text(x, fnt), anns)
@@ -9633,7 +9880,7 @@ module wa
             col_annotations = (Vector(dx[!, 1]) .+ 0.5, y_offset, xans) # x y val
     
             # Create a colormap from the `monmean` values
-            #k=wa.colorfunction(dx[!,2])
+            #k=colorfunction(dx[!,2])
             #k = cf2(dx[!,2])
             #mat = reshape(k, (1,nrow(dx)))
             #colors = colormap.(dx[!,2])
@@ -9686,7 +9933,7 @@ module wa
             label=["Min Moisture" "Max Moisture"]; kwargs...)
     end
 
-    function moncol(x::DataFrame)
+    function moncol(x::DataFrame;fun=mean)
         dmean = copy(x)
         s = map(Symbol, filter(x -> !occursin("date", x), names(dmean)))
         dmean[!, :month] = month.(dmean[!,:date])
@@ -9694,7 +9941,7 @@ module wa
     
         # Calculate monthly mean and confidence interval using combine and groupby
         dmean = DataFrames.combine(DataFrames.groupby(dmean, :month),
-            s .=> (dmean -> (mean(dmean), 1.96 * std(dmean) / sqrt(length(dmean)))) 
+            s .=> (dmean -> (fun(dmean), 1.96 * std(dmean) / sqrt(length(dmean)))) 
             .=> s)
     
         # Create separate columns for mean, lower bound, and upper bound
@@ -9714,7 +9961,49 @@ module wa
     aggregate and add confidence intervals
     df::DataFrame; confidence_level=0.95
     """
-    function monc(df::DataFrame; confidence_level=0.95)
+    function monc_f(df::DataFrame; confidence_level=0.95)
+        # Make a copy of the input DataFrame
+        dmean = copy(df)
+        
+
+        
+        # Add a 'month' column based on the 'date' column
+        dmean[!, :month] = month.(dmean[!, :date])
+        
+        # Drop the 'date' column
+        select!(dmean, Not(:date))
+        # Extract the columns of interest
+        columns = filter(x -> !occursin(r"date|month", x), names(dmean))
+        # before aggregation.
+        for col in columns
+            values = dmean[!, col]
+            mean_value = mean(values)
+            
+            z_score = quantile(Normal(), 0.5 + confidence_level / 2) # Use 0.975 for 95% confidence level
+            margin_of_error = z_score * std(values) / sqrt(length(values))
+            lower_bound = mean_value - margin_of_error
+            upper_bound = mean_value + margin_of_error
+            
+            dmean[!, col * "_mean"] .= mean_value
+            dmean[!, col * "_lower"] .= lower_bound
+            dmean[!, col * "_upper"] .= upper_bound
+        end
+
+        # get new names
+        y = filter(x -> !occursin(r"date|month", x), names(dmean))
+        dmean = DataFrames.combine(
+            groupby(dmean, :month), 
+            y .=> mean .=> y);
+
+    
+        return dmean
+    end
+
+    """
+    running momean and add confidence intervals
+    df::DataFrame; confidence_level=0.95
+    """
+    function monc(df::DataFrame; confidence_level=0.95, fun=mean)
         # Make a copy of the input DataFrame
         dmean = copy(df)
         
@@ -9726,20 +10015,22 @@ module wa
         
         # Drop the 'date' column
         select!(dmean, Not(:date))
-        
-        # Calculate monthly mean and confidence interval using combine and groupby
-        dmean = DataFrames.combine(DataFrames.groupby(dmean, :month)) do group
+
+        dmean = DataFrames.combine(DataFrames.groupby(dmean, 
+            :month)) do group
             result = DataFrame(month = group.month)
             for col in columns
                 values = group[!, col]
-                mean_value = mean(values)
-                confidence_interval = (mean_value, quantile(Normal(), 0.5 + confidence_level / 2) * std(values) / sqrt(length(values)))
-                mv = string(col) * "_mean"
-                lb = string(col) * "_lower"
-                ub = string(col) * "_upper"
-                result.mean .= mean_value
-                result.lower .= confidence_interval[1] - mean_value
-                result.upper .= confidence_interval[2] - mean_value
+                mean_value = fun(values)
+                
+                z_score = quantile(Normal(), 0.5 + confidence_level / 2) # Use 0.975 for 95% confidence level
+                margin_of_error = z_score * std(values) / sqrt(length(values))
+                lower_bound = mean_value - margin_of_error
+                upper_bound = mean_value + margin_of_error
+                
+                result[!, col * "_mean"] .= mean_value
+                result[!, col * "_lower"] .= lower_bound
+                result[!, col * "_upper"] .= upper_bound
             end
             return result
         end
@@ -9747,20 +10038,13 @@ module wa
         return dmean
     end
 
-    function eeread(filename)
-        df = CSV.read(filename, DataFrame)
-        df = unique(df, 1) # remove duplicate date rows
-        rename!(df, 1 => :date)
-        df.date .= [Date(d, dateformat"u d, y") for d in df.date]
-        z = basename(filename)
-        DataFrames.metadata!(df, "filename", z, style=:note)
-        return df
-    end
-
     """
     monthly mean plot with ribbon
+    x::Union{String,Regex,DataFrame};col::Any=1,confidence_level::Number=0.95)
+    dfrib(df;confidence_level=.999,col=1) 
     """
-    function dfrib(x::Union{String,Regex,DataFrame};col::Any=1)
+    function dfrib(x::Union{String,Regex,DataFrame};
+        col::Any=1,confidence_level::Number=0.95)
         if x isa String
             printstyled("reading $x\n",color=:light_red)
             df = waread2(x;silencewarnings=false)
@@ -9804,14 +10088,19 @@ module wa
         #colname = string(names(df[!, Not(:date)]))
         ##has to be in this order...
         colname = only(names(select(df,Cols(col))))
+        
         if length(ti)>1
             lab = ti[1:4]*colname
         else
             lab = colname
         end
 
+        lab = replace(lab,r"_" => " ")
+        ti = replace(ti,r"_" => " ")
+
         df = select(df,Cols(col,:date))
-        @info "aggregation monthly mean of col: $col"
+        @info "aggregation monthly mean of col: $col at confidence_level: $confidence_level"
+        
         # if startswith(colname,"_")
         #     colname = "basin"*colname
         # end
@@ -9841,12 +10130,20 @@ module wa
         #     dmean[!, string(col)*"_lower"] .= [first(only(x)) - last(only(x)) for x in eachrow(dmean[!, col])]
         #     dmean[!, string(col)*"_upper"] .= [first(only(x)) + last(only(x)) for x in eachrow(dmean[!, col])]
         # end
+        
+        dmean = monc(df;confidence_level = confidence_level) #s.o. confidence_interval 95%
+        mean_col = propertynames(select(dmean, Cols(r"mean")))[1]
+        lower_col = propertynames(select(dmean, Cols(r"lower")))[1]
+        upper_col = propertynames(select(dmean, Cols(r"upper")))[1]
+        lower_bounds = dmean[!, lower_col]|>unique
+        upper_bounds = dmean[!, upper_col]|>unique
 
-        dmean = wa.monc(df) #s.o. confidence_interval 95%
-    
-        plt = @df dmean plot(:month, Matrix(dmean[!,Cols(r"mean")]), 
+        #plt = @df dmean plot(:month, Matrix(dmean[!,Cols(r"mean")]), 
             #ribbon=(dmean.Lai_lower, dmean.Lai_upper), 
-            ribbon=(Matrix(dmean[!,Cols(r"lower")]), Matrix(dmean[!,Cols(r"upper")])), 
+            # ribbon=(Matrix(dmean[!,Cols(r"lower")]), 
+            #         Matrix(dmean[!,Cols(r"upper")])), 
+        plt = @df dmean plot(:month, cols(mean_col), 
+                          ribbon=(lower_bounds, upper_bounds),
             labels = lab, #see above at ti   # "Lai_mean", 
             xlabel = "", #"Month", 
             ylabel = "",  #"Lai", 
@@ -9859,14 +10156,26 @@ module wa
         return plt
     end
 
+    """
+    reader for earth engine csv files
+    """
+    function eeread(filename)
+        df = CSV.read(filename, DataFrame)
+        df = unique(df, 1) # remove duplicate date rows
+        rename!(df, 1 => :date)
+        df.date .= [Date(d, dateformat"u d, y") for d in df.date]
+        z = basename(filename)
+        DataFrames.metadata!(df, "filename", z, style=:note)
+        return df
+    end
     
     """
     usage like: kernelplot("route.txt") but with linlog option
-    reads with  wa.qba() and names of df or (route.txt)
+    reads with  qba() and names of df or (route.txt)
     lin: cols=Cols(2,4)
     log: cols=Cols(3,5)
     """
-    function klog(df::Union{String,DataFrame};lin=false)
+    function klog(df::Union{String,DataFrame};lin=false,ann=true)
         if lin 
             cols=Cols(2,4)
         else
@@ -9880,32 +10189,41 @@ module wa
             df.name=map(x->replace(x,r"#" => "",r" " => "",r"-" => "_"),df[:,3])
             df.name=map(x->replace(x,r"_>.*" => ""),df.name)
         end
-        #dsu = wa.qbb()|>last #recursive
-        dsu = wa.qba()
+        #dsu = qbb()|>last #recursive
+        dsu = qba()
         M = parse.(Float64,dsu[!,cols])|>y->subset(y,1=> ByRow(>(0.)))|>Matrix
         mns = names(dsu[!,cols])
         B = kde(M)
         Plots.plot(B,legend=false,xlabel=mns[1],ylabel=mns[2])
-        dsu.basin  .= df.name
-        name_mapping = df    
+        
+        #dsu.basin  .= df.name
+        rename!(dsu,:basin=>:sim)
+        dsu = innerjoin(dsu,df,on=:sim)
+        rename!(dsu,:name=>:basin)
+        
         msk = @rsubset(parse.(Float64,dsu[!,cols]) .> 0)
         nmn = dsu[msk[!,1],:]
-        nmn.basin=map(x->replace(x,r"_" => " "),nmn.basin)
-        Plots.annotate!([(M[i,1], M[i,2], 
-            Plots.text(
-            nmn.basin[i], 
-            8, :left, 
-            halign=:center, 
-            rotation=-15.0)) for i in 1:size(nmn, 1)])
+        if ann
+            nmn.basin=map(x->replace(x,r"_" => " "),nmn.basin)
+            Plots.annotate!([(M[i,1], M[i,2], 
+                Plots.text(
+                nmn.basin[i], 
+                8, :left, 
+                halign=:center, 
+                rotation=-15.0)) for i in 1:size(nmn, 1)])
+            end
         Plots.plot!(legend=false)
     end
 
 
     """
     pycall function to polygonize a raster
-    polygonize_raster(input_raster_path::String, output_shapefile_path::String;epsg=25832)
+        store it to geojson
+    ```
+    polygonize_raster(input_raster_path::String, output_path::String;toshapefile=true,epsg=25832)
+    ```
     """
-    function polygonize_raster(input_raster_path::String, output_shapefile_path::String;epsg=25832)
+    function polygonize_raster(input_raster_path::String, output_path::String;toshapefile=true,epsg=25832)
         gdal = pyimport("osgeo.gdal")
         ogr = pyimport("osgeo.ogr")
         osr = pyimport("osgeo.osr")
@@ -9916,11 +10234,15 @@ module wa
         # Get the first band
         band = dataset.GetRasterBand(1)
 
-        # Get the "ESRI Shapefile" driver
-        driver = gdal.GetDriverByName("ESRI Shapefile")
+        if toshapefile
+            # Get the "ESRI Shapefile" driver
+            driver = gdal.GetDriverByName("ESRI Shapefile")
+        else
+            driver = gdal.GetDriverByName("GeoJSON")
+        end
 
         # Create a new shapefile dataset
-        out_ds = driver.Create(output_shapefile_path, 0, 0, 0, gdal.GDT_Unknown)
+        out_ds = driver.Create(output_path, 0, 0, 0, gdal.GDT_Unknown)
 
         # Create a spatial reference object
         srs = osr.SpatialReference()
@@ -9932,7 +10254,7 @@ module wa
         # Polygonize the raster
         try
             gdal.Polygonize(band, py"None", layer, -1, [], callback=py"None")
-            @info "new shapefile created at: $output_shapefile_path ..."
+            @info "new shapefile created at: $output_path ..."
         catch
             @error "gdal.Polygonize failed ..."
         end
@@ -9940,8 +10262,6 @@ module wa
         # Close the dataset to write it to the disk
         out_ds = py"None"
     end
-
-
 
     """
     reads controlfile
@@ -10112,13 +10432,15 @@ module wa
     """
     runs perl wsl \$bsp x x 4 5 or 
     \$f1 \$f2 \$c1 \$c2 ∇
+    ```
     pers(x::Union{String,Regex}=r"qoutjl";c1=4,c2=5,f2=nothing,tofile=false)
+    ```
     """
-    function pers(x::Union{String,Regex}=r"qoutjl$";c1=4,c2=5,f2=nothing,tofile=false)
+    function pers(x::Union{String,Regex}=r"qoutjl$";c1=5,c2=4,f2=nothing,tofile=false)
         bsp = "/mnt/c/Users/Public/Documents/Python_Scripts/bashscripts/pearson_wsl.pl"
         dirpt = last(split(dirname(pwd()),"\\"))
         res = "pers_"*dirpt*".txt"
-        if f2 != nothing
+        if f2 !== nothing
             f1 = isa(x,String) ? x : first(x)
             if tofile
                 #res = readchomp(pipeline(cmd))
@@ -10149,9 +10471,9 @@ module wa
     plot_grouped_metrics(dataframes::Vector{DataFrame};col=:ve,all=false,kw...)
     """
     function plot_grouped_metrics(dataframes::Vector{DataFrame};col=:ve,usethresold=true,threshold = -0.41,all=false,kw...)
-        #nam = wa.getnames(dataframes)
+        #nam = getnames(dataframes)
         # Create a new plot
-        plot()
+        Plots.plot(xrotation = 35)
 
         # Iterate through each DataFrame in the input
         for df in dataframes
@@ -10211,8 +10533,6 @@ module wa
         
         xx = uppercase(string(col))
         ylabel!("Score $xx")
-        # Add annotation from DataFrames.metadata filename
-        #annotate!(Plots.text(size=(10, 10), metadata_filename, 2012, 1.5, :center, :center))
     end
 
     """
@@ -10222,7 +10542,7 @@ module wa
     pxm(dataframes::Vector{DataFrame}; col=:ve, usethresold=true, threshold=-0.410, all=false, kw...)
     """
     function pxm(dataframes::Vector{DataFrame}; col=:ve, usethresold=true, threshold=-0.410, all=false, kw...)
-        p1=Plots.plot()
+        p1=Plots.plot(xrotation = 35)
         # Iterate through each DataFrame in the input
         for df in dataframes
             # Extract year and metrics from the DataFrame
@@ -10292,12 +10612,190 @@ module wa
                 
                 Plots.xticks!(df[:, :year])
             end
-            xx = uppercase(string(col))
-            ylabel!("Score $xx")
+            # xx = uppercase(string(col))
+            # ylabel!("Score $xx")
         end
         return p1
     end
+
+    """
+    takes DataFrame from:
+    df = byear(some_merged_df)
+    annoated scatterplot of metrics    
+    """
+    function pxm(df::DataFrame; col=:ve, ann=false, usethresold=true, threshold=-0.410, all=false, kw...)
+        p1=Plots.plot(xrotation = 35)
+            year = df.year
+            if all
+                nam = try 
+                    replace(collect(DataFrames.metadata(df))[1][2] |> basename, 
+                        "-qoutjl" => "", r"_" => " ", r"#" => "", r"qout" => "")
+                catch
+                    "no name"
+                end                    
+                if usethresold
+                    yaxis!((threshold, 1))
+                end
+                kge = df.kge
+                nse = df.nse
+                ve = df.ve
+                # Plotting with annotations
+                Plots.scatter!(year, kge, label="KGE $nam", marker=:circle)
+                for (x, y) in zip(year, kge)
+                    if y > threshold
+                        
+                        Plots.annotate!([(x, y, 
+                        Plots.text("$(round(y, digits=2))", 8, 
+                        :black, :top))])
+                
+                    end
+                end
+                Plots.scatter!(year, nse, label="NSE $nam", marker=:square)
+                for (x, y) in zip(year, nse)
+                    if y > threshold
+                        Plots.annotate!([(x, y, 
+                        Plots.text("$(round(y, digits=2))", 8, 
+                        :black, :top))])
+                    end
+                end
+                Plots.scatter!(year, ve, label="VE $nam", marker=:diamond, legend=:outertopright, kw...)
+                for (x, y) in zip(year, nse)
+                    if y > threshold
+                        Plots.annotate!([(x, y, 
+                        Plots.text("$(round(y, digits=2))", 8, 
+                        :black, :top))])
+                    end
+                end
+                title!("Grouped Metrics by Year")
+                Plots.xticks!(df[:, :year])
+                ylabel!("Score")
+            else
+                if usethresold
+                    yaxis!((threshold, 1))
+                end
+                
+                ve = select(df, col) |> Matrix |> vec
+                ti = select(df, col) |> names |> first |> uppercase
+                nam = try 
+                    replace(collect(DataFrames.metadata(df))[1][2] |> basename, 
+                        "-qoutjl" => "", r"_" => " ", r"#" => "", r"qout" => "")
+                catch
+                    "   no name" #[1:3]
+                end                    
+                
+                # Plotting with annotations
+                Plots.scatter!(year, ve, 
+                    #label=nam, 
+                    label=false,
+                    title=ti, 
+                    marker=:diamond, legend=:outertopright, kw...)
+                
+                # Adding annotations for values above threshold
+                for (x, y) in zip(year, ve)
+                    if y > threshold
+                        if ann
+                            Plots.annotate!([(x, y, 
+                            Plots.text("$(round(y, digits=2)) "*nam[1:3], 
+                            8, :black, :top))])
+                        else
+                            Plots.annotate!([(x, y, 
+                            Plots.text(round(y, digits=2),
+                            8, :black, :top))])
+                        end
+                    end
+                end
+                
+                Plots.xticks!(df[:, :year])
+            end
+        return p1
+    end
     
+    """
+    df = byear(some_qoutjl_df)
+    adds annoated scatterplot of metrics    
+    """
+    function pxm!(df::DataFrame; col=:ve, ann=true, usethresold=true, threshold=-0.410, all=false, kw...)
+        p1=Plots.plot!(xrotation = 35)
+            year = df.year
+            if all
+                nam = try 
+                    replace(collect(DataFrames.metadata(df))[1][2] |> basename, 
+                        "-qoutjl" => "", r"_" => " ", r"#" => "", r"qout" => "")
+                catch
+                    "no name"
+                end                    
+                if usethresold
+                    yaxis!((threshold, 1))
+                end
+                kge = df.kge
+                nse = df.nse
+                ve = df.ve
+                # Plotting with annotations
+                Plots.scatter!(year, kge, label="KGE $nam", marker=:circle)
+                for (x, y) in zip(year, kge)
+                    if y > threshold
+                        Plots.annotate!([(x, y, 
+                        Plots.text("$(round(y, digits=2))", 8, 
+                        :black, :bottom))])
+                    end
+                end
+                Plots.scatter!(year, nse, label="NSE $nam", marker=:square)
+                for (x, y) in zip(year, nse)
+                    if y > threshold
+                        Plots.annotate!([(x, y, 
+                        Plots.text("$(round(y, digits=2))", 8, 
+                        :black, :bottom))])
+                    end
+                end
+                Plots.scatter!(year, ve, label="VE $nam", marker=:diamond, legend=:outertopright, kw...)
+                for (x, y) in zip(year, nse)
+                    if y > threshold
+                        Plots.annotate!([(x, y, 
+                        Plots.text("$(round(y, digits=2))", 8, 
+                        :black, :bottom))])
+                    end
+                end
+                title!("Grouped Metrics by Year")
+                Plots.xticks!(df[:, :year])
+                ylabel!("Score")
+            else
+                if usethresold
+                    yaxis!((threshold, 1))
+                end
+                ve = select(df, col) |> Matrix |> vec
+                ti = select(df, col) |> names |> first |> uppercase
+                nam = try 
+                    replace(collect(DataFrames.metadata(df))[1][2] |> basename, 
+                        "-qoutjl" => "", r"_" => " ", r"#" => "", r"qout" => "")
+                catch
+                    "   no name" #[1:3]
+                end                    
+                # Plotting with annotations
+                Plots.scatter!(year, ve, 
+                    #label=nam, 
+                    label=false,
+                    title=ti, 
+                    marker=:diamond, legend=:outertopright, kw...)
+                
+                # Adding annotations for values above threshold
+                for (x, y) in zip(year, ve)
+                    if y > threshold
+                        if ann
+                            Plots.annotate!([(x, y, 
+                            Plots.text("$(round(y, digits=2)) "*nam[1:3], 
+                            8, :black, :bottom))])
+                        else
+                            Plots.annotate!([(x, y, 
+                            Plots.text(round(y, digits=2),
+                            8, :black, :bottom))])
+                        end
+                    end
+                end
+                
+                Plots.xticks!(df[:, :year])
+            end
+        return p1
+    end
 
 
     """
@@ -10336,7 +10834,7 @@ module wa
                 continue
             end
         end
-        vz = filter(xx->xx[2]==5,wa.cntcolv("outjl"))
+        vz = filter(xx->xx[2]==5,cntcolv("outjl"))
         if length(vz)>0
             @warn "some files are not properly merged..."
         end
@@ -10345,7 +10843,7 @@ module wa
 
     """
     dfroute(;ofl="route.txt")
-    reads from wa.routeg(infile, ofl) and returns a DataFrame with the following columns:
+    reads from routeg(infile, ofl) and returns a DataFrame with the following columns:
         - sim: simulated flow
         - obs: observed flow
         - name: name of the station
@@ -10407,7 +10905,7 @@ module wa
     """
     function rmopt()
         # Get the list of files
-        files = wa.rglob("")
+        files = rglob("")
 
         #!occursin(r"pl|sh|csv|html|xml|fzt|ftz|log|ini|^wq|yrly|nc|tif|jpeg|png|svg|txt", file)
         # py|R|ftz_0|tex
@@ -10518,38 +11016,49 @@ module wa
     function build_soil_dictionary(soiltable::String)     
         entries = split(soiltable, "}")
         filter!(s -> !isempty(s), entries)
+        filter!(s -> length(s)>2, entries)
+        entries = strip.(entries)
         dictionary = Dict{Int, DataFrame}()
         
         for entry in entries
             # Extract key and value
-            key = parse(Int, match(r"(\d+)\s*\{", entry).captures[1]|>strip)
-            println("check: $key")
-            value = match(r"\{\s*(.*)", entry).captures[1]|>strip
-            
-            # Process value string and convert to DataFrame
-            value = replace(value, "method = MultipleHorizons;  EvapMaxDepth = 0.15;" => "")
-            value = replace(value, r";" => ",")
-            value = replace(value, r";" => "")
-            value = replace(value, r"\$" => "")
-            value = replace(value, r"#" => "")
-            value = replace(value, r"\s+" => " ")
-            value = replace(value, r"^\s+|\s+$" => "")
-            value = replace(value, r",$" => "")
-            pairs = split(value, ",")
-            # Create an empty dictionary to store the column names and values
-            #col_dict = Dict{String, Vector{String}}()
-    
-            # Iterate over the key-value pairs and extract the column names and values
-            filter!(s -> !isempty(s), pairs)
-            z=[]
-            for pair in pairs
-                key2, value = split(strip(pair), " = ")
-                push!(z,DataFrame(key2 => value))
+            m = match(r"(\d+)\s*\{", entry)
+            if m !== nothing
+                key = parse(Int, m.captures[1]|>strip)
+                println("check: $key")
+            else
+                println("No match found in string: $entry")
             end
-            # Create the DataFrame using the extracted column names and values
-            df = hcat(z...)
-            # Store key-value pair in the dictionary
-            dictionary[key] = df
+            
+            value_match = match(r"\{\s*(.*)", entry)
+            if value_match !== nothing
+                value = value_match.captures[1]|>strip
+                #value = match(r"\{\s*(.*)", entry).captures[1]|>strip
+                # Process value string and convert to DataFrame
+                value = replace(value, "method = MultipleHorizons;  EvapMaxDepth = 0.15;" => "")
+                value = replace(value, r";" => ",")
+                value = replace(value, r";" => "")
+                value = replace(value, r"\$" => "")
+                value = replace(value, r"#" => "")
+                value = replace(value, r"\s+" => " ")
+                value = replace(value, r"^\s+|\s+$" => "")
+                value = replace(value, r",$" => "")
+                pairs = split(value, ",")
+                # Create an empty dictionary to store the column names and values
+                #col_dict = Dict{String, Vector{String}}()
+                
+                # Iterate over the key-value pairs and extract the column names and values
+                filter!(s -> !isempty(s), pairs)
+                z=[]
+                for pair in pairs
+                    key2, value = split(strip(pair), " = ")
+                    push!(z,DataFrame(key2 => value))
+                end
+                # Create the DataFrame using the extracted column names and values
+                df = hcat(z...)
+                # Store key-value pair in the dictionary
+                dictionary[key] = df
+            end
         end
         
         return dictionary
@@ -10606,15 +11115,17 @@ module wa
             @info "$m found!"
         return getproperty(x, m)
     end
+
     """
     extract_layers(df::DataFrame, colkey::String="ksat")
-    form fsoil(infile)
+    from fsoil(infile)
     or build_soil_dictionary(infile) -> df
     """
     function extract_layers(df::DataFrame, colkey::String="ksat")
         num_layers = size(select(df,Cols(colkey))[1,1],1)
         layer_columns = [Symbol("layer$i") for i in 1:num_layers]
         layer_values = Vector{Vector{Float64}}(undef, num_layers)   
+        #layer_values = Vector{Vector{Any}}(undef, num_layers)
         for i in 1:num_layers
             layer_values[i] = [ r[1][i] for r in eachrow(select(df, colkey)) ]
         end    
@@ -10625,6 +11136,7 @@ module wa
 
     """
     a reader using filtermask and looks_like_number
+    kw passed to CSV.read
     """
     function nread(x::Union{String,Regex};kw...)
         if x isa String
@@ -10671,7 +11183,7 @@ module wa
         fun::Function = sum, 
         freq::String="monthly",
         ylab::String="[mm/$freq]",
-        simcol=1,obscol=2)
+        simcol=1,obscol=2,kw...)
         if x isa Regex
             x = first(dfonly(x))
             ndf = waread2(x;silencewarnings=true)
@@ -10700,8 +11212,8 @@ module wa
             elseif freq == "yearly" || freq == "Y" || freq == "yr" || freq == "year"
                 #df[day.(df.date) .== 1 && month.(df.date) == 1, :]
                 ndf = qrtr(ndf;fun=fun,agg=year)  #yrsum(ndf)
-                #DataFrames.combine(groupby(df, year.(df.date)), y .=> mean .=> y);
-                #DataFrames.combine(groupby(df, quarterofyear.(df.date)), y .=> mean .=> y);
+                #DataFrames.combine(DataFrames.groupby(df, year.(df.date)), y .=> mean .=> y);
+                #DataFrames.combine(DataFrames.groupby(df, quarterofyear.(df.date)), y .=> mean .=> y);
             end
         catch e
             @error("smth went wrong",e)
@@ -10742,7 +11254,7 @@ module wa
         p = Plots.plot(title=ti, ylabel=ylab, 
             xlabel="", 
             yaxis = yscale, 
-            legend=:topleft)
+            legend=:topleft;kw...)
 
             #sim,obs
         Plots.plot!(p, ndf[!, :Date], ndf[!, :Simulated], 
@@ -10924,15 +11436,23 @@ module wa
     """
     using GLM with reader. see also trendline
     """
-    function dftrend(x::Union{String,Regex,DataFrame},col::Any=1;date_col::Symbol=:date)
+    function dftrend(x::Union{String,Regex,DataFrame},col::Any=1;dtcol::Symbol=:date)
         if isa(x,DataFrame)
             df = x
         else
             df = dfr(x)
         end
-        df.dn .= Dates.value.(df.date .- minimum(df.date))
+
+        DN = try
+            Dates.value.(df[!,dtcol] .- minimum(df[!,dtcol]))
+            catch
+                @info "using dn as Int from $dtcol..."
+                df[!,dtcol] .- minimum(df[!,dtcol])
+            end
+
+        df.dn .= DN
         # select the columns to use for the model
-        id = propertynames(df[!,Not(:date)])
+        id = propertynames(df[!,Not(dtcol)])
         #if isa(col,Symbol) ? col = string(col) : col
         #col="we"
         if isa(col,Number)
@@ -10958,11 +11478,12 @@ module wa
         #trendline_equations = "$dat\ny = $(round(slope; sigdigits=2))x + $(round(intercept, sigdigits=1))"
         trendline_equations = "y = $(round(slope; sigdigits=2))x + $(round(intercept, sigdigits=1))"
 
-        plot(df.date, Matrix(select(df,dat))|>vec, 
+        Plots.plot(df[!,dtcol], 
+            Matrix(select(df,dat))|>vec, 
             label=string(dat),
             legend=:topright)
         #@df df plot(:date, cols(dat), label=string(dat), legend=:topright)
-        plot!(df.date, predict(model, df), 
+        Plots.plot!(df[!,dtcol], predict(model, df), 
             label=trendline_equations, 
             linewidth=2.5,style=:dash)
     end
@@ -10970,8 +11491,8 @@ module wa
     """
     sums up julias rootenv
     269171 files in directory
-    .julia      25.89 GB
-    in ubu      26.78 GB  332643
+    .julia      29.24 GB
+    in ubu      23.64 GB
     """
     function juliasize()
         cwd = joinpath(homedir(),".julia")
@@ -11022,10 +11543,19 @@ module wa
             end
         end 
         println("$(n[]) files in directory")
-        @printf("%-40s %15.2f GB\n","$(cwd):", osize[]/1024^3)
+        #sizeof(osize)
+        osize_val = osize[]
+        # println("$(osize_val) bytes in directory")
+        # if length(digits(osize_val)) < 9
+        if osize_val < 1024^3
+            @printf("%-40s %15.2f MB\n", "$(cwd):", osize_val / 1024^2)
+        else
+            @printf("%-40s %15.2f GB\n", "$(cwd):", osize_val / 1024^3)
+        end
+
     end
 
-     
+    
     """
     controlfile::String = "",
     match1::String = "[landuse_table]",
@@ -11171,41 +11701,666 @@ module wa
         end
     end
 
- 
     
+    """
+    creates a export snippet\n
+    for all Funcs in given Module\n
+    """
+    function generate_export_statement(M::Module)
+        fnames = names(M; all=true)
+        export_statements = String[]
+        for name in fnames
+            if Base.isidentifier(name) && name != :eval
+                push!(export_statements, string(name))
+            end
+        end
+        println("export ", join(export_statements, ", "))
+    end
+
+    function interpolate_missing(df::DataFrame, column::Symbol)
+        # Get the data from the column
+        data = df[!, column]
+    
+        # Find the indices of the missing values
+        missing_indices = findall(ismissing, data)
+    
+        # Find the indices of the non-missing values
+        non_missing_indices = findall(!ismissing, data)
+    
+        # Fill the first missing values with the first non-missing value
+        first_non_missing_index = first(non_missing_indices)
+        data[1:first_non_missing_index] .= data[first_non_missing_index]
+    
+        # Fill the last missing values with the last non-missing value
+        last_non_missing_index = last(non_missing_indices)
+        data[last_non_missing_index:end] .= data[last_non_missing_index]
+    
+        # Interpolate the missing values
+        for i in missing_indices
+            # Skip if it's the first or last missing value
+            if i in [first_non_missing_index, last_non_missing_index]
+                continue
+            end
+    
+            # Find the nearest non-missing indices
+            left_index = last(non_missing_indices[non_missing_indices .< i])
+            right_index = first(non_missing_indices[non_missing_indices .> i])
+    
+            # Interpolate the value
+            interpolated_value = data[left_index] + (data[right_index] - data[left_index]) * 
+                                 ((i - left_index) / (right_index - left_index))
+    
+            # Replace the missing value with the interpolated value
+            data[i] = interpolated_value
+        end
+    
+        # Update the column in the DataFrame
+        df[!, column] = data
+    
+        return df
+    end
+
+    
+    """
+    different from yrsum
+    renames and adds a rowsum column
+    """
+    function yearsum(df::DataFrame)
+        df_yearsum = combine(groupby(transform(df, 
+        :date => ByRow(year) => :year), :year), 
+        Not(:date) .=> sum)
+        names(df_yearsum)
+        #rename!(df_yearsum, :year_date => :year)
+        return df_yearsum
+    end
+
+    """
+    another ts reader
+    """
+    function wain(x::AbstractString)
+        #dfd = CSV.read(x, DataFrame, header = 1) #, limit = 3)
+        #df1 = dfd[.!contains.(dfd[:, 1], r"[A-z]|-"), :]
+        ms = ["-9999","-9999.0"]
+        df1 = try 
+            CSV.File(x, 
+            #silencewarnings=true,
+            missingstring = ms, 
+            limit = 50_000,
+            header = 1) |>
+                z->z[.!contains.(z.MM, r"[A-z]|-")] |>
+                    DataFrame
+            #z[.!contains.(z.YY, r"[A-z]|-")] |>DataFrame
+            catch e
+                @error "Error reading file $x \n $e"
+            end
+        df1.date = [Dates.Date(parse(Int, row.YY), parse(Int, row.MM), parse(Int, row.DD)) for row in eachrow(df1)]
+        select!(df1, Not([:YY, :MM, :DD, :HH]))
+        metadata!(df1, "filename", x, style=:note);
+        return df1
+    end
+    
+
+    
+    """
+    hydrograph plot, selection of first column by default
+    `x::Union{Regex,String,DataFrame}; col = 1,
+        leg = :outertopright, logy = false
+        ,kwargs...)`
+    """
+    function hyd2(x::Union{Regex,String,DataFrame}; 
+        col::Union{Int64,Regex,String} = 1,
+        leg = :outertopright, 
+        logy = false, 
+        #ti::String = "",
+        kwargs...)
+        if isa(x, DataFrame)
+            df = copy(x)
+        else
+            df = dfr(x)
+        end
+
+        # ti = try
+        #     DataFrames.metadata(df) |> values |> only |> basename
+        # catch
+        #     @warn "No basename in metadata!"
+        #     raw""
+        # end
+
+        if col isa Number && names(df)[col] == "date"
+            if col + 1 >= ncol(df)
+                col = col - 1
+                @info "date column is at $col position, skipping to col-1..."
+            elseif names(df)[col - 1] == "date"
+                col = ncol(df)
+                @info "date column is at $col-1 position, skipping to last col..."
+            else
+                col = col + 1
+                @info "date column is at position $col, skipping to col + 1..."
+            end
+        end
+
+        try
+            select!(df, Cols(col, :date))
+        catch
+            @error "col not found!"
+            return
+        end
+
+        if length(names(df)) < 2
+            col = string.(col)
+            @error "no $col column found!"
+            return
+        end
+
+        @info ("Selection:", names(df))
+
+        colname = names(df[!, Not(:date)]) |> only
+
+        # s = filter(x -> !occursin(r"(?i)date|year|month",
+        #                           string(x)), names(df))
+        years = unique(year.(df.date))
+        # years_str = string.(years)
+        
+        ylog = logy ? :log : :identity
+
+        # month_order = Dict(
+        #     "Sep" => 1, "Oct" => 2, 
+        # "Nov" => 3, "Dec" => 4, 
+        # "Jan" => 5, "Feb" => 6, 
+        # "Mar" => 7, "Apr" => 8, 
+        # "May" => 9, "Jun" => 10, 
+        # "Jul" => 11, 
+        # "Aug" => 12)
+
+        hp1 = plot(xrot = 45,
+                xminorticks = false,
+                xmajorticks = false,
+                yaxis = ylog,
+                #title = ti,
+                legendtitle = colname,
+                legend = leg)
+
+        for yr in years
+            #Filter
+            su = filter(row -> (year(row.date) == yr && 
+                month(row.date) >= 10) || (year(row.date) == yr + 1 && 
+                month(row.date) < 10), df)
+            #mn = sort([monthabbr(x) for x in unique(month.(su.date))], by = x -> month_order[x])
+            #mn = sort([value(month_order(x)) for x in unique(month.(su.date))], by = x -> month_order[x])
+            #mn = sort([month_order[monthabbr(x)] for x in unique(month.(su.date))], by = x -> month_order[x])
+            #st = 1:12:length(su)
+            hp1 = plot!(
+                getproperty(su,Symbol(colname)),
+            #    xticks =(st, mn),
+                label = yr; kwargs...)
+
+            # hp1 = plot!(vec(Matrix(
+            #     select(su, Not(:date)))),
+            #     xticks =(st, mn),
+            #             label = yr)
+
+                        
+        end
+        lng = size(df, 1) ./ length(years) ./ 12
+        nln = size(df, 1) ./ length(years)
+        # Create a dictionary that maps each month abbreviation to a number
+        # month_order = Dict("Oct" => 1, "Nov" => 2, 
+        #     "Dec" => 3, "Jan" => 4, "Feb" => 5, 
+        #     "Mar" => 6, "Apr" => 7, "May" => 8, 
+        #     "Jun" => 9, "Jul" => 10, "Aug" => 11, 
+        #     "Sep" => 12)
+        # Get the unique months and sort them according to the custom order
+        #mn = sort([monthabbr(x) for x in unique(month.(df.date))], by = x -> month_order[x])
+        mn = ["Okt", "Nov", "Dez", "Jan", "Feb", "Mar", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep"]
+        st = 15:lng:nln
+        xticks!(st, mn)
+
+        return hp1
+    end
+
+    """
+    wrapper for waread2, skipyr, byear
+    reads qoutjl files
+    """
+    function lambda(;rgx::Regex=r"qoutjl$")
+        map(waread2, glob(rgx)) |> λ -> map(skipyr, λ) |> λ -> map(byear, λ)
+    end
+
+    """
+    Rs flowscreen alt version
+    """
+    function xflow_o(TS, q=[0.9, 0.1];
+        text::String="Wolfsmünster", 
+        ylab::LaTeXString = L"\left[\frac{l}{s\cdot km^2}\right]",
+        # y_lims=(0,10), 
+        kw...)
+        TS = copy(TS)
+        TS.Month = month.(TS.date)
+        TS.DOY = Dates.dayofyear.(TS.date)
+        TS.hdoy = mod.(TS.DOY .- 275, 365) .+ 1
+        # Map the months to their names
+        mn = ["Okt", "Nov", "Dez", "Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep"]
+        TS.mn = map(x -> mn[Int(x)], TS.Month)
+        rename!(TS, 1 => :Flow)
+        doy = (TS.DOY)
+        Qdoy = fill(NaN, maximum(map(Int, doy)), 7)      
+        Qdoy[:, 1] .= [maximum(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 2] .= [minimum(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 3] .= [mean(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 4] .= [quantile(TS.Flow[doy .== d], q[1]) for d in levels(doy)]
+        Qdoy[:, 5] .= [quantile(TS.Flow[doy .== d], q[2]) for d in levels(doy)]
+        Qdoy[:, 6] .= [median(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 7] .= [first(TS.Month[doy .== d]) for d in levels(doy)]
+
+        nms = ["MaxQ", "MinQ", "MeanQ", "Q90", "Q10", "Median", "Month"]
+        df = DataFrame(Qdoy, nms)
+        df[!, "SortOrder"] = ifelse.(df.Month .>= 10, df.Month .- 12, df.Month)
+        sort!(df, :SortOrder)
+        p1 = plot(
+            df.MinQ,
+            color=:red,
+            #seriestype=:bar,
+            alpha=0.8,
+            #markersize=.95,markershape=:circle,
+            label=L"Q_{min}")
+            #label="", 
+        #Adds a new, empty subplot overlaid on top of sp, with a mirrored y-axis and linked x-axis.
+        #axis2 = twinx()
+        plot!( 
+            df.MaxQ,
+            color=:red,
+            alpha=0.8,
+            #fillalpha=0.2,
+            seriestype=:scatter,
+            markersize=.95,
+            markershape=:diamond,
+            label=L"Q_{max}");
+        Plots.areaplot!(
+            df.MeanQ,
+            color="#08519C",
+            alpha=0.2,
+            label=L"Q_{Mean}")
+        plot!(df.Q10,color=:blue,seriestype=:scatter,
+            markersize=.75,
+            markershape=:diamond,
+            label=L"Q_{10}")
+        plot!(df.Q90,color=:red,seriestype=:scatter,
+            markersize=.75,
+            markershape=:diamond,
+            label=L"Q_{90}")
+
+        plot!(df.Median,
+            color=:black, 
+            alpha=0.5,
+            seriestype=:line,
+            #markersize=.75,
+            #markershape=:circle,
+            label=L"Q_{Median}",
+            minorticks=false,
+            #yaxis=:log2, #errors.
+            margins=5mm,
+            #ylim = y_lims,
+            ylabel = ylab;
+            kw...)
+
+        lng = size(df, 1)
+        title!(text)
+        xticks!(15:31:lng, mn; xrotation=45)
+        return p1
+    end 
+
+    """
+    Rs flowscreen
+    ```wa.xflow(a,q=[0.6,0.3],ylab=L"mm")```
+    """
+    function xflow(df, q=[0.9, 0.1];
+        #text::String="", 
+        ylab::LaTeXString = L"\left[\frac{l}{s\cdot km^2}\right]",
+        kw...)
+    
+        #TS = copy(TS)
+        # drop if doy is 366
+        TS = filter(row -> Dates.dayofyear(row[date_column]) != 366, df)
+        
+        #ismissing(TS.mn)
+        if any(ismissing.(TS[!,1]))
+            @warn "missing values found!"
+            dropmissing!(TS)
+        end
+    
+        TS.Month = month.(TS.date);
+        TS.DOY = Dates.dayofyear.(TS.date)
+        TS.mnen = Dates.monthname.(TS.date)
+        #sort the months to hydrolocical order
+        TS[!, "SortOrder"] = ifelse.(TS.Month .>= 10, TS.Month .- 12, TS.Month)
+        sort!(TS, :SortOrder)
+        mnv = unique(TS.mnen)
+        # Map the german months to their names
+        mndt = ["Okt", "Nov", "Dez", "Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep"]
+        mndict = Dict(zip(mnv, mndt))
+        TS.mn = map(x -> mndict[x], TS.mnen)        
+        rename!(TS, 1 => :Flow)
+        doy = TS.DOY
+        Qdoy = fill(NaN, maximum(map(Int, doy)), 7)      
+        Qdoy[:, 1] .= [maximum(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 2] .= [minimum(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 3] .= [mean(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 4] .= [quantile(TS.Flow[doy .== d], q[1]) for d in levels(doy)]
+        Qdoy[:, 5] .= [quantile(TS.Flow[doy .== d], q[2]) for d in levels(doy)]
+        Qdoy[:, 6] .= [median(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 7] .= [first(TS.Month[doy .== d]) for d in levels(doy)]
+    
+        nms = ["MaxQ", "MinQ", "MeanQ", "Q90", "Q10", "Median", "Month"]
+        df = DataFrame(Qdoy, nms)
+        df[!, "SortOrder"] = ifelse.(df.Month .>= 10, df.Month .- 12, df.Month)
+        sort!(df, :SortOrder)
+        p1 = plot(
+            df.MinQ,
+            color=:black, #:red,
+            #seriestype=:bar,
+            alpha=0.8,
+            #markersize=.95,markershape=:circle,
+            label=L"Q_{min}")
+            #label="", 
+        #Adds a new, empty subplot overlaid on top of sp, with a mirrored y-axis and linked x-axis.
+        #axis2 = twinx()
+        plot!( 
+            df.MaxQ,
+            color=:red,
+            alpha=0.8,
+            #fillalpha=0.2,
+            seriestype=:scatter,
+            
+            markersize=1.95, #.95,
+            
+            markershape=:diamond,
+            label=L"Q_{max}");
+        plot!(df.Q10,
+            color=:black,
+            seriestype=:scatter,
+            markersize=.75,
+            markershape=:diamond,
+            label=L"Q_{10}")
+        areaplot!(df.Q90,
+            color=:lightblue,
+            alpha=0.5,
+            #seriestype=:scatter,
+            #markersize=.75,
+            #markershape=:diamond,
+            label=L"Q_{90}")
+        
+        areaplot!(
+            df.MeanQ,
+            color="#08519C",
+            alpha=0.3,
+            label=L"Q_{Mean}")
+    
+        plot!(df.Median,
+            color=:grey, 
+            alpha=0.7,
+            seriestype=:line,
+            #markersize=.75,
+            #markershape=:circle,
+            label=L"Q_{Median}",
+            minorticks=false,
+            #yaxis=:log2, #errors.
+            margins=5mm,
+            legend=:topright, #inner
+            legend_font_pointsize = 12,#gibs nicht
+            #ylim = y_lims,
+            ylabel = ylab;
+            kw...)
+        lng = size(df, 1)
+        xticks!(15:31:lng, mndt; xrotation=45)
+        return p1
+    end 
+
+    
+    function remove_leap_days(df::DataFrame, date_column::Symbol)
+        return filter(row -> month(row[date_column]) != 2 || day(row[date_column]) != 29, df)
+    end
+
+
+    """
+    Rs flowscreen
+    ```wa.xflow2(a,q=[0.6,0.3],ylab=L"mm")```
+    """
+    function xflow2(df, q=[0.9, 0.1];
+        ylab::LaTeXString = L"\left[\frac{l}{s\cdot km^2}\right]",
+        date_column::Symbol = :date,
+        kw...)
+    
+        #TS = copy(df)
+        
+        # a = Dates.dayofyear.(TS.date)
+        # count("366",string(a))
+        # count("365",string(a))
+        #so drop the leap year
+        
+        #TS = filter(row -> month(row[date_column]) != 2 || day(row[date_column]) != 29, df)
+        # drop if doy is 366
+        TS = filter(row -> Dates.dayofyear(row[date_column]) != 366, df)
+        
+        if any(ismissing.(TS[!,1]))
+            @warn "missing values found!"
+            dropmissing!(TS)
+        end
+    
+        TS.Month = month.(TS.date);
+        TS.DOY = Dates.dayofyear.(TS.date)
+        TS.mnen = Dates.monthname.(TS.date)
+        #sort the months to hydrolocical order
+        TS[!, "SortOrder"] = ifelse.(TS.Month .>= 10, TS.Month .- 12, TS.Month)
+        sort!(TS, :SortOrder)
+        mnv = unique(TS.mnen)
+        # Map the german months to their names
+        mndt = ["Okt", "Nov", "Dez", "Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep"]
+        mndict = Dict(zip(mnv, mndt))
+        TS.mn = map(x -> mndict[x], TS.mnen)        
+        rename!(TS, 1 => :Flow)        
+        doy = TS.DOY
+        Qdoy = fill(NaN, maximum(map(Int, doy)), 7)      
+        Qdoy[:, 1] .= [maximum(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 2] .= [minimum(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 3] .= [mean(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 4] .= [quantile(TS.Flow[doy .== d], q[1]) for d in levels(doy)]
+        Qdoy[:, 5] .= [quantile(TS.Flow[doy .== d], q[2]) for d in levels(doy)]
+        Qdoy[:, 6] .= [median(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 7] .= [first(TS.Month[doy .== d]) for d in levels(doy)]
+    
+ 
+        nms = ["MaxQ", "MinQ", "MeanQ", "Q90", "Q10", "Median", "Month"]
+        df = DataFrame(Qdoy, nms)
+        df[!, "SortOrder"] = ifelse.(df.Month .>= 10, df.Month .- 12, df.Month)
+        sort!(df, :SortOrder)
+
+        p1 = plot(
+            df.MinQ,
+            color=:black,
+            alpha=0.8,
+            #markersize=.95,markershape=:circle,
+            label=L"Q_{min}")
+        plot!( 
+            df.MaxQ,
+            color=:red,
+            alpha=0.7,
+            #fillalpha=0.2,
+            #seriestype=:scatter,
+            linestyle=:dashdotdot,
+            # markersize=1.95, #.95,
+            # markershape=:diamond,
+            labelfontsize=12,
+            label=L"Q_{max}");
+        areaplot!(df.Q10,
+            color=:grey,
+            alpha = 0.7,
+            #seriestype=:scatter,
+            #markersize=.75,
+            #markershape=:diamond,
+            #linestyle=:auto,
+            label=L"Q_{10}")
+        areaplot!(df.Q90,
+            color=:lightblue,
+            alpha=0.5,
+            label=L"Q_{90}")
+        
+        areaplot!(
+            df.MeanQ,
+            color="#08519C",
+            alpha=0.3,
+            label=L"Q_{Mean}")
+    
+        plot!(df.Median,
+            color=:purple, 
+            alpha=0.7,
+            seriestype=:line,
+            #markersize=.75,
+            #markershape=:circle,
+            label=L"Q_{Median}",
+            minorticks=false,
+            #yaxis=:log, #errors.
+            margins=5mm,
+            legend=:topright, #inner
+            legend_font_pointsize = 12,
+            #ylim = y_lims,
+            ylabel = ylab;
+            kw...)
+        lng = size(df, 1)
+        xticks!(15:31:lng, mndt; xrotation=45)
+        return p1
+    end 
+
+    """
+    climateplot from dfs
+    (r"^tem",r"^pre")
+    """
+    function cmdf(temp::DataFrame,prec::DataFrame;col::Int=1)    
+        yrs = Dates.year.(prec.date)|>unique|>length
+        prec = monsum(prec)
+        if ncol(prec) > 2
+            select!(prec, Not(:month))
+            prec = prec[:,col]
+            precvec = vec(Matrix(prec))
+        else
+            precvec = vec(Matrix(select(prec, Not(:month))))
+        end
+                
+        precvec = precvec ./ yrs
+        
+        temp = monmean(temp)
+        if ncol(temp) > 2
+            select!(temp, Not(:month))
+            temp = temp[:,col]
+            tempvec = vec(Matrix(temp))
+        else
+            tempvec = vec(Matrix(select(temp, Not(:month))))
+        end
+        
+        month_abbr = ["Jan", "Feb", "Mär", "Apr", 
+            "Mai", "Jun", "Jul", "Aug", "Sep", 
+                "Okt", "Nov", "Dez"];
+        #;family="Computer Modern"
+        #Plots.theme(:ggplot2) #passt.
+        #Plots.theme(:dao) #gibt mir falsche twinx margin.
+        #Plots.theme(:sheet)
+        Plots.theme(:wong2)
+        #Plots.showtheme(:dracula)
+        
+        p1 = Plots.bar(prec.month, precvec, 
+            color=:cornflowerblue, 
+            guidefontfamily="Computer Modern",
+            tickfontfamily="Computer Modern",
+            #ylims = (0.0, maximum(precvec) + 5.0),
+            ylims = (0,120),
+            xflip=false,
+            ylabel="Niederschlag [mm]", 
+            ylabelfontsize=10,
+            legend=false, 
+            yflip=true,
+            left_margin = 5mm,
+            tick_direction = :out
+            );
+        xticks!(1:12, month_abbr)
+
+        for i in prec.month
+            val = round(precvec[i]; digits=1)
+            annotate!(i, precvec[i], 
+            Plots.text("$(val)",8,:bottom; family="Computer Modern"))
+        end
+        
+        ann2 = map(x->Plots.text(
+            string.(round(x; digits=1))*"°", 
+                9,
+                :left, 
+                :black;
+                #:red;
+                family="Computer Modern"),
+                tempvec)
+        
+        plot!(twinx(), tempvec,
+            ylabel="Temperatur [°C]", 
+            ylabelfontsize=10,
+            guidefontfamily="Computer Modern",
+            tickfontfamily="Computer Modern",
+            color=:coral2,
+            #ylims = (minimum(tempvec) - 1.0 , 
+            #    maximum(tempvec) + 1.0),
+            ylims = (-5,20),
+
+            annotations = (temp.month .+ 0.125, 
+                tempvec .+ 0.1, ann2, :center),
+            label=false, 
+            linestyle = :dashdot,
+            linewidth = 2,
+            right_margin = 5mm,
+            left_margin = 5mm,
+            #margins = 10mm,
+            tick_direction = :out            
+            );      
+
+        return p1
+    end
+
+    function mos(x::AbstractString)
+        fn = Grep.grep(r"_output.txt$",readdir())
+        #m = Grep.grep(Regex(x, "i"), readlines.(fn))
+        printstyled("Searching for  $x\n",color=:green)
+        for file in fn
+            output = readdlm(file,'\t', String)
+            match = Grep.grep(Regex(x, "i"),output)
+            if !isempty(match)
+                fn = first(split(file,"_qout"))
+                for line in match
+                    line = strip(line) 
+                    line = join(split(line), " ")  ##remove inner whitespaces
+                    printstyled(rpad("$fn:",30),lpad("$line\n",10),color=:green)
+                end
+            end
+        end
+    end
+        
 end ##end of module endof
 
 println("used Threads: ", Threads.nthreads())
+#println("To view a DataFrame, use vscodedisplay(df)")
 println("fold all in vscode: alt+0\n","\\Sigma  + Tab -> Σ\n","you are here: ",pwd())
 #println("formatting: alt + shift + f")
 println("new vscode window: alt + shift + n \n ctrl+R, ctrl+S Incremental history search")
 
-#import Main.wa.fdi
-# Import all submodules of `wa` module
 
-fnames = names(wa, all=true)
-for submodule in fnames
-    @eval import Main.wa.$submodule
-end
-
-
-#this is necessary to use the modules in the REPL
-using DataFrames, CSV, Statistics, Dates, Distributions
-using StatsPlots, Plots.PlotMeasures
-using DelimitedFiles, Grep, Printf, PrettyTables
-using Rasters, ArchGDAL
-import NCDatasets
-using PyCall
-using KernelDensity
-using DataFramesMeta #new...not in wa... 
-using SHA
-using GeoInterface #for reverse_coords
-# #--> matplotlib.use("TkAgg")    
-# default(show=true)    
+#####now see export.
+# # Import all submodules of `wa` module
+# fnames = names(wa, all=true)
+# for submodule in fnames
+#     @eval import Main.wa.$submodule
+# end
 
 ##import rasterstuff
-include("rasterfuncs.jl")
-
+try
+    include("rasterfuncs.jl")
+catch e
+    @error "rasterfuncs.jl not found! $e"
+end
 
 ##add themes
 begin
@@ -11223,7 +12378,8 @@ begin
         legend_font = Plots.Font("sans-serif", 10, :hcenter, 
             :vcenter, 0.0, colorant"black")
     )
-
+    #test it
+    #showtheme(:tst)
     PlotThemes._themes[:cooper] = PlotTheme(linewidth = 2,
                              markersize = 10,
                              fontfamily = "JuliaMono",
@@ -11232,62 +12388,16 @@ begin
                              tickfontsize = 18,
                              legend_font_pointsize = 18,
                             )
-        
+    
+    Plots.theme(:dao) #activate latex style typesetting.        
+    using .wa
+    
+    # """
+    # source my R setup now
+    # """
+    # function includeR()
+    #         script_path=joinpath(dirname(src_path),"rfile/setup.R")
+    #         @rput script_path
+    #         R"""source($script_path)"""
+    # end
 end
-
-theme(:dao) #latex style typesetting.
-# wa.toMain()
-# fdi()
-# wa.fdi()
-
-#using PlotlyJS
-#const AG = ArchGDAL
-
-# using RCall
-# begin    
-#     ## source my R setup now!
-#     script_path="D:/Fernerkundungsdaten/Klassifikation/R-Sessions/setup.R"
-#     @rput script_path
-#     R"source($script_path)"
-# end
-
-
-# s=raw"D:\Wasim\regio\out\rc200\x17\full2\prec_reg2_rcm.x17.2010"
-# s=raw"D:\Wasim\regio\out\rc200\x17\full2\pytdiff.txt"
-# s=raw"D:\Wasim\regio\out\rc200\x17\full2\pondrcm.x17.2017"
-# df = dfr(s)
-# df = pyread(s)
-
-# #pyread und dfr ist das einzige constante.
-# df = xread(s) #breaks.
-# df = wread(s)
-# df = waread(s)
-# df = dfread(s)
-# df = readf(s)
-# df = waread3_py(s)
-# nd = wa.pydf(df)
-
-
-# #NOTE: If you are installing Python packages for use with PyCall, you must use the root environment.
-# cdaroot=raw"C:\Users\chs72fw\.julia\conda"
-# ENV["CONDA_JL_HOME"]=cdaroot
-# using Pkg
-#ENV[""]=raw"C:\Users\chs72fw\AppData\Local\miniforge3\condabin\mamba.bat"
-#ENV["PYTHON"]=raw"C:\Users\chs72fw\AppData\Local\miniforge3\python.exe"
-# #Pkg.build("Conda")
-# Pkg.add("PyCall")
-# #Pkg.build("PyPlot")
-
-#https://github.com/JuliaPy/Conda.jl/issues/185
-##now it works
-# using Conda
-#Conda.list()
-#Conda.clean()
-# using Pkg
-# ENV["CONDA_JL_CONDA_EXE"] = joinpath(Conda.ROOTENV, "condabin", "mamba.bat")
-# ENV["CONDA_JL_CONDA_EXE"] = raw"C:\Users\chs72fw\AppData\Local\miniforge3\condabin\mamba.bat"
-# Pkg.build("Conda")
-# Pkg.build("PyCall")
-# ## Pkg.add("PyPlot")
-# Conda.add("geopandas")
-#Conda.add("rioxarray")

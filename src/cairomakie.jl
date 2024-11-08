@@ -1,19 +1,33 @@
-#a test to adapt cairomakie instead of plots 
+# adapt cairomakie instead of plots 
+if !(isdefined(Main, :src_path) && ispath(src_path))
+    include("smallfuncs.jl")
+end
 
 module cmk
-    using CairoMakie, Makie    
+    using Makie, CairoMakie
+    import GeoMakie
     using DataFrames, CSV, Statistics, Dates, Distributions
-    using DelimitedFiles, Grep , Printf
-    # using PrettyTables
-    # using SHA
-    using PyCall #for mkheat
+    using DelimitedFiles, Grep, Printf
+    # using PrettyTables, SHA
+    # using PyCall #for old mkheat
     using Rasters
+    using LaTeXStrings
     import NCDatasets
-    import Makie as Mke
     import ArchGDAL
+    import GeoInterface
 
     #very useful
     CairoMakie.set_theme!(theme_latexfonts())
+    # p=Rasters.rplot
+    # p(A;title="TIT",colormap = :thermal, ylabel="ylab",
+        #plottype=Contourf,colorbar_position=Makie.Bottom())
+
+    #rasters
+    export mkecont, mkecont2, mkemon, mkestream, 
+    mkpoly, mkrheat, mkh, mkfzs, gmwas
+    #timeseries
+    export dfpl, ctov, cloudplot, cloudplot2, 
+    tsbar, tsdf, tsp, tsp2, tsp3, tspblack
 
     function qgk(;rootdir=".", prefix="qgk")
         """
@@ -161,10 +175,10 @@ module cmk
         return size
     end
 
+    """
+    gets sorted DF by size recursivley
+    """
     function fz()
-        """
-        gets sorted DF by size recursivley
-        """
         cwd = pwd() 
         osize = 0
         m = []
@@ -197,73 +211,72 @@ module cmk
         return(v)
     end
 
-    function waread(x::Regex;recurse=false)
-        """
-        waread(x::Regex)
-        reads first match of regex wasim timeseries
-        """
-        if recurse
-            results = []
-            rootdir="."
-            for (looproot, dirs, filenames) in walkdir(rootdir)
-                for filename in filenames
-                    if (occursin(x,filename)) && (!occursin(r"txt|yrly|nc|png|svg|grd",filename))
-                        push!(results, joinpath(looproot, filename)) 
-                    end
+    """
+    enhanced Reader.
+    Read the text file, preserve line 1 as header column \n
+    `function waread(x::String;station=false,proj=false,pts_and_data=false,src=EPSG(25832),dst=EPSG(4326))`
+    """
+    function waread(x::String;station=false,proj=false,pts_and_data=false,src=EPSG(25832),dst=EPSG(4326))
+        ms = ["-9999","lin","log","--"]
+        if station
+            fl = CSV.read(x,DataFrame;limit=4)
+            ez = fl[1,5:end]|>collect
+            xc = fl[2,5:end]|>collect
+            yc = fl[3,5:end]|>collect
+            no = fl[4,5:end]|>collect
+            pts = ArchGDAL.IGeometry[]
+            
+            #for i in 1:length(xc)
+            for i in 1:lastindex(xc)
+                pt = ArchGDAL.createpoint([xc[i],yc[i]])
+                if proj
+                    pt = ArchGDAL.reproject(pt,src,dst)
                 end
+                push!(pts,pt)
             end
-            if length(results)==0
-                @error "no match for $x !"
-                return
-            end
-            fn=first(results)
-        else
-            fn=try 
-                first(filter(file -> (occursin(x,file) & 
-                (!occursin(r"xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg",
-                file))), readdir()))
-                #That’s a speedup of about 2x, but x is a string
-                # regex = Regex(x * "(?!\\.(xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg))","i")
-                # files = [file for file in readdir() if occursin(regex, file)]
-                # first(files) #1st match
-            catch
-                    @error "no match for $x !"
-                    return
+            
+            nd = DataFrame(geometry=pts, 
+                name=names(fl)[5:end],
+                ez = ez, no = no,
+                xc=xc, yc=yc)
+
+            if !pts_and_data
+                return nd
             end
         end
-        x = fn
-        ms=["-9999","lin","log","--"]
-        df = CSV.read(x,DataFrame,
-        missingstring = ms, 
-        # ntasks=4,
-        limit = typemax(Int),
-        types = Float64,
-        ignorerepeated = true,
-        delim="\t",
-        silencewarnings=true,
-        stripwhitespace=true,
-        normalizenames=true,
-        drop=(i, nm) -> i == 4)
-        dropmissing!(df,1)
-        df.YY=map(x ->Int(x),df.YY);
-        df.MM=map(x ->Int(x),df.MM);
-        df.DD=map(x ->Int(x),df.DD);
-        df.date = Date.(string.(df.YY,"-",df.MM,"-",df.DD),"yyyy-mm-dd");
-        df=df[:,Not(1:3)]
-        metadata!(df, "filename", x, style=:note);
-        
-        #s = (filter(x->!occursin(r"year|date",x),names(df)))
-        #renamer - remove char _   
+
+        df = CSV.read(x, DataFrame; 
+            delim="\t", header=1, 
+            missingstring=ms, 
+            maxwarnings = 1, #silencewarnings = true,
+            normalizenames=true, types=Float64)
+        df = dropmissing(df, 1)
+        dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
+        df.date = dt2
+        df = select(df, Not(1:4))
+        DataFrames.metadata!(df, "filename", x, style=:note)
         for x in names(df)
             if startswith(x,"_")
-            #newname=replace(x,"_"=>"C")
-            newname=replace(x,"_"=>"C", count=1)
-            rename!(df,Dict(x=>newname))
+                newname=replace(x,"_"=>"C", count=1)
+                rename!(df,Dict(x=>newname))
             end
         end
-        #names(df)
-        #s = Symbol.(filter(x->!occursin(r"year|date",x),names(df)))
-        return df 
+            
+        if (pts_and_data && !station)
+            fl = CSV.read(x, DataFrame; limit=4)
+            ez, xc, yc, no = [fl[i, 5:end] |> collect for i in 1:4]
+            pts = [ArchGDAL.createpoint([xc[i], yc[i]]) for i in 1:lastindex(xc)]
+            if proj
+                pts = ArchGDAL.reproject.(pts, Ref(src), Ref(dst))
+            end
+            nd2 = DataFrame(geometry=pts, name=names(fl)[5:end], ez=ez, no=no, xc=xc, yc=yc)
+            return (nd2,df)
+        elseif (pts_and_data && station)
+            return (nd,df)
+        else
+            return df
+        end
+        
     end
 
     function waread(x::AbstractString)
@@ -309,41 +322,46 @@ module cmk
     end
 
 
-    function old_waread2(x::String)
-        """
-        Read the text file, preserve line 1 as header column
-        """
-        ms=["-9999","lin","log","--"]
-        df = CSV.read(x, DataFrame, 
-            delim="\t",
-            header=1,
-            missingstring=ms,
-            normalizenames=true,
-            types=Float64)
-        dropmissing!(df,1)
-        dt2::Vector{Date} = []
-        for i in eachrow(df)
-            z=i[1:3]|>collect|>transpose
-            push!(dt2,Date(z[1],z[2],z[3]))
-        end
-        df.date = dt2
-        df=df[:,Not(1:4)]
-        metadata!(df, "filename", x, style=:note);
-    end
-
-    function waread2(x::String)
-        """
-        Read the text file, preserve line 1 as header column
-        Instead of using CSV.read, we use CSV.File to create a lazy representation of the file.
-        This avoids reading the entire file into memory at once, 
-        which can be more memory-efficient for large datasets.
-        """
-        ms = ["-9999", "lin", "log", "--"]
-        df = CSV.File(x; delim="\t", header=1, normalizenames=true, missingstring=ms, types=Float64) |> DataFrame
+    """
+    Read the text file, preserve line 1 as header column
+    Instead of using CSV.read, we use CSV.File to create a lazy representation of the file.
+    This avoids reading the entire file into memory at once, 
+    which can be more memory-efficient for large datasets.
+    kwargs are passed to CSV.read
+    """
+    function waread2(x::String;kwargs...)
+        ms = ["-9999","-9999.0","lin", "log", "--"]
+        df = CSV.File(x; delim="\t", header=1, normalizenames=true, 
+            missingstring=ms, types=Float64, kwargs...) |> DataFrame
         dropmissing!(df,1)
         dt2 = [Date(Int(row[1]), Int(row[2]), Int(row[3])) for row in eachrow(df)]
         select!(df, Not(1:4))
         df.date = dt2
+        metadata!(df, "filename", x, style=:note)
+        return df
+    end
+
+
+    """
+    waread2 on regex
+    kwargs... passed to CSV.File
+    Read the text file, preserve line 1 as header column
+    Instead of using CSV.read, we use CSV.File to create a lazy representation of the file.
+    This avoids reading the entire file into memory at once, 
+    which can be more memory-efficient for large datasets.
+    """
+    function waread2(x::Regex;kwargs...)
+        inF = first(filter(x->!occursin(r"yrly|nc|png|svg|grd",x),Grep.grep(x,readdir())))
+
+        ms = ["-9999", "lin", "log", "--"]
+        df = CSV.File(inF; delim="\t", header=1, 
+            normalizenames=true, missingstring=ms,
+            #maxwarnings=2, 
+            silencewarnings=true, 
+            types=Float64, kwargs...) |> DataFrame
+        dropmissing!(df,1)        
+        df.date = [Date(Int(row[1]), Int(row[2]), Int(row[3])) for row in eachrow(df)]
+        select!(df, Not(1:4)) #since date is at last position
         metadata!(df, "filename", x, style=:note)
         return df
     end
@@ -916,65 +934,7 @@ module cmk
         end
     end
 
-    function vgjl(snippet::AbstractString)
-        owd=pwd()
-        cd("C:/Users/Public/Documents/Python_Scripts/julia")
-        files = filter(file -> endswith(file, ".jl"), readdir())
-        for file in files
-            open(file) do f
-                counter = 0 # Zähler initialisieren
-                for line in eachline(f)
-                    counter += 1 # Zähler erhöhen
-                    if contains(line,snippet)
-                        printstyled("$counter:\t",color=:light_red) 
-                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled("$line\n",color=:green,bold=true) 
-                    end
-                end
-            end
-        end
-        cd("C:/Users/Public/Documents/Python_Scripts/julia/win")
-        files = filter(file -> endswith(file, ".jl"), readdir())
-        for file in files
-            open(file) do f
-                counter = 0 # Zähler initialisieren
-                for line in eachline(f)
-                    counter += 1 # Zähler erhöhen
-                    if contains(line,snippet)
-                        printstyled("$counter:\t",color=:light_red) 
-                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled("$line\n",color=:green,bold=true) 
-                    end
-                end
-            end
-        end
-        cd(owd)
-    end
 
-    function vgjlrec(snippet::AbstractString)
-        """
-        recursive grep
-        """
-        owd="C:/Users/Public/Documents/Python_Scripts/julia"
-        for (root, dirs, files) in walkdir(owd)
-            for file in files 
-                if (endswith(file, ".jl"))
-                    pt=(joinpath(root, file))
-                    open(pt) do f
-                        counter = 0 # Zähler initialisieren
-                        for line in eachline(f)
-                            counter += 1 # Zähler erhöhen
-                            if contains(line,snippet)
-                                printstyled("$counter:\t",color=:light_red) 
-                                printstyled("$pt:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                                printstyled("$line\n",color=:green,bold=true) 
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
 
     function vgro(snippet::AbstractString)
         owd=pwd()
@@ -1036,95 +996,6 @@ module cmk
         end
     end
 
-    function vgctl(snippet::AbstractString)
-        """
-        hint. vgctl("set \$TS")
-        """
-        owd=pwd()
-        nwd="D:/Wasim/regio/control/"
-        nwd2="D:/temp/saale/control/"
-        nwd3="D:/Wasim/Tanalys/DEM/brend_fab/control/"
-        nwd4="D:/Wasim/regio/control/"
-        nwd5="D:/Wasim/streu/control/"
-        cd(nwd)
-        #println("greps from *ctl from  \n$nwd and \n$nwd2...")
-        println("greps from *ctl from  \n$nwd \n$nwd2 \n$nwd3 \n$nwd4 \n$nwd5...")
-        files = filter(file -> endswith(file, ".ctl"), readdir())
-        for file in files
-            open(file) do f
-                counter = 0 # Zähler initialisieren
-                for line in eachline(f)
-                    counter += 1 # Zähler erhöhen
-                    if contains(line,snippet)
-                        printstyled("$counter: $nwd",color=:light_red) 
-                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled("$line\n",color=:green,bold=true) 
-                    end
-                end
-            end
-        end
-        cd(nwd2)
-        files = filter(file -> endswith(file, ".ctl"), readdir())
-        for file in files
-            open(file) do f
-                counter = 0 # Zähler initialisieren
-                for line in eachline(f)
-                    counter += 1 # Zähler erhöhen
-                    if contains(line,snippet)
-                        printstyled("$counter: $nwd2",color=:light_red) 
-                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled("$line\n",color=:green,bold=true) 
-                    end
-                end
-            end
-        end
-        cd(nwd3)
-        files = filter(file -> endswith(file, ".ctl"), readdir())
-        for file in files
-            open(file) do f
-                counter = 0 # Zähler initialisieren
-                for line in eachline(f)
-                    counter += 1 # Zähler erhöhen
-                    if contains(line,snippet)
-                        printstyled("$counter: $nwd3",color=:light_red) 
-                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled("$line\n",color=:green,bold=true) 
-                    end
-                end
-            end
-        end
-        cd(nwd4)
-        files = filter(file -> endswith(file, ".ctl"), readdir())
-        for file in files
-            open(file) do f
-                counter = 0 # Zähler initialisieren
-                for line in eachline(f)
-                    counter += 1 # Zähler erhöhen
-                    if contains(line,snippet)
-                        printstyled("$counter: $nwd4",color=:light_red) 
-                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled("$line\n",color=:green,bold=true) 
-                    end
-                end
-            end
-        end
-        cd(nwd5)
-        files = filter(file -> endswith(file, ".ctl"), readdir())
-        for file in files
-            open(file) do f
-                counter = 0 # Zähler initialisieren
-                for line in eachline(f)
-                    counter += 1 # Zähler erhöhen
-                    if contains(line,snippet)
-                        printstyled("$counter: $nwd5",color=:light_red) 
-                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled("$line\n",color=:green,bold=true) 
-                    end
-                end
-            end
-        end
-        cd(owd)
-    end
 
     function rglob(prefix::String)
         rootdir="."
@@ -1181,35 +1052,11 @@ module cmk
         return(s)
     end
 
-    function vgr(regex, file_ending)
-        rootdir=pwd()
-        println("starting on: $rootdir...\n searching for >> $regex << with file ending >> $file_ending <<\n")
-        files = []
-        for (looproot, dirs, filenames) in walkdir(rootdir)
-            for filename in filenames
-                #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
-                #if (occursin(Regex(prefix,"i"),filename))
-                if (endswith(filename, file_ending))
-                    push!(files, joinpath(looproot, filename)) 
-                end
-            end
-        end
-        for file in files
-            open(file) do f
-                counter = 0 # Zähler initialisieren
-                for line in eachline(f)
-                    counter += 1 # Zähler erhöhen
-                    if occursin(Regex(regex,"i"), line)
-                        println("$file: $counter:\t $line")
-                    end
-                end
-            end
-        end
-    end
+
 
     function vjl(regex)
         # greps jl from julia folder
-        pt="/mnt/c/Users/Public/Documents/Python_Scripts/julia";
+        pt = src_path;
         file_ending=".jl"
         files = filter(file -> endswith(file, file_ending), readdir(pt,join=true))
         for file in files
@@ -1225,32 +1072,61 @@ module cmk
         end
     end
     
-    function mall(files::Vector{Any};xcol=:date)
-        """reads, reduces + merges by date"""
+"""
+    reads, reduces + merges by date
+    ds = innerjoin(unique.(dfs, xcol)..., on = xcol, makeunique=true)
+    example:
+    df = mall(glob(r"qges|qbas|qd"))
+    """
+    function mall(files::Vector{String};xcol=:date)
         #files
         dfs = DataFrame[]
         for file in files
             if isfile(file) && (!occursin(r"xml|qgk|fzt|ftz|log|ini|wq|yrly|nc|png|svg",file))
             file_path = file
-        println("reading ",file_path,"...")
-        p1 = waread(file_path)
-        push!(dfs, p1)
+            println("reading ",file_path,"...")
+            p1 = readdf(file_path)
+            push!(dfs, p1)
             end
         end
-        df = reduce((left, right) -> 
-        innerjoin(left, right, on = xcol,makeunique=true), 
-        dfs)
+        # df = reduce((left, right) -> 
+        # innerjoin(left, right, on = xcol,makeunique=true), 
+        # dfs)
+        df = innerjoin(unique.(dfs, xcol)..., on = xcol, makeunique=true)
+        #xcol = string(xcol)
+        #df = hcat(df[!,Not(Cols(Regex(xcol)))],df[:,Cols(Regex(xcol))])
+        df = hcat(df[!,Not(Cols(xcol))],df[:,Cols(xcol)])
         return(df)
     end
 
+    """
+    reduces + merges by date
+    files::Vector{DataFrame};xcol=:date
+    """
     function mall(files::Vector{DataFrame};xcol=:date)
-        "reduces + merges by date"
-        df = reduce((left, right) -> 
-        innerjoin(left, right, on = xcol,makeunique=true), 
-        files)
+        # df = reduce((left, right) -> 
+        # innerjoin(left, right, on = xcol,
+        #     makeunique=true), files)
+        df = innerjoin(unique.(files, xcol)..., 
+            on = xcol, makeunique=true)
+        df = hcat(df[!,Not(Cols(xcol))],df[:,Cols(xcol)])
         return(df)
     end
-
+    
+    """
+    reduces + merges by date
+    files::Vector{Any};xcol=:date
+    """
+    function mall(files::Vector{Any};xcol=:date)
+        # df = reduce((left, right) -> 
+        # innerjoin(left, right, on = xcol,makeunique=true), 
+        # files)
+        df = innerjoin(unique.(files, xcol)..., 
+            on = xcol, makeunique=true)
+        df = hcat(df[!,Not(Cols(xcol))],df[:,Cols(xcol)])
+        return(df)
+    end
+    
     function getdf(regex::AbstractString,dfs::Vector{DataFrame})
         "selects first match..."
         df = dfs[map(n->occursin(Regex(regex,"i"),n),
@@ -1289,7 +1165,7 @@ module cmk
             ti = raw""
         end
         df[!, :year] = year.(df[!,:date]);
-        df_yearsum = DataFrames.combine(groupby(df, :year), y .=> sum .=> y);
+        df_yearsum = DataFrames.combine(DataFrames.groupby(df, :year), y .=> sum .=> y);
         return(df_yearsum)
     end
 
@@ -1304,7 +1180,7 @@ module cmk
             ti = raw""
         end
         df[!, :year] = year.(df[!,:date]);
-        df_yearsum = DataFrames.combine(groupby(df, :year), y .=> sum .=> y);
+        df_yearsum = DataFrames.combine(DataFrames.groupby(df, :year), y .=> sum .=> y);
         return(df_yearsum)
     end
 
@@ -1319,7 +1195,7 @@ module cmk
             ti = raw""
         end
         df[!, :year] = year.(df[!,:date]);
-        df_yearsum = DataFrames.combine(groupby(df, :year), y .=> sum .=> y);
+        df_yearsum = DataFrames.combine(DataFrames.groupby(df, :year), y .=> sum .=> y);
         return(df_yearsum)
     end
 
@@ -1334,7 +1210,7 @@ module cmk
             ti = raw""
         end
         df[!, :year] = year.(df[!,:date]);
-        df_yearsum = DataFrames.combine(groupby(df, :year), y .=> mean .=> y);
+        df_yearsum = DataFrames.combine(DataFrames.groupby(df, :year), y .=> mean .=> y);
         return(df_yearsum)
     end
 
@@ -1349,7 +1225,7 @@ module cmk
             ti = raw""
         end
         df[!, :year] = year.(df[!,:date]);
-        df_yearsum = DataFrames.combine(groupby(df, :year), y .=> mean .=> y);
+        df_yearsum = DataFrames.combine(DataFrames.groupby(df, :year), y .=> mean .=> y);
         return(df_yearsum)
     end
 
@@ -1364,7 +1240,7 @@ module cmk
             ti = raw""
         end
         df[!, :year] = year.(df[!,:date]);
-        df_yearsum = DataFrames.combine(groupby(df, :year), y .=> mean .=> y);
+        df_yearsum = DataFrames.combine(DataFrames.groupby(df, :year), y .=> mean .=> y);
         return(df_yearsum)
     end
 
@@ -1461,7 +1337,7 @@ module cmk
         y = filter(x->!occursin("date",x),names(df))
         s = map(y -> Symbol(y),y)
         df[!, :month] = month.(df[!,:date]);
-        df_monthsum = DataFrames.combine(groupby(df, :month), y .=> sum .=> y);
+        df_monthsum = DataFrames.combine(DataFrames.groupby(df, :month), y .=> sum .=> y);
         return(df_monthsum)
     end
 
@@ -1470,7 +1346,7 @@ module cmk
         y = filter(x->!occursin("date",x),names(df))
         s = map(y -> Symbol(y),y)
         df[!, :month] = month.(df[!,:date]);
-        df_monthsum = DataFrames.combine(groupby(df, :month), y .=> sum .=> y);
+        df_monthsum = DataFrames.combine(DataFrames.groupby(df, :month), y .=> sum .=> y);
         return(df_monthsum)
     end
 
@@ -1479,7 +1355,7 @@ module cmk
         y = filter(x->!occursin("date",x),names(df))
         s = map(y -> Symbol(y),y)
         df[!, :month] = month.(df[!,:date]);
-        df_monthsum = DataFrames.combine(groupby(df, :month), y .=> mean .=> y);
+        df_monthsum = DataFrames.combine(DataFrames.groupby(df, :month), y .=> mean .=> y);
         return(df_monthsum)
     end
 
@@ -1488,7 +1364,7 @@ module cmk
         y = filter(x->!occursin("date",x),names(df))
         s = map(y -> Symbol(y),y)
         df[!, :month] = month.(df[!,:date]);
-        df_monthsum = DataFrames.combine(groupby(df, :month), y .=> mean .=> y);
+        df_monthsum = DataFrames.combine(DataFrames.groupby(df, :month), y .=> mean .=> y);
         return(df_monthsum)
     end
 
@@ -1498,8 +1374,8 @@ module cmk
         run(cmd)
     end
 
+    "--- reader with drop exept of first col ---"
     function so_read(x::AbstractString)
-        "--- reader with drop exept of first col ---"
         ms=["-9999","lin","log"]
         df::DataFrame = CSV.read(x,DataFrame,
         missingstring=ms,
@@ -1518,8 +1394,8 @@ module cmk
     end
 
 
+    "--- main reader ---"
     function readmhm(x::AbstractString)
-        "--- main reader ---"
         ms=["-9999","lin","log"]
         #x=lk
         df::DataFrame = CSV.read(x,DataFrame,
@@ -1550,57 +1426,10 @@ module cmk
         df=df[:,Not(1:3)]    
     end
 
-    # function dfsplog(dfs::Vector{DataFrame};save="")
-    #     "plots and adds"
-    #     df = dfs[1]
-    #     s = Symbol.(filter(x->!occursin(r"date|year",x),names(df)))
-    #     p = @df df Plots.plot(:date,
-    #             cols(s),
-    #             yaxis = :log,
-    #             legend = false)
-    #             #legend = :bottom)
-    #     for i in 2:length(dfs)
-    #         nm=DataFrames.metadata(dfs[i])|>only|>last|>basename
-    #         println("adding $nm")
-    #         s = Symbol.(filter(x->!occursin(r"date|year",x),names(dfs[i])))
-    #         @df dfs[i] Plots.plot!(:date,cols(s),
-    #         label="$nm") #geht, wenn oben legend true ist.
-    #         # label="$nm",
-    #         # legend = false)
-    #         # Plots.annotate!(0.5, 0.5, text(nm, 14))
-    #     end
-    #     return p
-    #     if !isempty(save) 
-    #         Plots.savefig(p,save*".png")
-    #         printstyled("$save saved as $save*.png! \n",color=:green)
-    #     end
-    # end
-
-    # function dfsp(dfs::Vector{DataFrame};save="")
-    #     "plots and adds"
-    #     df = dfs[1]
-    #     s = Symbol.(filter(x->!occursin(r"date|year",x),names(df)))
-    #     p = @df df Plots.plot(:date,
-    #             cols(s),
-    #             legend = false)    #legend = :bottom)
-    #     for i in 2:length(dfs)
-    #         nm=DataFrames.metadata(dfs[i])|>only|>last|>basename
-    #         println("adding $nm")
-    #         s = Symbol.(filter(x->!occursin(r"date|year",x),names(dfs[i])))
-    #         @df dfs[i] Plots.plot!(:date,cols(s),
-    #         label="$nm") #geht, wenn oben legend true ist.
-    #     end
-    #     return p
-    #     if !isempty(save) 
-    #         Plots.savefig(p,save*".png")
-    #         printstyled("$save saved as $save*.png! \n",color=:green)
-    #     end
-    # end
-
+    """
+    greps from repl_history
+    """
     function vgrepl(snippet::AbstractString)
-        """
-        greps from repl_history
-        """
         #file = raw"/home/ubu/.julia/logs/repl_history.jl"
         file = raw"C:\Users\chs72fw\.julia\logs\repl_history.jl"
         #files = filter(file -> endswith(file, ".py"), readdir())
@@ -1620,24 +1449,24 @@ module cmk
         #cd(owd)
     end
 
+    """
+    greps from current dir iRegex
+    """
     function glob(x::AbstractString)
-        """
-        greps from current dir iRegex
-        """
         filter(file -> occursin(Regex(x,"i"),file), readdir())
     end
 
+    """
+    greps from current dir Regex
+    """
     function glob(x::Regex)
-        """
-        greps from current dir Regex
-        """
         filter(file -> occursin(x,file), readdir())
     end
 
+    """
+    date to last position
+    """
     function reorder_df(df::DataFrame)
-        """
-        date to last position
-        """
         df = hcat(df[!,Not(Cols(r"date"))],df[:,Cols(r"date")])
         return(df)
     end
@@ -2139,7 +1968,7 @@ module cmk
         y = filter(x->!occursin(r"date",x),names(df))
         df[!, :year] = year.(df[!,:date]);
         df = df[!,Not(:date)]
-        dy = DataFrames.combine(groupby(df, :year), y .=> sum .=> y);
+        dy = DataFrames.combine(DataFrames.groupby(df, :year), y .=> sum .=> y);
         for row in eachrow(dy)
             pot=row[2]
             real=row[3]
@@ -2314,10 +2143,9 @@ module cmk
         DataFrames.metadata!(df, "filename", z, style=:note)
     end
 
-
-    readall = loadalldfs
-    readmeteo = waread
-    loaddf = waread
+    # readall = loadalldfs
+    # readmeteo = waread
+    # loaddf = waread
 
     function rename_duplicates(df::DataFrame)
         # loop over the column names
@@ -2384,7 +2212,7 @@ module cmk
     end
 
     function ssup()
-        include("C:/Users/Public/Documents/Python_Scripts/julia/win/smallfuncs.jl")
+        include("C:/Users/Public/Documents/Python_Scripts/julia/smallfuncs.jl")
     end
  
     function kge_fread()
@@ -2411,42 +2239,6 @@ module cmk
         df.date = Date.(string.(df[!,1],"-",df[!,2],"-",df[!,3]),"yyyy-mm-dd");
         df=df[:,Not(1:4)]
         metadata!(df, "filename", x, style=:note);
-    end
-
-    function waread2(x::Regex)
-        """
-        waread2 on regex
-        Read the text file, preserve line 1 as header column
-        Instead of using CSV.read, we use CSV.File to create a lazy representation of the file.
-        This avoids reading the entire file into memory at once, 
-        which can be more memory-efficient for large datasets.
-        """
-        #x=glob(x)|>first
-        #glob==filter(file -> occursin(Regex(x,"i"),file), readdir())
-
-        #@time filter(file -> occursin(Regex(x,"i"),file), readdir()) #slower
-        #@time filter(file -> occursin(r"sb",file), readdir()) #slower
-        
-        
-        # @time Grep.grep(r"sb",readdir()) #0.000541 
-        # x="sb"
-        # @time glob(x) #faster
-        # @time Grep.grep(Regex(x),readdir()) #equally fast.
-
-        #filter(x->!occursin(r"yrly|nc|png|svg|grd",x),readdir("."))
-        #@time x = first(filter(x->!occursin(r"yrly|nc|png|svg|grd",x),glob(x)))
-        #slightly faster.
-        #@time x = first(filter(x->!occursin(r"yrly|nc|png|svg|grd",x),Grep.grep(x,readdir())))
-        inF = first(filter(x->!occursin(r"yrly|nc|png|svg|grd",x),Grep.grep(x,readdir())))
-
-        ms = ["-9999", "lin", "log", "--"]
-        df = CSV.File(inF; delim="\t", header=1, normalizenames=true, missingstring=ms, types=Float64) |> DataFrame
-        dropmissing!(df,1)
-        dt2 = [Date(Int(row[1]), Int(row[2]), Int(row[3])) for row in eachrow(df)]
-        select!(df, Not(1:4))
-        df.date = dt2
-        metadata!(df, "filename", x, style=:note)
-        return df
     end
 
     
@@ -3715,11 +3507,11 @@ module cmk
         println("Matched results saved to $output_file")
     end
 
+    """
+    map(typeof, eachcol(df)) #check types of cols
+    msk = broadcast(x->typeof(x)==Vector{Float64},df)
+    """
     function subset_dataframe_by_mask(df::DataFrame, msk::DataFrame)
-        """
-        map(typeof, eachcol(df)) #check types of cols
-        msk = broadcast(x->typeof(x)==Vector{Float64},df)
-        """
         # Get column names that satisfy the condition
         columns_to_keep = names(df)[collect(msk[1, :])]
         # Subset DataFrame using the mask
@@ -4004,98 +3796,6 @@ module cmk
     
         return zd
     end
-    
-    # function pyread_meteo(s::AbstractString;hdr=0)
-    #     pd = pyimport("pandas")
-    #     ddf = pd.read_csv(s, delim_whitespace=true, 
-    #         header=hdr,
-    #         na_values=-9999,
-    #         low_memory=false,
-    #         verbose=true)
-    #     #ddf.filename=basename(s)
-    #     ddf = wa.pydf(ddf)
-        
-    #     #dt = Date.(map(x -> join(x, "-"), eachrow(ddf[:, 1:3])))
-    #     dt = select(ddf,1:3)
-    #     Z = []
-    #     for i in eachcol(dt)
-    #         col = tryparse.(Int, i)
-    #         push!(Z,col)
-    #     end
-    #     dt = DataFrame(Z,:auto)
-        
-    #     msk = tryparse.(Int, ddf.YY)
-    #     ddf = ddf[findall(!isnothing,msk),:]
-    #     dt = dt[findall(!isnothing, dt.x1),:]
-    #     dt = Date.(map(k -> join(k, "-"), eachrow(dt[:, 1:3])))
-    #     nd = hcat(ddf[!, 5:end], dt)
-       
-    #     for col in names(nd)[(eltype.(eachcol(nd)) .<: String)]
-    #         nd[!, col] .= tryparse.(Float64, col)
-    #     end
-    #     rename!(nd, ncol(nd) =>"date")
-    #     metadata!(nd, "filename", s, style=:note);
-    #     return nd
-    # end
-
-    # function pyread(s::AbstractString;hdr=0)
-    #     pd = pyimport("pandas")
-    #     ddf = pd.read_csv(s, delim_whitespace=true, 
-    #         header=hdr,
-    #         na_values=-9999,
-    #         low_memory=false,
-    #         verbose=true)
-    #     #ddf.filename=basename(s)
-    #     ddf = wa.pydf(ddf)
-        
-    #     dt = Date.(map(x -> join(x, "-"), eachrow(ddf[:, 1:3])))
-        
-    #     nd = hcat(ddf[!, 5:end], dt)
-
-    #     for col in names(nd)[(eltype.(eachcol(nd)) .<: String)]
-    #         nd[!, col] .= tryparse.(Float64, col)
-    #     end
-    #     rename!(nd, ncol(nd) =>"date")
-    #     metadata!(nd, "filename", s, style=:note);
-    #     return nd
-    # end
-
-    # function waread3_py(x, flag=true)
-    #     # use py"""...""" syntax to access the Python function
-    #     py"""
-    #     import pandas as pd
-    #     import datetime
-
-    #     def waread3(x, flag=True):
-    #         if flag:
-    #             df = pd.read_csv(x, delim_whitespace=True, header=0,
-    #                             na_values=-9999, verbose=True,engine='c')
-    #             if 'YY' not in df.columns:
-    #                 print("Column 'YY' not found in the CSV file.")
-    #                 return None
-    #             if df.iloc[:, 0].dtype == 'object':
-    #                 print('First column contains strings, subsetting to Int...')
-    #                 df = df[~df.iloc[:, 0].str.contains("[A-z]|-", na=False)]
-    #             source_col_loc = df.columns.get_loc('YY')        
-    #             df['date'] = df.iloc[:, source_col_loc:source_col_loc +
-    #                                 3].apply(lambda x: "-".join(x.astype(str)), axis=1)
-    #             df = df.iloc[:, 4:]
-    #             df['date'] = pd.to_datetime(df['date'])
-    #             #df.set_index('date', inplace=True)
-    #             df.iloc[:,0:-2] = df.iloc[:,0:-2].apply(lambda x: x.astype(float), axis=1)
-    #             df.filename = x
-    #             print(df.filename,"done!")
-    #             return df
-    #         else:
-    #             print('Date parse failed, try reading without date transformation...')
-    #             df = pd.read_csv(x, delim_whitespace=True, comment="Y", skip_blank_lines=True).dropna()
-    #             df.filename = x
-    #             print(df.filename,"done!")
-    #             return df
-    #     """
-    #     # call the Python function with the arguments and return the result
-    #     return py"waread3($x, $flag)"
-    # end
 
     import InteractiveUtils: clipboard
 
@@ -4463,19 +4163,31 @@ module cmk
         value_to_color = Dict(unique_values[i] => colors[i % length(colors) + 1] for i in 1:length(unique_values))
         # Map values in a to colors
         selected_colors = [value_to_color[value] for value in a]
-   
-        rainclouds(a,b;
-            xlabel = "", #"Basins",
-            ylabel = " ", title = ti,
-            plot_boxplots = true, cloud_width=2.5, 
-            side = :right, violin_limits = extrema,
-            xticklabelrotation = π / 4,
-            xticklabelalign = (:right, :center),
+        #category_labels = names(df[!,Not(:date)]),
+        fig = Figure() 
+        ax3 = Axis(fig[1, 1], 
+            title = replace(ti,r"_|so"=>" "),
+            xlabel="", ylabel = "") 
+
+        rainclouds!(a,b;            
+            orientation = :horizontal,
+            plot_boxplots = true, 
+            cloud_width=2.5, 
+            side = :right, 
+            violin_limits = extrema,
             #clouds=hist,
             color = selected_colors)
-            # ax3.xticklabelrotation = π / 4
-            # ax3.xticklabelalign = (:right, :center)
+        hideydecorations!(ax3, grid=true, ticks=true)
+        hidexdecorations!(ax3, grid=true, ticks=true,  ticklabels = false)
+        ax3.xticks = (1:ncol(df),names(df))
+        #ax3.yticks = #repeat("x",3)
+        ax3.xticklabelrotation = π / 4
+        ax3.xticklabelalign = (:right, :center)
 
+        return fig
+
+        #cbs = names(df[!,Not(:date)])
+        #CairoMakie.yticks!(;ytickrange=1:length(cbs),yticklabels=cbs)
 
     end
 
@@ -4492,24 +4204,38 @@ module cmk
         ti = raw""
         end
     
-        a,b = cmk.ctov(df)
+        a,b = ctov(df)
         colors = Makie.wong_colors()
         unique_values = unique(a)
         value_to_color = Dict(unique_values[i] => colors[i % length(colors) + 1] for i in 1:length(unique_values))
         selected_colors = [value_to_color[value] for value in a]
+
+        fig = Figure( #resolution=(600, 400), 
+            #fonts=(;regular = "consolas")            
+        )
+        
+        ax3 = Axis(fig[1, 1], 
+            title = replace(ti,r"_|so"=>" "),
+                xlabel="", 
+                ylabel = "") 
+            #ylabel=first(names(df))           )
     
-        rainclouds(a,b;
-            xlabel = "",
-            ylabel = " ", 
-            title = ti,
+        rainclouds!(a,b;
+            #xlabel = "",
+            #ylabel = " ", 
+            #title = ti,
             gap=0.0002,
             #cloud_width = maximum(b),
             #clouds = violin,
             #violin_limits = extrema(b).*.8,
-            xticklabelalign = (:right, :center),
+            #xticklabelalign = (:right, :center),
             color = selected_colors)
             #clouds=hist,
             #xticklabelrotation = π / 4,
+        ax3.xticks = (1:ncol(df),names(df))
+        ax3.xticklabelrotation = π / 4
+        ax3.xticklabelalign = (:right, :center)
+        return fig
     end
     
     """
@@ -4525,7 +4251,12 @@ module cmk
         #lentime = nrow(df)
         lentime = size(df,1)
         slice_dates = range(1, lentime, step=lentime ÷ 8)
-        tit = DataFrames.metadata(df)|>only|>last|>basename
+        tit = try
+            DataFrames.metadata(df) |> only |> last |> basename
+            catch
+                @warn "no metadata in df"
+                raw""
+            end
         
         ax3 = Axis(fig[1, 1], 
             title = replace(tit,r"_|so"=>" "),
@@ -4576,7 +4307,12 @@ module cmk
         tempo = string.(dt)
         lentime = size(df, 1)
         slice_dates = range(1, lentime, step=lentime ÷ 8)
-        tit = DataFrames.metadata(df) |> only |> last |> basename
+        tit = try
+            DataFrames.metadata(df) |> only |> last |> basename
+            catch
+                @warn "no metadata in df"
+                raw""
+            end
         
         ax3 = Axis(fig[1, 1], 
                    title = replace(tit, r"_|so" => " "),
@@ -4614,7 +4350,12 @@ module cmk
         tempo = string.(dt)
         lentime = size(df, 1)
         slice_dates = range(1, lentime, step=lentime ÷ 8)
-        tit = DataFrames.metadata(df) |> only |> last |> basename
+        tit = try
+            DataFrames.metadata(df) |> only |> last |> basename
+            catch
+                @warn "no metadata in df"
+                raw""
+            end
         cols = filter(x -> !occursin(r"date|year", x), names(df))
     
         fig = Figure( #resolution=(800, 400), 
@@ -4649,7 +4390,12 @@ module cmk
         tempo = string.(dt)
         lentime = size(df, 1)
         slice_dates = range(1, lentime, step=lentime ÷ 8)
-        tit = DataFrames.metadata(df) |> only |> last |> basename
+        tit = try
+            DataFrames.metadata(df) |> only |> last |> basename
+            catch
+                @warn "no metadata in df"
+                raw""
+            end
         cols = filter(x -> !occursin(r"date|year", x), names(df))
     
         fig = Figure( #resolution=(800, 800), 
@@ -4680,20 +4426,27 @@ module cmk
     barplots yearsum timeseries
     baryrsum
     """
-    function tsbar(df::DataFrame)
+    function tsbar(df::DataFrame;kw...)
         df = yrsum(df)
         #dt = df.date
         dt = df.year
-        fig = Figure( #resolution=(600, 400), 
-                fonts=(;regular = "consolas")            
-                )
+        fig = Figure(kw...) 
+                #resolution=(600, 400), 
+                #fonts=(;regular = "consolas")            
+                #)
     
         
         tempo = string.(dt)
         lentime = size(df, 1)
         #slice_dates = range(1, lentime, step=lentime ÷ 8)
         slice_dates = range(1, lentime, step=1)
-        tit = DataFrames.metadata(df) |> only |> last |> basename
+        tit = try
+            DataFrames.metadata(df) |> only |> last |> basename
+            catch
+                @warn "no metadata in df"
+                raw""
+            end
+                
         
         ax3 = Axis(fig[1, 1], 
                    title = replace(tit, r"_|so" => " "),
@@ -4789,9 +4542,9 @@ module cmk
         y = [last(pt) for pt in GeoInterface.coordinates(ks)|>first]
         # fig = Figure()
         # axs = Axis(fig, xlabel="", ylabel="")
-        # Mke.lines!(x, y)    
+        # Makie.lines!(x, y)    
         # return fig
-        return Mke.lines(x, y)    
+        return Makie.lines(x, y)    
     end
 
     """
@@ -4809,8 +4562,8 @@ module cmk
             reverse!(z,dims=2)
             replace!(z, missval=>missing)
         end
-        ex = extrema(z|>skipmissing)
-        lscale = ex[1]:10:ex[2] # Adjusted levels
+        #ex = extrema(z|>skipmissing)
+        #lscale = ex[1]:10:ex[2] # Adjusted levels
         fig = Figure(
             #size=(800, 600), 
             fontsize=22);
@@ -4853,12 +4606,12 @@ module cmk
                 @warn "replace missing failed!"
             end
         end
-        ex = extrema(z|>skipmissing)
-        lscale = ex[1]:10:ex[2] # Adjusted levels
+        #ex = extrema(z|>skipmissing) #can be errornous due to NaN32
+        #lscale = ex[1]:10:ex[2] # Adjusted levels
         fig = Figure(size=(1200, 400), fontsize=22);
         axs = [Axis(fig[1, j], aspect=1, xlabel="x", ylabel=j == 1 ? "y" : "")
                 for j in 1:3]
-        p1 = heatmap!(axs[1], z, colormap=:plasma, levels=lscale)
+        p1 = heatmap!(axs[1], z, colormap=:plasma)
             contour!(axs[2], z; color=:black) 
             heatmap!(axs[3], z; colormap=(:plasma, 0.85))
         contour!(axs[3], z; color=:white)
@@ -4874,9 +4627,9 @@ module cmk
         #axs = Axis(fig, xlabel="x", ylabel="y"
         fig = Figure();
         axs = Axis(fig, xlabel="", ylabel="",aspect=1)
-        Mke.heatmap!(axs,r)
+        Makie.heatmap!(axs,raster)
         for pt in ptc_tuples
-            Mke.scatter!(axs,pt, markersize = 5, color = :red)
+            Makie.scatter!(axs,points, markersize = 5, color = :red)
         end
         # Set explicit limits if needed
         #GeoInterface.bbox(ptc_tuples)
@@ -4919,16 +4672,39 @@ module cmk
 
     """
     plots timeseries like cmk, but with a legend
+    ```
+    dfpl(x::Union{Regex,String,DataFrame};leg::Bool=true,kw...)
+
+    kw.. passed to Axis:
+    cmk.dfpl(r"wolf"i;yscale=log10)
+    using CairoMakie
+    f = Figure()
+    for (i, scale) in enumerate([identity, log10, log2, log, sqrt, Makie.logit])
+        row, col = fldmod1(i, 2)
+        Axis(f[row, col], xscale = scale, title = string(scale),
+            xminorticksvisible = true, xminorgridvisible = true,
+            xminorticks = IntervalsBetween(5))
+
+        lines!(range(0.01, 0.99, length = 200), 1:200)
+    end
+    f
+    ```
+    
     https://docs.makie.org/stable/reference/blocks/legend/
     """
-    function dfp(x::Union{Regex,String,DataFrame};leg::Bool=true)
+    function dfpl(x::Union{Regex,String,DataFrame};leg::Bool=true,kw...)
         if isa(x,DataFrame)
             df = (x)
         else
             df = waread(x)
         end
 
-        dt = df.date
+        dt = vec(Matrix(
+            select(df,
+                first(filter(x->occursin(r"date|year",x),
+                names(df))))))
+        #dt = df.date
+
         fig = Figure()
                 # fonts=(;regular = "consolas")            
                 # #size=(600, 400), 
@@ -4938,9 +4714,14 @@ module cmk
         lentime = size(df, 1)
         #slice_dates = range(1, lentime, step=lentime ÷ 8)
         slice_dates = range(1, lentime, step=lentime ÷ 10)
-        tit = DataFrames.metadata(df) |> only |> last |> basename
+        tit = try
+            DataFrames.metadata(df) |> only |> last |> basename
+            catch
+                @warn "no metadata in df"
+                raw""
+            end
         
-        ax3 = Axis(fig[1, 1]) 
+        ax3 = Axis(fig[1, 1];kw...)
 
         cols = names(df)
         filter!(x -> !occursin(r"date|year", x), cols)
@@ -4963,6 +4744,11 @@ module cmk
                 nbanks = 2)
 
             fig[1, 2] = legend
+            # axislegend(ax3, fig, 
+            # cols, lt, 
+            # position = :rb,
+            # orientation = :horizontal)
+
         end
 
         ax3.xticks = (slice_dates, tempo[slice_dates])
@@ -4972,12 +4758,28 @@ module cmk
         return fig
     end
 
-    tsdf = dfp
+    tsdf = dfpl
 
     """
     density plot of dataframe monthly values
+    kw passed to Axis
+    msk -> only values > 0 
+    ```
+    mkemon(x::Union{String,Regex,DataFrame};
+        col::Any="tot_average",
+        tit::nothing,
+        msk=false,
+        mskval=0,
+        offset=4, #offset denominator. increase on higher density
+        kw...)
+    ```
     """
-    function mkemon(x::Union{String,Regex,DataFrame};col::Any="tot_average",msk=false)
+    function mkemon(x::Union{String,Regex,DataFrame};col::Any="tot_average",
+            ti::Union{String,LaTeXString} = "",
+            msk=false,
+            mskval=0,
+            offset=4,
+            kw...)
         if x isa String
             printstyled("reading $x\n",color=:light_red)
             df = dfr(x)
@@ -4988,24 +4790,17 @@ module cmk
             df = dfr(x)
             dropmissing!(df)
         else
-            df = x #reorder_df(x)
+            df = copy(x)
             dropmissing!(df)
         end
 
-        ti = try
-            DataFrames.metadata(df) |> only |> last |> basename
-        catch
-            @warn "No basename in metadata!"
-            ti = raw""
-        end
-        #check if "tot_average" in df
-        # col = try 
-        #     findfirst(x->occursin(r"tot_average",x),names(df))
+        # ti = try
+        #     DataFrames.metadata(df) |> only |> last |> basename
         # catch
-        #     @warn "No :tot_average column in dataframe - changed to first column!"
-        #     first(names(df))
+        #     @warn "No basename in metadata!"
+        #     ti = raw""
         # end
-
+        #check if "tot_average" in df
         if col isa Number && names(df)[col] == "date"
             if col + 1 >= ncol(df)
                 col = col - 1
@@ -5025,109 +4820,102 @@ module cmk
             @warn "No :date & $col column in dataframe!"
             return
         end
-
-
+        #only values > 0 
         if msk
-            #only values > 0 
             df = try 
-                DataFrames.subset(df,col => ByRow(>(0)))
+                DataFrames.subset(df,col => ByRow(>(float(mskval))))
             catch
                 cn=propertynames(df[!,Not(Cols(r"date|month"i))])|>first
-                #DataFrames.index(df,col)
-                #DataFrames.subset(df,Int(col) => ByRow(>(0)))
-                DataFrames.subset(df,cn => ByRow(>(0)))
+                DataFrames.subset(df,cn => ByRow(>(float(mskval))))
             end
         end
 
-
         df[!, :month] = month.(df[!,:date]);
-        grp = groupby(df, :month)
+        grp = DataFrames.groupby(df, :month)
 
         months = ["Januar", "Februar", "März", "April",
             "Mai", "Juni", "Juli", "August", "September",
             "Oktober", "November", "Dezember"]
         
+        #if isnothing(tit)
+        if length(ti) == 0
+            plot_title = ti*" Basin:"*string(col)
+        else
+            plot_title = ti
+        end
+        
         f = Figure()
-        Axis(f[1, 1], title = ti*" Basin:"*string(col),
-            yticks = ((1:12) ./ 4,  reverse(months)))
+        Axis(f[1, 1], title = plot_title,
+            yticks = ((1:12) ./ 4,  reverse(months));kw...)
         for i in 12:-1:1
             values = select(grp[i], Not(Cols(r"date|month"i)))|>Matrix|>vec
-            d = density!(values, offset = i / 4,
+            d = Makie.density!(values, offset = i / offset,
                         color = :x, colormap = :thermal, 
-                        #colorrange = (-5, 5),
                         strokewidth = 1, strokecolor = :black)
+                        #colorrange = (-5, 5),
             #Apply an absolute translation to the Scene
             translate!(d, 0, 0, -0.1i) 
+            #translate!(d, 0, 0.5i, -0.1i) 
+            #translate!(d, 0.5i, 0, -0.1i) 
+            
         end
         return f
     end
 
-    # """
-    # uses xarray to read netcdf and makie to plot.
-    # using PyCall
-    # @pyimport xarray as xr
-    # """
-    # function mkheat(x::Union{String,Regex};msk=true,layer=0)
-    #     if isa(x,Regex)
-    #         #fn = filter(z->endswith(z,"nc"),glob(x))[1]
-    #         #ne = join([x,"nc","\$"],"+.")
-    #         fn = filter(z->endswith(z,"nc"),Grep.grep(x,readdir()))[1]        
-    #     else
-    #         fn = x
-    #     end
-    #     ds = xr.open_dataset(fn)
-    #     k = ds.keys()|>collect|>first
-    #     A = ds[k].isel(t=layer).squeeze()[:values]
-    #     A = reverse(A, dims=2) #very important!
-    #     if msk
-    #         A = map(x -> x <= 0 ? NaN : x, A)
-    #     end
-    #     fig = Figure(
-    #         #size=(800, 600), 
-    #         fontsize=22);
-    #     ti = replace(fn,".nc"=>"","_"=>" ")
-    #     axs = Axis(fig[1,1],title=ti, aspect=1, 
-    #         xlabel="x", 
-    #         ylabel="y")
-    #     #replace NaN values with missing
-    #     B = replace(A, NaN => missing)
-    #     # Find rows and columns where all values are missing
-    #     xm = .!all(ismissing, B, dims=2)
-    #     ym = .!all(ismissing, B, dims=1)
-    #     # Remove rows and columns where all values are missing
-    #     A = B[xm[:], ym[:]]
-
-    #     p1 = heatmap!(A,colormap=(:turbo, 0.9))
-    #         contour!(axs, A; color=:black) #, levels=lscale
-    #         Colorbar(fig[1, 2], p1, 
-    #             width=20, ticksize=20, 
-    #             tickalign=1)
-    #         xmax,ymax = size(A)
-    #         limits!(axs, 1, xmax, 1, ymax)
-    #     # hideydecorations!(axs, grid=true, ticks=false)
-    #     # hidexdecorations!(axs, grid=true, ticks=false)
-    #     return fig
-    # end
-
-
     """
-    mkrheat(x::Union{String,Regex};msk=true,umask=10^6,mskval=0.001,layer=1) \n
+    ```
+    mkrheat(x::Union{String,Regex,Raster};hide=false,msk=true,missval=0.0,umask=10^6,mskval=0.001,layer=1,crs=EPSG(25832),mappedcrs=EPSG(25832),turn=true,kw...) \n
     uses Rasters to read netcdf and makie to plot.
-    Main.cmk.mkrheat(r"sb0";umask=0.3,mskval=.15)
+    Regex only applies to netcdf files. \n
+    hide = hidedecorations \n
+    turn = true flips the raster  \n
+    agr = Raster(x)|>v->Rasters.aggregate(mean,v,2)
+    i,m = extrema(agr|>skipmissing)
+    cmk.mkrheat(agr;mskval=i,umask=m-0.0001)
+    ```
     """
-    function mkrheat(x::Union{String,Regex,Raster};msk=true,missval=0.0,umask=10^6,mskval=0.001,layer=1,crs=EPSG(25832),mappedcrs=EPSG(25832),kw...)
-        
+    function mkrheat(x::Union{String,Regex,Raster};
+        hide=false,
+        msk=true,
+        layer=1,
+        umask::Number=10^6,
+        mskval::Number=0.001,
+        missval::Number=0.0,
+        crs=EPSG(25832),mappedcrs=EPSG(25832),turn=true,
+        c=(:plasma,0.7),kw...)
+        #(Reverse(:plasma),0.9) -9999.000000
         if isa(x,Regex)
             #fn = filter(z->endswith(z,"nc"),glob(x))[1]
             #ne = join([x,"nc","\$"],"+.")
-            fn = filter(z->endswith(z,"nc"),Grep.grep(x,readdir()))[1]
-            ds = Raster(fn;kw...) #missingval,
+            ds = try
+                #fn = filter(z->endswith(z,"nc"),Grep.grep(x,readdir()))[1]
+                fn = first(filter(z -> endswith(z, "nc") && occursin(x, z), readdir()))
+                println("found $fn")
+                if endswith(fn,"nc")
+                    Raster(fn)
+                else
+                    Raster(fn;missingval=missval) #missingval,
+                end
+            catch
+                @error "no file found!"
+                return
+            end
+            
         elseif isa(x,Raster)
-            ds = x
+            ds = x #Rasters.rebuild(x;missingval=missval)
             fn = string.(name(ds))
         else
             fn = x
-            ds = Raster(fn;missingval=missval,kw...)
+            ds = try
+                if endswith(fn,"nc")
+                    Raster(fn)
+                else
+                    Raster(fn;missingval=missval) #missingval,
+                end
+            catch
+                @error "no file found!"
+                return
+            end
         end
         
         #A = ds[Ti=layer].data
@@ -5149,6 +4937,19 @@ module cmk
             zm = boolmask(zm;missingval=missval)
             
             A = Rasters.mask(ds; with=zm)
+            min_val, max_val = extrema(skipmissing(A))
+            @info join(["min: ", string(min_val), ", max: ", string(max_val)], " ")
+            #
+            if (typeof(A.metadata) == DimensionalData.Dimensions.LookupArrays.NoMetadata || isnothing(A.metadata))
+                @error "no metadata in raster!"
+            else
+                try
+                    @info A.metadata.val    #|>DataFame
+                catch
+                    @warn "no metadata in raster!"
+                end
+            end
+            
             #A = Rasters.mask(ds; with=boolmask(ds;missingval=mskval))
             A = A.data
             #A = Rasters.rebuild(A;kw...)
@@ -5164,16 +4965,20 @@ module cmk
         # A = replace(A, 0.0 => missing)
         #b = replace(A, [0 .. 70] => missing)
         #b = replace(A, float(-10..70) => missing)
-        #b = map(x -> replace(x,float(-10..70) => missing),eachrow(A))
-        
+        #b = map(x -> replace(x,float(-10..70) => missing),eachrow(A))     
 
         mrows = map(x -> !all(ismissing, x),eachrow(A))
         mcols = map(x -> !all(ismissing, x),eachcol(A))
         A = A[mrows, mcols]
         
-        #A = reverse(A,dims=1) #very important!
-        A = transpose(A)
-        A = reverse(A, dims=2) #very important!
+        if turn
+            A = transpose(A)
+            A = reverse(A, dims=2) #very important!
+        else
+            #A = A #reverse(A, dims=1) #replace(A, missing => 0.0)
+            #A = replace(A, missing => mskval)
+            A = A
+        end
         
         ti = replace(basename(fn),".nc"=>"","_"=>" ")
         #ti = replace(name(ds),".nc"=>"","_"=>" ")
@@ -5189,9 +4994,11 @@ module cmk
             xlabel="x", 
             ylabel="y")
         
-
         #p1 = heatmap!(A,colormap=(:turbo, 0.9))
-        p1 = heatmap!(A,colormap=(:thermal, 0.9))
+        p1 = heatmap!(A,
+        #colormap=(:thermal, 0.9)
+        colormap = c,kw...
+        )
         #p1 = heatmap!(A,colormap=Makie.wong_colors())
         
             contour!(axs, A; color=:black) #, levels=lscale
@@ -5201,7 +5008,9 @@ module cmk
             #xmax,ymax = size(A)
             #limits!(axs, 1, xmax, 1, ymax)
         # hideydecorations!(axs, grid=true, ticks=false)
-        # hidexdecorations!(axs, grid=true, ticks=false)
+        if hide 
+            hidedecorations!(axs, grid=true, ticks=true)
+        end
         return fig
     end
 
@@ -5227,8 +5036,749 @@ module cmk
 
     """
     streamplot
+    streamplot(f::function, xinterval, yinterval; color = norm, kwargs...)
     """                     
     function mkestream(r::Raster;wasim=true,missval=0)
+        if wasim
+            z = replace_missing(r[t=1], missval)
+            reverse!(z,dims=1)
+            # z = z'       
+            # replace!(z, missval=>missing)
+        else
+            z = r.data
+            # reverse!(z,dims=1)
+            # reverse!(z,dims=2)
+            # replace!(z, missval=>missing)
+        end
+        #ex = extrema(z|>skipmissing)
+        
+        # Define a function to calculate the gradient
+        function gradient2d(z)
+            dy, dx = size(z)
+            gx = [z[i, j+1] - z[i, j] for i in 1:dy, j in 1:dx-1]
+            gy = [z[i+1, j] - z[i, j] for i in 1:dy-1, j in 1:dx]
+            return gx, gy
+        end
+
+        gx, gy = gradient2d(z)
+        f = (x, y) -> Point2(gx[round(Int, y), round(Int, x)], gy[round(Int, y), round(Int, x)])
+        xinterval = 1:size(z, 2)
+        yinterval = 1:size(z, 1)       
+        p1 = CairoMakie.streamplot(f, xinterval, yinterval)
+        return p1
+    end
+
+
+    """
+    new mkrheat
+    ```
+    mkh(x::Union{String,Regex,Raster};
+        hide=false,
+        msk=true,
+        proj=false,
+        layer=1,
+        mskval::Number=0.001,
+        umask::Number=10^6,
+        missval::Number=0.0,
+        turn=true,
+        psize = (900, 700),
+        c=(:plasma,0.7),kw...)
+    ```
+    """
+    function mkh(x::Union{String,Regex,Raster};
+        hide=false,
+        msk=true,
+        proj=false,
+        layer=1,
+        mskval::Number=0.001,
+        umask::Number=10^6,
+        missval::Number=0.0,
+        assign_missing::Bool=true,
+        psize = (900, 700),
+        turn=true,
+        c=(:plasma,0.7),
+        kw...)
+        #(Reverse(:plasma),0.9) -9999.000000
+        if isa(x,Regex)
+            ds = try
+                fn = first(filter(z -> endswith(z, "nc") && occursin(x, z), readdir()))
+                println("found $fn")
+                if endswith(fn,"nc")
+                    Raster(fn;
+                    crs=EPSG(25832),
+                    mappedcrs=EPSG(25832))
+                else
+                    Raster(fn;missingval=missval)
+                end
+            catch
+                @error "no file found!"
+                return
+            end
+        elseif isa(x,Raster) && assign_missing
+            ds = Rasters.rebuild(x;missingval=missval)
+            fn = string.(name(ds))
+        elseif isa(x,Raster)
+            ds = x
+            fn = string.(name(ds))
+        else
+            fn = x
+            ds = try
+                if endswith(fn,"nc")
+                    Raster(fn;
+                    crs=EPSG(25832),
+                    mappedcrs=EPSG(25832))
+                else
+                    Raster(fn;missingval=missval)
+                end
+            catch
+                @error "no file found!"
+                return
+            end
+        end       
+            
+        ds = ds[:, :, layer]
+        if proj
+            #For converting between projections that are rotated, skewed or warped in any way, use resample.
+            #ds = Rasters.reproject(ds, EPSG(4326))
+            #If projections can be converted for each axis independently, 
+            #it may be faster and more accurate to use reproject.
+            ds = Rasters.resample(ds;
+                crs=ProjString("+proj=longlat +datum=WGS84"),
+                method=:bilinear)
+        end
+
+
+        if msk
+            if umask==10^6
+                umask = maximum(ds|>skipmissing)
+            end
+            zm = (ds .> float(mskval)) .& (ds .<= umask)
+            zm = boolmask(zm;missingval=missval)
+            
+            A = Rasters.mask(ds; with=zm)
+            min_val, max_val = extrema(skipmissing(A))
+            @info join(["min: ", string(min_val), ", max: ", string(max_val)], " ")
+            if (typeof(A.metadata) == DimensionalData.Dimensions.LookupArrays.NoMetadata || isnothing(A.metadata))
+                @error "no metadata in raster!"
+            else
+                try
+                    @info A.metadata.val    #|>DataFame
+                catch
+                    @warn "no metadata in raster!"
+                end
+            end
+            
+            A = Rasters.trim(A)
+            #extrema(A|>skipmissing)
+            #A = Rasters.rebuild(A;kw...)
+        else
+            A = Rasters.trim(ds)
+        end
+        if turn
+            A = transpose(A)
+            A = reverse(A, dims=2) #very important!
+        end
+        ti = replace(basename(fn),".nc"=>"","_"=>" ")
+        fig = GeoMakie.Figure(
+            #color = :thermal, #see colormap below
+            size = psize, 
+            fontsize=20);
+        # axs = Makie.Axis(fig[1,1],
+        #     title=ti, 
+        #     aspect = DataAspect(), 
+        #     xlabel="x", 
+        #     ylabel="y")
+        
+        # Set custom x-axis tick positions (e.g., every 2 units)
+        #Axis(xticks = 2:2:10)
+        xl = lookup(A,:X)|>collect|>extrema
+        yl = lookup(A,:Y)|>collect|>extrema
+        xt = round.(range(xl[1], stop=xl[2], length=4),digits=2)
+        #x_values = range(525600, stop=621000, length=5)
+        
+        axs =  Makie.Axis(fig[1,1],
+            title   =   ti,
+            #xticks = xl[1]:250*10^5:xl[2],
+            xticks = xt,
+            xticklabelrotation = 45,
+            xminorticksvisible = true,
+            xminorgridvisible = true,
+            yminorticksvisible = true, 
+            yminorgridvisible = true,
+            xminorticks = IntervalsBetween(5),
+            yminorticks = IntervalsBetween(5))
+        p1 = GeoMakie.heatmap!(axs,A;
+                colormap = c,
+                kw...)
+            #CairoMakie.
+            Makie.contour!(axs, A; color=:black,
+                linewidth = 0.5) 
+            #, levels=lscale
+            Colorbar(fig[1, 2], p1, 
+                width=20, ticksize=20, 
+                tickalign=1)
+
+
+            #add 100 to each
+            #xl = (xl[1]-100, xl[2]+100)
+            #yl = (yl[1]-100, yl[2]+100)
+            if GeoInterface.crs(ds)  != EPSG(25832)
+                inc = 0.01
+            else
+                inc = 500
+            end
+            GeoMakie.limits!(
+                xl[1]-inc, 
+                xl[2]+inc,
+                yl[1]-inc, 
+                yl[2]+inc)
+                    
+        if hide 
+            hidedecorations!(axs, grid=true, ticks=true)
+        end
+        return fig
+        #GeoMakie.save("x.png",fig, px_per_unit = 10/1)
+    end
+
+    function create_raster(fn; missval::AbstractFloat = -9999.0)
+        if endswith(fn,"nc")
+            tmp=Raster(fn;crs=EPSG(25832),mappedcrs=EPSG(25832))
+            return tmp[t=1]
+        else
+            return Raster(fn;crs=EPSG(25832),mappedcrs=EPSG(25832),missingval=missval)
+        end
+    end
+    
+    """
+    ```
+    mkfzs(x::Union{String,Regex,Raster};
+        ti::String="Fliesszeitsummen [h]",
+        tolonlat=false,hide=false,
+        missval::AbstractFloat = -9999.0,
+        c=(:greys,0.7), kw... )
+    ```
+    kw... passed to heatmap!
+    """
+    function mkfzs(x::Union{String,Regex,Raster};
+        ti::String="Fliesszeitsummen [h]",
+        tolonlat=false,hide=false,
+        missval::AbstractFloat = -9999.0,
+        c=(:greys,0.7), kw... )
+    
+        if isa(x,Regex)
+            #fn = first(filter(z -> !endswith(z, "nc") && occursin(x, z), readdir()))
+            fn = first(filter(z -> occursin(x, z), readdir()))
+            if isfile(fn)
+                ds = create_raster(fn; missval=missval)
+            else
+                @error "no file found!"
+                return
+            end
+        elseif isa(x,Raster) && hasdim(x, :t)
+            ds = x[t=1]
+            fn = string.(name(ds))
+        elseif isa(x,Raster)
+            ds = x              # x[Band(1)]
+            fn = string.(name(ds))
+        else
+            fn = x
+            if isfile(fn)
+                ds = create_raster(fn; missval=missval)
+            else
+                @error "no file found!"
+                return
+            end
+        end
+        if tolonlat
+            ds = resample(ds;crs=ProjString("+proj=longlat +datum=WGS84"))
+            lonlat = true
+        end
+        z = replace_missing(ds,0)
+        z.data .= z.data ./ 3600
+        xl = lookup(z,:X)|>collect|>extrema
+        yl = lookup(z,:Y)|>collect|>extrema
+        xt = round.(range(xl[1], stop=xl[2], length=4),digits=2)
+
+        fig = CairoMakie.Figure(fontsize=15);
+        axs = CairoMakie.Axis(fig[1,1],
+            title = ti,
+            xticks = xt,
+            xticklabelrotation = 45,
+            xminorticksvisible = true,
+            xminorgridvisible = true,
+            yminorticksvisible = true, 
+            yminorgridvisible = true,
+            xminorticks = IntervalsBetween(5),
+            yminorticks = IntervalsBetween(5))
+        p1 = CairoMakie.heatmap!(axs,z;
+                colormap = c,
+                kw...)
+            # CairoMakie.contour!(axs, z; color=:black,
+            #     linewidth = 0.5) 
+            CairoMakie.Colorbar(fig[1, 2], p1, 
+                width=20, ticksize=20, 
+                tickalign=1)
+            
+
+            if lonlat
+                inc = 0.01
+            else
+                inc = 500
+            end
+            CairoMakie.limits!(
+                xl[1]-inc, 
+                xl[2]+inc,
+                yl[1]-inc, 
+                yl[2]+inc)
+                    
+        if hide 
+            hidedecorations!(axs, grid=true, ticks=true)
+        end
+        return fig
+    end
+
+    """
+    wasim plot
+    Union{String,Raster}, fn::Union{String,GeoMakie.GeoJSON.FeatureCollection
+    lyr::Int = 1,
+    lims::Tuple{Tuple{Int,Int},Tuple{Int,Int}}=((8, 13), (48, 52)),c=Reverse(:plasma))
+    """
+    function gmwas(rmo::Union{String,Raster}, fn::Union{String,GeoMakie.GeoJSON.FeatureCollection};
+            lyr::Int = 1,
+            #lims::Tuple{Tuple{Int,Int},Tuple{Int,Int}}=((9, 12), (49, 51)),
+            #lims::Tuple{Tuple{Int,Int},Tuple{Int,Int}}=((9.5, 12), (48.5, 50.7)),
+            c=Reverse(:plasma))
+        if fn isa GeoMakie.GeoJSON.FeatureCollection
+            pol = fn
+        else
+            pol = GeoMakie.GeoJSON.read(read(fn, String))
+        end
+        if rmo isa Raster
+            ra = rmo[t=lyr]
+            ra = replace_missing(ra,0)
+            #ra = rst.project(ra;dst="+proj=longlat +datum=WGS84")
+            if crs(ra) == EPSG(25832)
+                ra = resample(ra;crs=ProjString("+proj=longlat +datum=WGS84"))
+            end
+        else
+            r = Raster(rmo;crs=EPSG(25832),mappedcrs=EPSG(25832))
+            ra = r[t=lyr]
+            ra = replace_missing(ra,0)
+            #ra = rst.project(ra;dst="+proj=longlat +datum=WGS84")
+            ra = resample(ra;crs=ProjString("+proj=longlat +datum=WGS84"))
+        end
+        
+        fig = Figure()
+        #ax = GeoMakie.GeoAxis(fig[1,1]; limits=lims)
+        #ax = Axis(fig[1,1]; limits=lims)
+        ax = Axis(fig[1,1];)
+        sf = GeoMakie.heatmap!(ax,ra;
+            #colormap = Reverse( :plasma, 0.5 ),     
+            #colormap = ["grey", "red", "orange", "yellow", "blue"],
+            colormap = c)
+            #shading = NoShading)
+        Colorbar(fig[1,2], sf; 
+            label = "",
+            height = Relative(0.65))
+        #n = length(pol)
+        #hm = GeoMakie.poly!(ax, pol; 
+        hm = poly!(ax, pol; 
+            color = :transparent,    
+            strokecolor = :black, 
+            strokewidth = 1.5,
+            )
+        #GeoMakie.translate!(hm, 0, 0, 100) # move above surface plot
+        translate!(hm, 0, 0, 100) # move above surface plot
+        return fig
+    end
+
+    """
+    ``` 
+    function mkflow(TS, q=[0.9, 0.1]; text::String="", ylab::LaTeXString = <liter per second*km²>,leg=true,kw...)
+    usage: cmk.mkflow(df;text="Flow Series \n") #Time of df is in Legend Title
+    ```
+    """
+    function mkflow(TS, q=[0.9, 0.1]; text::String="", ylab::LaTeXString = L"\left[\frac{l}{s\cdot km^2}\right]",leg=true,kw...)
+        TS = copy(TS)
+        if !hasproperty(TS, :date)
+            @error "no date column in dataframe!"
+            return
+        end
+        if first(propertynames(TS)) == :date
+            #date to last position
+            TS = select(TS, Not(:date), :)
+        end
+        timestring = string.(extrema(TS.date))
+        text = text*" "*timestring[1]*" - "*timestring[2]
+
+        mn = ["Okt", "Nov", "Dez", "Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep"]
+        #TS.date = Date.(TS.date) # Ensure Date column is of type Date
+        #TS.HydroYear = year.(TS.date)
+        TS.Month = month.(TS.date)
+        TS.DOY = Dates.dayofyear.(TS.date)
+        TS.hdoy = mod.(TS.DOY .- 275, 365) .+ 1
+        #TS.hmon = mod.(TS.Month .- 10, 12) .+ 1
+        
+        # Map the months to their names
+        TS.mn = map(x -> mn[Int(x)], TS.Month)
+
+        rename!(TS, 1 => :Flow)
+        doy = (TS.DOY)
+        Qdoy = fill(NaN, maximum(map(Int, doy)), 7)      
+        Qdoy[:, 1] .= [maximum(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 2] .= [minimum(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 3] .= [mean(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 4] .= [quantile(TS.Flow[doy .== d], q[1]) for d in levels(doy)]
+        Qdoy[:, 5] .= [quantile(TS.Flow[doy .== d], q[2]) for d in levels(doy)]
+        Qdoy[:, 6] .= [median(TS.Flow[doy .== d]) for d in levels(doy)]
+        Qdoy[:, 7] .= [first(TS.Month[doy .== d]) for d in levels(doy)]
+
+        nms = ["MaxQ", "MinQ", "MeanQ", "Q90", "Q10", "Median", "Month"]
+        df = DataFrame(Qdoy, nms)
+        df[!, "SortOrder"] = ifelse.(df.Month .>= 10, df.Month .- 12, df.Month)
+        sort!(df, :SortOrder)
+
+        # Create the plot
+
+        fig = Figure(size = (800, 600))
+        ax3 = Axis(fig[1, 1], 
+            #title = text, #see legend
+            #palette = (patchcolor = [:red, :green, :blue, :grey, :orange],),
+            #xlabel = "DOY", 
+            ylabel = ylab) 
+        cols = names(df)
+        filter!(x -> !occursin(r"date|year|sortorder|month"i, x), cols)
+        #colors = Makie.wong_colors()
+        #colormap = Reverse(:bluesreds),
+        colors = [:grey, :red, :green, :blue, :grey, :orange]
+        value_to_color = Dict(cols[i] => colors[i % length(colors) + 1] for i in 1:length(cols))
+        selected_colors = [value_to_color[value] for value in cols]
+        lentime = size(df, 1)
+        #with_theme(
+            # Theme(
+            # palette = (color = [:grey, :blue], linestyle = [:dash, :dot]),
+            # Lines = (cycle = Cycle([:color, :linestyle], covary = true),)
+            # ) #) do
+        for (i, col) in enumerate(cols)
+            vals = Vector(df[:, col])
+            lines!(ax3, 1:lentime, vals; 
+                #linestyle = :dash,    
+                color = selected_colors[i], 
+                linewidth = 0.95, 
+                label=col)
+        end
+        if leg
+            legend = Legend(fig, ax3, text, 
+                framevisible = true,
+                nbanks = 2)
+
+            fig[1, 2] = legend
+        end
+        
+        #tempo = string.(df.Month)
+        tempo = TS.mn #month strings mapped on dates.
+        slice_dates = range(1, lentime, step=lentime ÷ 10)
+        ax3.xticks = (slice_dates, tempo[slice_dates])
+        
+        ax3.xticklabelrotation = π / 4
+        ax3.xticklabelalign = (:right, :center)
+        
+        return fig
+    end
+
+    """
+    plots timeseries, see dfpl
+    """
+    function fts(df::DataFrame)
+        
+        dt = vec(Matrix(
+            select(df,
+                first(filter(x->occursin(r"date|year|time"i,x),
+                names(df))))))
+        fig = Figure( #resolution=(600, 400), 
+            #fonts=(;regular = "cmr10")
+            #fonts=(;regular = "consolas")
+            )
+        
+        tempo = string.(dt)
+        lentime = size(df,1)
+        slice_dates = range(1, lentime, step=lentime ÷ 8)
+        tit = try
+            DataFrames.metadata(df) |> only |> last |> basename
+            catch
+                @warn "no metadata in df"
+                raw""
+            end
+        #xline =  first(DelimitedFiles.readdlm(x,'_',String)[2,:])
+        ax3 = Axis(
+            fig[1, 1], 
+            title = replace(tit,r"_|so"=>" ")
+                #xlabel="Date", 
+                #yscale = :log10,
+                #ylabel=first(names(df))
+                )
+        #cols = propertynames(df)  
+        cols = names(df)  
+        filter!(x->!occursin(r"date|year",x),cols)
+        # colors = Makie.wong_colors()
+        # # Map unique values to colors
+        # value_to_color = Dict(cols[i] => colors[i % length(colors) + 1] for i in 1:length(cols))
+        # # Map values in a to colors
+        # selected_colors = [value_to_color[value] for value in cols]
+        # colors = Makie.wong_colors()
+        #v = 1:length(cols)
+        #for v, col in enumerate(cols)
+        for col in cols
+            vals = Vector(df[:, col])
+            lines!(ax3, 1:lentime, vals; 
+            color=:black,         
+            # color=colors[v], 
+             linewidth=0.75)
+        end
+        
+        ax3.xticks = (slice_dates, tempo[slice_dates])
+        ax3.xticklabelrotation = π / 4
+        ax3.xticklabelalign = (:right, :center)
+        return fig
+    end
+
+    
+    """
+    density plot of dataframe monthly values
+    kw passed to Figure
+    msk -> only values > 0 
+    ```
+    mkemon2(x::Union{String,Regex,DataFrame},y::Union{String,Regex,DataFrame};
+        col::Any="tot_average",
+        col2::Any="tot_average",
+            tit::String = "",
+            msk=false,kw...)
+    ```
+    """
+    function mkemon2(x::Union{String,Regex,DataFrame},y::Union{String,Regex,DataFrame};
+        col::Any="tot_average",
+        col2::Any="tot_average",
+            tit::String = "",
+            msk=false,kw...)
+        if x isa String
+            printstyled("reading $x\n",color=:light_red)
+            df1 = dfr(x)
+            df2 = dfr(y)
+            dropmissing!(df1)
+            dropmissing!(df2)
+        elseif x isa Regex
+            x = first(dfonly(x))
+            x = first(dfonly(y))
+            printstyled("reading $x\n",color=:light_red)
+            printstyled("reading $y\n",color=:light_red)
+            df1 = dfr(x)
+            df2 = dfr(y)
+            dropmissing!(df1)
+            dropmissing!(df2)
+        else
+            df1 = copy(x)
+            df2 = copy(y)
+            dropmissing!(df1)
+            dropmissing!(df2)
+        end
+
+        ti = try
+            DataFrames.metadata(df1) |> only |> last |> basename
+        catch
+            @warn "No basename in df1!"
+            ti = raw""
+        end
+        #check if "tot_average" in df1
+        if col isa Number && names(df1)[col] == "date"
+            if col + 1 >= ncol(df1)
+                col = col - 1
+                @info "date column is at $col position, skipping to col-1..."
+            elseif names(df1)[col - 1] == "date"
+                col = ncol(df1)
+                @info "date column is at $col-1 position, skipping to last col..."
+            else
+                col = col + 1
+                @info "date column is at position $col, skipping to col + 1..."
+            end
+        end
+        #check if "tot_average" in df2
+        if col2 isa Number && names(df2)[col2] == "date"
+            if col2 + 1 >= ncol(df2)
+                col2 = col2 - 1
+                @info "date column is at $col2 position, skipping to col-1..."
+            elseif names(df2)[col2 - 1] == "date"
+                col2 = ncol(df2)
+                @info "date column is at $col2-1 position, skipping to last col..."
+            else
+                col2 = col2 + 1
+                @info "date column is at position $col2, skipping to col + 1..."
+            end
+        end
+        
+        
+        try 
+            select!(df1, Cols(:date,col))
+            select!(df2, Cols(:date,col2))
+        catch
+            @warn "subset dataframe failed!"
+            return
+        end
+
+        #only values > 0 
+        if msk
+            df1 = try 
+                DataFrames.subset(df1,col => ByRow(>(0)))
+            catch
+                cn=propertynames(df1[!,Not(Cols(r"date|month"i))])|>first
+                DataFrames.subset(df1,cn => ByRow(>(0)))
+            end
+            df2 = try 
+                DataFrames.subset(df2,col => ByRow(>(0)))
+            catch
+                cn2=propertynames(df2[!,Not(Cols(r"date|month"i))])|>first
+                DataFrames.subset(df2,cn2 => ByRow(>(0)))
+            end
+        end
+
+
+        df1[!, :month] = month.(df1[!,:date]);
+        grp1 = DataFrames.groupby(df1, :month)
+        df2[!, :month] = month.(df2[!,:date]);
+        grp2 = DataFrames.groupby(df2, :month)
+
+        months = ["Januar", "Februar", "März", "April",
+            "Mai", "Juni", "Juli", "August", "September",
+            "Oktober", "November", "Dezember"]
+        
+        #if isnothing(tit)
+        if length(tit) == 0
+            plot_title = ti*" Basin:"*string(col)
+        else
+            plot_title = tit
+        end
+        
+        f = Figure(;kw...)
+        Axis(f[1, 1], title = plot_title,
+            yticks = ((1:12) ./ 4,  reverse(months)))
+        for i in 12:-1:1
+            values = select(grp1[i], Not(Cols(r"date|month"i)))|>Matrix|>vec
+            d = density!(values, offset = i / 4,
+                        color = :x, colormap = :thermal, 
+                        strokewidth = 1, strokecolor = :black)
+                        values = select(grp2[i], Not(Cols(r"date|month"i)))|>Matrix|>vec
+                        
+                        density!(values, offset = i / 4,
+                                    color = :x, 
+                                    colormap = [:blue, :yellow, :red], 
+                                    strokewidth = 1, 
+                                    strokecolor = :black)
+            #Apply an absolute translation to the Scene
+            translate!(d, 0, 0, -0.1i) 
+        end
+        # for i in 12:-1:1
+        #     values = select(grp2[i], Not(Cols(r"date|month"i)))|>Matrix|>vec
+        #     density!(values, offset = i / 4,
+        #                 color = :x, colormap = :thermal, 
+        #                 #colorrange = (-5, 5),
+        #                 strokewidth = 1, strokecolor = :black)
+        #     #Apply an absolute translation to the Scene
+        #     translate!(d, 0, 0, -0.1i) 
+        # end
+        return f
+    end
+
+    """
+    density plot of dataframe on monthly values on annual basis
+    kw passed to Axis
+    ```
+    density_plot(df::Union{DataFrame,Regex,String}; date_col::Symbol=:date, value_col::Symbol=:value,agg=mean, kwargs...)
+    ```
+    """
+    function density_plot(df::Union{DataFrame,Regex,String}; date_col::Symbol=:date, 
+            value_col::Union{Symbol,String,Int}="",agg=mean, kwargs...)
+        if isa(df, Regex) || isa(df, String)
+            df = dfr(df)
+        end
+        if value_col isa String
+            value_col = Symbol(value_col)
+        end
+        if value_col isa Int
+            value_col = propertynames(df)[value_col]
+            @info "value_col is $value_col"
+        end
+        df = copy(df)
+        if !(value_col in propertynames(df))
+            value_col = first(propertynames(df[!,Not(:date)]))
+            #@info "value_col not found in DataFrame! 
+            @info "Using first column as value_col which is $value_col"
+        end
+        # Extract month and day
+        df.month = month.(df[!,date_col]);
+        df.day = day.(df[!,date_col]);
+        # Aggregate data by month and day
+        agg_df = DataFrames.combine(DataFrames.groupby(df, [:month, :day]), value_col => agg => :mean_value)
+        density_data = [agg_df.mean_value[agg_df.month .== m] for m in 1:12]
+        labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        reverse!(labels) # Reverse the order of the labels
+
+        grs = ["#1C1C1C", "#2E2E2E", "#404040", "#525252", "#646464", 
+        "#767676", "#888888", "#9A9A9A", "#ACACAC", "#BEBEBE", 
+        "#D0D0D0", "#E2E2E2"]
+        thermal_colors = [
+            "#ADD8E6",  # January (Sky Blue - Cool)
+            "#87CEFA",  # February (Light Sky Blue - Mild)
+            "#00BFFF",  # March (Deep Sky Blue - Mild Warm)
+            "#00FF7F",  # April (Spring Green - Warm)
+            "#FFD700",  # May (Gold - Warm)
+            "#FFA500",  # June (Orange - Hot)
+            "#FF4500",  # July (Orange Red - Very Hot)
+            "#FF6347",  # August (Tomato - Hot)
+            "#FF7F50",  # September (Coral - Mild Hot)
+            "#FFB6C1",  # October (Light Pink - Cooling)
+            "#D3D3D3",   # November (Light Gray - Cool)
+            "#B0E0E6"  # December (Light Blue - Cool)
+        ]
+        
+        # Plot density
+        fig = Figure()
+        ax = Axis(fig[1, 1], ylabel = string(value_col);kwargs...)
+        for (i, data) in enumerate(density_data)
+            d = density!(ax, data, 
+                label = labels[i],
+                strokewidth = .66, 
+                strokecolor = :black,
+                color = thermal_colors[i])
+            #Apply an absolute translation to the Scene
+            #translate!(d, 0, 0, -0.2i) 
+            translate!(d, 0, 0.1i, -0.1i) 
+            #translate!(d, 0.5i, 0, -0.1i) 
+            
+        end
+        #Label(fig[1, 1], string(value_col), halign = :right, valign = :top,
+        #        justification = :center)
+        #fig[1, 2] = Legend(fig, ax, string(value_col), framevisible = false)
+        axislegend(; merge = true, position = :rt)
+        #, orientation = :horizontal)
+        # Legend(fig[1,1], ax, string(value_col), 
+        #     framevisible = false,
+        #     height = Relative(1 / 4),
+        #     width = Relative(1 / 4),
+        #     tellheight = false,
+        #     tellwidth = false,
+        #     #margin = (30, 10, 10, 10),
+        #     halign = :right, valign = :top, 
+        #     orientation = :horizontal)
+
+        return fig
+    end
+
+    """
+    Contour over heatmap
+    ```
+    mkc(r::Raster,wasim=false,missval=0)
+    ```
+    """                     
+    function mkc(r::Raster,wasim=false,missval=0)
         if wasim
             z = r.data[:,:,1]
             reverse!(z,dims=1)
@@ -5240,31 +5790,106 @@ module cmk
             reverse!(z,dims=2)
             replace!(z, missval=>missing)
         end
-        ex = extrema(z|>skipmissing)
-        lscale = ex[1]:10:ex[2] # Adjusted levels
+        # if missingval(z) != missval
+        #     z = replace_missing!(z,0)
+        # end
+        # ex = extrema(z|>skipmissing)
+        # lscale = ex[1]:10:ex[2]   # errors by NaN32
         fig = Figure(
             #size=(800, 600), 
             fontsize=22);
         axs = Axis(fig[1,1], aspect=1, xlabel="x", ylabel="y")
-        
-        xmax = findmax(size(z))[1] #gets the index of the max value
-        #xmin = findmax(size(z))[1] #gets the index of the max value
-        
-        p1 = streamplot!(axs, 
-                z, ex[1] .. ex[2], ex[1] .. ex[2], 
-                colormap = Reverse(:plasma),
-                gridsize = (32, 32), arrow_size = 10)
-        
-        #p1 = heatmap!(axs, z, colormap=(:plasma, 0.87))
-        #contour!(axs, z; color=:black) #, levels=lscale
+        p1 = heatmap!(axs, z, colormap=(:plasma, 0.87))
+        contour!(axs, z; color=:black) # levels=lscale)
         Colorbar(fig[1, 2], p1, width=20, ticksize=20, tickalign=1)
+        xmax = findmax(size(z))[1] #gets the index of the max value
         limits!(axs, 1, xmax, 1, xmax)
         return fig
     end
+    
+    """
+    ``` performance_metrics(df::DataFrame) ```
+    """
+    function performance_metrics(df::DataFrame)
+        # Create a figure
+        fig = Figure()
+        
+        # Create an axis
+        ax = Axis(fig[1, 1], 
+            title = "Performance Metrics Over Years", 
+            xlabel = "Year", 
+            ylabel = "Metric Value"
+        )
+        
+        # Plot the lines
+        lines!(ax, df.year, df.nse, color = :blue, linewidth = 2, label = "NSE")
+        lines!(ax, df.year, df.kge, color = :red, linewidth = 2, label = "KGE")
+        lines!(ax, df.year, df.ve, color = :green, linewidth = 2, label = "VE")
+        
+        # Add a legend
+        axislegend(ax, position = :rt)
+        
+        return fig
+    end
 
-end    ##end of module
+    """
+    ``` cumplot(df::DataFrame; leg::Bool=true, scale = identity, oneyear::Bool=false) ```
+    plots cumulated values of each column of a dataframe
+    """
+    function cumplot(x::DataFrame; leg::Bool=true, scale = identity, oneyear::Bool=false)
+        if isa(x,DataFrame)
+            df = (x)
+        else
+            df = waread(x)
+        end        
+        #enumerate([identity, log10, log2, log, sqrt, Makie.logit])
+        dropmissing!(df)
+        if oneyear
+            lastfullyear = year(last(df.date))
+            df = filter(row -> year(row.date) == lastfullyear, df)
+            #mean_values = DataFrames.combine(df, names(df, Not(:date)) .=> mean)
+            #println(mean_values)
+        end
+        
+        fig = Figure()
+        #make shure to start x-axias label at first date value
+        #a,b = extrema(df[!, :date])
+        #a,b = (1, size(df, 1))
+        ax = Axis(fig[1, 1], yscale = scale,
+            #limits = ((a, b), nothing),
+            #xlabel = "Date", 
+            ylabel = "", xlabel = "")
+            #ylabel = "Cumulated Rainfall")
+        #labs = []
+        for col in filter(c -> c != :date, propertynames(df)) # exclude the "date" column
+            if eltype(df[!, col]) <: Number # check if the column is numeric
+                lines!(ax, df[!, "date"], 
+                    cumsum(df[!, col]), 
+                    label = string.(col))
+                #push!(labs, col)
+            end
+        end
+        ax.xticks = (4:size(df, 1)+4, df[!, "date"]) # show dates on x-axis
+        ax.xticklabelrotation = π / 4 # rotate x-axis labels for better readability
+        ax.xticklabelalign = (:right, :center)
+        #hidedecorations!(ax)
+        if leg
+            tit = try
+                values(DataFrames.metadata(df)) |> only |> basename
+                catch
+                    @warn "no metadata in df"
+                    raw""
+                end
+            lt = replace(tit, r"_|so" => " ")
+            legend = Legend(fig, ax, lt, 
+                framevisible = true, nbanks = 2)
+            fig[1, 2] = legend
+        end
+        fig
+    end
 
-println("cairomakie.jl module cmk loaded")
+
+end   ##endof end of module
 
 # #https://docs.makie.org/stable/explanations/fonts/
 # Makie.to_font("Computer Modern")
@@ -5278,3 +5903,10 @@ println("cairomakie.jl module cmk loaded")
 #     Axis(fig[3, 1], title = "An axis with matching font for the tick labels")
 #     fig
 # end
+
+
+printstyled("
+    cairomakie.jl as module cmk loaded \n
+    using .cmk to access functions from Main\n
+            ",
+    color=:green)

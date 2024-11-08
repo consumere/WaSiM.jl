@@ -3,7 +3,7 @@ on:
   push:
     branches:
      - main
-     - dev
+#     - dev
 # pull_request:
 # schedule: 
 #   - cron: 0 1 * ? *
@@ -13,6 +13,7 @@ permissions:
   pull-requests: write
 jobs:
   CompatHelper:
+    if: github.event_name == 'workflow_dispatch' || github.actor == 'CompatHelper'
     runs-on: ubuntu-latest
     steps:
       - name: Pkg.add("CompatHelper")

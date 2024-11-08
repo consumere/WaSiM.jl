@@ -20,7 +20,3 @@ function pyplot_df(df::DataFrame;log=false)
     PyPlot.title(ti)
     PyPlot.grid(true)
 end
-
-"""
-Returns the total size of all files in the current directory non recursively.
-"""

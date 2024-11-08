@@ -17,5 +17,3 @@ function pwin()
         #return wsl_path
     end
 end
-
-"""

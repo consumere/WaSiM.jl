@@ -1,13 +1,30 @@
+# %%
 using WaSiM
 using Test
+# %%
+ftest(x) = @test isone(x)
 
-f(x) = @test isone(x)
-@testset f(1)
-
-@testset verbose = true "WaSiM.jl" begin
+@testset verbose = true "arithmetrics" begin
     # Write your tests here.
     θ = 2/3*π
     @test sin(-θ) ≈ -sin(θ)
-    #@test ct()
+    ftest(1)
     #@test WaSiM.llf()
 end
+
+# @testset verbose = true "my ls test" begin
+#    ls()
+# end
+
+# @testset verbose = true "my du test" begin
+#    du() # also works
+# end
+
+@testset verbose = true "my ls test" begin
+   ls();
+   du();
+   #sf("func")
+end
+
+#using JET
+#report_package("WaSiM")

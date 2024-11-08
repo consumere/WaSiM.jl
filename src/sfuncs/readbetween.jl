@@ -18,6 +18,3 @@ function readbetween(io::IO, start::Regex, stop::Regex)
     end
     return output
 end
-
-"""
-prints out the 
