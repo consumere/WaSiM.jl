@@ -1,9 +1,19 @@
 
 module rr
     using RCall
+    try
+        import Grep: grep
+        rversion = grep("string",convert(Dict,R"version"))|>values|>collect|>first
+        printstyled("\n$rversion loaded !\n",color=:green,bold=true,underline=true)
+    catch e
+        @error "R not loaded! \n$e"
+        return
+    end
     using DataFrames
-    using Dates
+    using Dates    
     import DelimitedFiles: readdlm
+    import ArchGDAL #for wa_terra
+    using GeoFormatTypes: EPSG, ProjString
     tr = rimport("terra") #accessable via rr.tr.
     bR = rimport("base") #accessable via rr.bR.
     dt = rimport("data.table") #accessable via rr.dt.
@@ -325,32 +335,99 @@ module rr
         return DataFrame(value=vals,frequency=freq)
     end
 
+    """
+    ´´´
+    wa_terra(file::String, turn::Bool = false, crsval::Int = 25832, encoding::String = "UTF-8")
+    usage:
+    s="D:/Wasim/Tanalys/DEM/Input_V2/meteo/specdis_kmu.txt"
+    st=wa_terra(s,turn=false,crsval=25832,encoding="UTF-8") #-> SpatVector 
+    a=convert(Matrix,tr.as_data_frame(st)) #-> DataFrame of Names and EZG
+    b=convert(Matrix,tr.crds(st)) #-> Matrix of crds
+    hcat(a,DataFrame(x=b[:,1],y=b[:,2])) #-> DataFrame of Names, EZG, x, y
+    ´´´
+    """
+    function wa_terra(file::String, turn::Bool = false, crsval::Int = 25832, encoding::String = "UTF-8")
+        # Read the data file using R's fread function from data.table
+        if !isempty(file)
+            @rput file encoding
+            R"st <- data.table::fread(input = file, skip = 0, header = TRUE, nrows = 4, encoding = encoding)"
+            @rget st
+        else
+            println("Error: please provide a valid file path to read in.")
+            return nothing
+        end
+
+        # Define how to handle the data based on the 'turn' parameter
+        if turn
+            # Extract longitude and latitude when `turn` is true
+            @rput st
+            R"""
+            cords <- data.frame(
+                lon = as.numeric(t(st[3, 5:ncol(st)])),
+                lat = as.numeric(t(st[2, 5:ncol(st)]))
+            )
+            ez <- st[1, 5:ncol(st)]
+            st <- terra::vect(cords, crs = paste0("epsg:", $crsval))
+            st$rn <- names(ez)
+            st$ezg <- as.numeric(ez)
+            """
+            @rget st
+        else
+            # Extract longitude and latitude when `turn` is false
+            @rput st
+            R"""
+            cords <- data.frame(
+                lon = as.numeric(t(st[2, 5:ncol(st)])),
+                lat = as.numeric(t(st[3, 5:ncol(st)]))
+            )
+            ez <- st[1, 5:ncol(st)]
+            st <- terra::vect(cords, crs = paste0("epsg:", $crsval))
+            st$rn <- names(ez)
+            st$ezg <- as.numeric(ez)
+            """
+            @rget st
+        end
+
+        #return st
+        a=convert(Matrix,tr.as_data_frame(st)) #-> DataFrame of Names and EZG
+        b=convert(Matrix,tr.crds(st)) #-> Matrix of crds
+        aa = hcat(a,DataFrame(x=b[:,1],y=b[:,2])) #-> DataFrame of Names, EZG, x, y
+        pts = ArchGDAL.IGeometry[]
+        for i in axes(aa)[1]
+            pt = ArchGDAL.createpoint([aa.x[i],aa.y[i]])
+            pt = ArchGDAL.reproject(pt,EPSG(25832),ProjString("+proj=longlat +datum=WGS84 +no_defs"))
+            push!(pts,pt)
+        end
+        od = DataFrame(geometry=pts, name=aa.rn,ezg=aa.ezg, xc=aa.x, yc=aa.y)
+        return od
+    end
+
+    """
+    this sources from /rfile/setup.R
+    not /mnt/d/Fernerkundungsdaten/Klassifikation/R-Sessions/setup.R
+    """
+    function rsetup()
+        #script_path="D:/Fernerkundungsdaten/Klassifikation/R-Sessions/setup.R"
+        script_path=joinpath(dirname(src_path),"rfile","setup.R")
+        @rput script_path
+        R"source($script_path)"
+        # #moved to 4.4.1 -> add old path to .libPaths() <-already in module
+        # lpt = raw"C:/Users/chs72fw/AppData/Local/R/win-library/4.2"
+        # R""".libPaths(new=$lpt)"""
+    end
+
 end # endof module 
 
-using RCall
-function rrtoMain()
-    fnames = names(Main.rr, all=true)
-    for submodule in fnames
-        @eval import Main.rr.$submodule
-    end
-end
-
-"""
-this sources from /rfile/setup.R
-not /mnt/d/Fernerkundungsdaten/Klassifikation/R-Sessions/setup.R
-"""
-function rsetup()
-    #script_path="D:/Fernerkundungsdaten/Klassifikation/R-Sessions/setup.R"
-    script_path=joinpath(dirname(src_path),"rfile","setup.R")
-    @rput script_path
-    R"source($script_path)"
-    #moved to 4.3.2 -> add old path to .libPaths()
-    lpt = raw"C:/Users/chs72fw/AppData/Local/R/win-library/4.2"
-    R""".libPaths(new=$lpt)"""
-end
-
+# using RCall
+# function rrtoMain()
+#     fnames = names(Main.rr, all=true)
+#     for submodule in fnames
+#         @eval import Main.rr.$submodule
+#     end
+# end
 println("rr Module loaded!")
-println("use rrtoMain for loading all submodules")
+#println("use rrtoMain for loading all submodules")
+#println("using .rr for loading all submodules to Main...")
 
 #v = dfonly(r"qoutjl$")
 # @time dfs2 = map(dfr,v)

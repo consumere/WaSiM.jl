@@ -14,7 +14,7 @@ import InteractiveUtils.clipboard
 
 #printstyled("loc $here\n now initializing...\n",color=:green)
 
-src_path = "../"
+#const src_path=joinpath(@__DIR__, "src")
 
 #test for shortcuts
 const t = true
@@ -2789,8 +2789,8 @@ end
 like Grep.grep("x",df)
 """
 function findindf(df::DataFrame, x::Union{AbstractString,Regex})
-    filter(row -> any(occursin(x, 
-        string(value)) for value in row), 
+    filter(row -> any(occursin(x,
+        string(value)) for value in row),
             eachrow(df))
 end
 
@@ -2806,7 +2806,7 @@ function qall(;recursive=false)
         #x = "qgkofab.m6.2010"
         x = file
         try
-            df = DataFrame(CSV.File(x, header=1, 
+            df = DataFrame(CSV.File(x, header=1,
                                 delim="\t",
                                 skipto=366,
                                 ntasks=1,
@@ -2815,14 +2815,14 @@ function qall(;recursive=false)
                                 ignorerepeated=true,
                                 ignoreemptyrows=true,
                                 stripwhitespace=true))
-                                
+
             #df = CSV.read(x,DataFrame;ntasks=1)
             println(x)
             pattern = r"^[LIN. R]|^[LOG. R]|^CO"
             mask = [occursin(pattern, df[i, 1]) for i in 1:nrow(df)]
             dx = df[mask, :]
             dx = permutedims(dx) |>dropmissing
-            
+
             #mapcols!(x -> parse(Float64, x), dx)
             #mapcols(x -> x.^2, dx)
 
@@ -2843,7 +2843,7 @@ function qall(;recursive=false)
             dout = dx[3:end,:]
             for col in names(dout)[1:end-1]
                 dout[!, col] = parse.(Float64, replace.(dout[!, col], "," => ""))
-            end          
+            end
             #mapcols!(x -> parse(Float64, x), dout)
             #dout = hcat(dx[!,Cols(r"bas")],dx[:,Not(Cols(r"bas"))])
             dout = hcat(dout[:,Cols("basin")],dout[:,Not(Cols(r"bas"))])
@@ -2866,36 +2866,36 @@ find LOG. R-SQUARE > .4 recursivley
 function findlog(;lb=.4)
     v = qall(;recursive=true)
     #map(x->DataFrames.subset(x,3 => ByRow(<(1))),v)
-    k = try 
+    k = try
         map(x->DataFrames.subset(x,3 => ByRow(>(lb))),v)
         catch
             @error "no df on lowerbound! "
             return
     end
-    df = try 
-        reduce(vcat,k) 
+    df = try
+        reduce(vcat,k)
         catch
             @error "vcat failed! "
             return
     end
-    
-    df = try 
+
+    df = try
         DataFrames.subset(df,3 => ByRow(<(1.0)))
         catch
             println(first(k))
             @error "no df on upperbound! "
             return
     end
-    
-    
+
+
     return df
 end
 
 
 """
-Like parse, but returns either a value of the requested type, 
+Like parse, but returns either a value of the requested type,
 or missing if the string does not contain a valid number.
-``` 
+```
 mytryparse(T, str) = something(tryparse(T, str), missing)
 ```
 """
