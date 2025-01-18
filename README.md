@@ -7,5 +7,5 @@
 # Installation 
 ```
 using Pkg
-Pkg.add(PackageSpec(url="https://github.com/consumere/WaSiM.jl", rev="dev"))
+Pkg.add(PackageSpec(url="https://github.com/consumere/WaSiM.jl", rev="dev2"))
 ```

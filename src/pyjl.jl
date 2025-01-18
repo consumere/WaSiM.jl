@@ -1,8 +1,14 @@
+if !(isdefined(Main, :src_path) && ispath(src_path))
+    include("smallfuncs.jl")
+end
+
 module pyjl
     using PyCall
     using PyPlot
-#    import PyPlot:plot as pplt #see pyplot_df
-    include("smallfuncs.jl")
+    #import PyPlot:plot as pplt #see pyplot_df
+    using Grep, Printf, Statistics, Dates, DataFrames, CSV #, PrettyTables
+
+    #import DelimitedFiles 
     #@info "dont forget using PyCall; pygui(true) in vscode!"
     export allkge, dfvec, doy, doyplot, 
     fdoy, fkge, hekge, looks_like_number, 
@@ -20,9 +26,52 @@ module pyjl
     @pyimport geopandas as gpd
     xr  = pyimport("xarray")
     plt = pyimport("matplotlib.pyplot")
+    plt.rc("font", family="serif", serif=["cmr10"])
+    plt.rc("axes", unicode_minus=false)
+
+    function nconly(rx::Union{AbstractString,Regex})
+        z = filter(z -> endswith(z,".nc"),readdir()[map(x->occursin(rx,x),readdir())])
+        # v = readdir();
+        # z = v[map(x->occursin(rx,x),v)]
+        # z = z[map(x->endswith(x,"nc"),z)]
+        return(z)
+    end
     
 
-
+    """
+    Fastest Reader
+    Read the text file, preserve line 1 as header column
+    """
+    function dfr(x::String)
+        ms = ["-9999","lin","log","--"]
+        df = try
+        CSV.read(x, DataFrame; 
+            delim="\t", 
+            header=1, 
+            missingstring=ms, 
+            #maxwarnings = 1, 
+            silencewarnings = true,
+            normalizenames=true, 
+            types=Float64)
+        catch e
+            @error("error reading $x\nexiting now\n $e")
+            return nothing
+        end
+        
+        df = dropmissing(df, 1)
+        dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
+        df.date = dt2
+        df = select(df, Not(1:4))
+        DataFrames.metadata!(df, "filename", x, style=:note)
+        for x in names(df)
+            if startswith(x,"_")
+                newname=replace(x,"_"=>"C", count=1)
+                rename!(df,Dict(x=>newname))
+            end
+        end
+        return df 
+    end
+    
     function looks_like_number(str::AbstractString)
         try
             parse(Float64, str)
@@ -116,10 +165,10 @@ module pyjl
         return dropmissing(df)
     end
 
+    """
+    no transposing
+    """
     function pydf_to_julia(py_df::PyObject)
-        """
-        no transposing
-        """
         # Convert each column of the Python DataFrame to a Julia array
         col_names = py_df.columns  # Get the column names from the Python DataFrame
         col_arrays = [convert(Array, py_df[col]) for col in col_names]
@@ -128,10 +177,10 @@ module pyjl
         return julia_df
     end 
     
+    """
+    Convert each column of the Python DataFrame to a Julia array
+    """
     function pydf(py_df::PyObject)
-        """
-        Convert each column of the Python DataFrame to a Julia array
-        """
         # fn = filename
         # pyo = py"""waread3($fn).reset_index(drop=False)"""
         # pdf = wa.pydf(pyo)
@@ -245,10 +294,10 @@ module pyjl
         return py"waread3($x, $flag)"
     end
 
+    """
+    uses xarray to plot a 4xn grid of wasim stacks.
+    """
     function xrfacets(a::AbstractString;maskval=0)
-        """
-        uses xarray to plot a 4xn grid of wasim stacks.
-        """
         # xr  = pyimport("xarray")
         # plt = pyimport("matplotlib.pyplot")
         ad = xr.open_dataset(a)
@@ -272,23 +321,23 @@ module pyjl
         from matplotlib.pyplot import show
         maskval = float($maskval)
         dx = open_dataset($x,mask_and_scale=True).isel(t=$lyr).transpose().to_array()
-        dx.where(dx.values>maskval).plot(cmap="cividis")
+        dx.where(dx.values>maskval).plot(cmap='cividis')
         show()
         """
     end
 
     #ENV["LD_PRELOAD"] = .so to the missing c++ library...
-
-    
     #filter(z -> endswith(z,".nc"),readdir()[map(x->occursin(rx,x),readdir())])
 
-
     """
+    wasim nc plotter
+    ´´´
     pyjl.xrp(r"sb.+06") 
     xrp(x::Union{String,Regex}; maskval=0, lyr=0)
             if isa(x,Regex)
                 x = nconly(x)|>last
             end
+    ´´´
     """
     function xrp(x::Union{String,Regex}; maskval=0, lyr=0)
         if isa(x,Regex)
@@ -311,7 +360,6 @@ module pyjl
         plt.title(ti)
         plt.show()
     end
-
     
     """
     pyplot_df(df::Union{String,Regex,DataFrame};log=false)
@@ -489,6 +537,7 @@ module pyjl
 
         mn = [ monthabbr(x) for x in unique(month.(df.date)) ]
         PyPlot.rc("font", family="serif", serif=["cmr10"])
+        PyPlot.rc("axes", unicode_minus=false)
         PyPlot.figure()
         PyPlot.set_cmap("cividis")
         #PyPlot.rc("font",**{"family":"serif","serif":["cmr10"]}) #thats the one
@@ -609,6 +658,7 @@ module pyjl
     end
 
     """
+    ```
     doyplot(simh, simp, obsh)
     xr  = pyimport("xarray")
     sh="d:/remo/qm/tas/simh.nc"
@@ -618,6 +668,7 @@ module pyjl
     tl="D:/remo/cordex/eobs/v28/tas/tas_obs.nc"
     obsh=xr.open_dataset(tl)
     pyjl.doyplot(simh,simp,obsh)
+    ```
     keys have to be the same!
 
     ad = xr.open_dataset(a)
@@ -800,17 +851,27 @@ module pyjl
     function allkge(;dirpath::String=pwd(),suffix::String="qoutjl")
         odf = rename(hcat(vcat(map(hekge,
             filter( x->endswith(x,suffix),
-            readdir(dirpath) ))...),
+            readdir(dirpath,join=true) ))...),
             basename.(filter(x->endswith(x,suffix),
-            readdir(dirpath)))),
+            readdir(dirpath,join=true)))),
             Dict(5=>"fn"))
         return odf
     end
 
     """
     day of year plot using xarray and matplotlib
+    ```
+    xr  = pyimport("xarray")
+    sh="E:/qq/jlcor/pre-jl.nc"
+    simh=xr.open_dataset(sh)
+    sp="d:/remo/qm/corgrids/pre/pre-cor2.nc"
+    simp=xr.open_dataset(sp)
+    tl="D:/remo/cordex/eobs/v28/pre/pre_rcm_obs.nc"
+    obsh=xr.open_dataset(tl)
+    pyjl.doy(simh,simp,obsh;tosum=true)
+    ```
     """
-    function doy(simh, simp, obsh; tosum::Bool=false)
+    function doy(simh, simp, obsh; tosum::Bool=false, ti::String="")
         plt = pyimport("matplotlib.pyplot")
         xr = pyimport("xarray")
         calendar = pyimport("calendar")
@@ -867,7 +928,8 @@ module pyjl
         plt.plot(outds[1], label="\$$vr _{sim,h}\$")
         plt.plot(outds[2], label="\$$vr _{sim,p}\$")
         plt.plot(outds[3], label="\$$vr _{obs,h}\$")
-        plt.title("Historical modeled and predicted versus observed $(uppercasefirst(k))")
+        #plt.title("Historical modeled and predicted versus observed $(uppercasefirst(k))")
+        plt.title("$ti $(uppercasefirst(k))")
         plt.xlim(0, 365)
         plt.gca().grid(alpha=0.3)
         plt.legend()
@@ -1140,18 +1202,33 @@ module pyjl
     end
 
     """
-    pyjl.xrcont
+    xr contourf(x::Union{String,Regex,PyObject}; maskval=0, lyr=0)
     """
     function xrcont(x::Union{String,Regex,PyObject}; maskval=0, lyr=0)
-        xr = pyimport("xarray")
-        plt = pyimport("matplotlib.pyplot")
+        #xr = pyimport("xarray")
+        #plt = pyimport("matplotlib.pyplot")
+
+        if !isdefined(Main, :xr)
+            global xr = pyimport("xarray")
+        end
+
+        if !isdefined(Main, :plt)
+            global plt = pyimport("matplotlib.pyplot")
+        end
         
         if isa(x,Regex)
             v = readdir();
             z = v[map(k->occursin(x,k),v)]
-            println(z)
-            z = z[map(k->endswith(k,"nc"),z)][end]
+            printstyled("found:\n$(join(z, "\n"))\n",color=:yellow)
+            #println("found $z")
+            z = try
+                z[map(k->endswith(k,"nc"),z)][end]
+            catch
+                @error "no file found!"
+                return
+            end
             x = z
+            dx = xr.open_dataset(x,mask_and_scale=true)
         elseif isa(x,String)
             dx = xr.open_dataset(x,mask_and_scale=true)
         else
@@ -1161,9 +1238,9 @@ module pyjl
         #m = dx.keys()|>collect|>last    
         m=dx.variables|>collect|>last 
         #dx[m].where(dx[m]>maskval).isel(t=lyr).transpose().plot(cmap="turbo").contour()
-        dx[m].where(dx[m]>maskval).isel(t=lyr).transpose().plot.contour()
+        dx[m].where(dx[m]>maskval).isel(t=lyr).transpose().plot.contourf()
         ti = try
-            basename(x)
+            replace(basename(x),".nc"=>"",r"_"=>" ")
         catch
             raw""
         end
@@ -1172,7 +1249,10 @@ module pyjl
         plt.show()
     end
 
-    function xrlist(;cwd::AbstractString=pwd(),gridres::Float64=8317.01,xmatch="qq.",suffix=".winlist")
+    """
+    xrlist(;cwd::AbstractString=pwd(),gridres::Float64=8317.01,xmatch="qq.",suffix=".winlist")
+    """
+    function xrlist(;cwd::AbstractString=pwd(),gridres::Float64=8317.01,xmatch="qq.",suffix=".winlist",xkey::String="lon",ykey::String="lat",timekey::String="time")
         files = filter(x -> contains(x, xmatch) && endswith(x, ".nc"), readdir())
     
         if any(x -> occursin(xmatch, x) && endswith(x, suffix), readdir())
@@ -1190,10 +1270,10 @@ module pyjl
             # # Access the coordinate information
             # lon_values = ds["lon"].values
             # lat_values = ds["lat"].values
-    
-            xf = ds["lon"].values|>first
+
+            xf = ds[xkey].values|>first
             #xl = ds["lon"].values|>last
-            yf = ds["lat"].values|>first
+            yf = ds[ykey].values|>first
             #yl = ds["lat"].values|>last
     
             # gridfile_content = ["xfirst:  $xf",
@@ -1202,9 +1282,9 @@ module pyjl
             #                     "ylast:   $yl"]
     
             gridfile_content = ["GRID\tLIST\tof\t$var", #var is var in files
+                                "YY\tMM\tDD\tHH\t$gridres",
                                 "YY\tMM\tDD\tHH\t$xf",
                                 "YY\tMM\tDD\tHH\t$yf",
-                                "YY\tMM\tDD\tHH\t$gridres",
                                 "YY\tMM\tDD\tHH\tListe\n"]
     
             # open("x_gridfile.txt", "w") do out
@@ -1215,7 +1295,7 @@ module pyjl
                 write(out, join(gridfile_content, "\n"))
             end
     
-            timevec = ds["time"].values
+            timevec = ds[timekey].values
             #typeof(timevec|>first)
             dts = nothing
             try
@@ -1250,6 +1330,10 @@ module pyjl
         println("Lists for WaSiM Input are written to the current directory. All done!")
     end
     
+    """
+    lt. doku cellsize, xll_corner and yll_corner 
+    xrlist2(;cwd::AbstractString=pwd(),xcrd="x",ycrd="y",tvec="t",gridres::Float64=8317.01, xmatch="qq2",suffix=".winlist")
+    """
     function xrlist2(;cwd::AbstractString=pwd(),xcrd="x",ycrd="y",tvec="t",gridres::Float64=8317.01, xmatch="qq2",suffix=".winlist")
         #,tstep::Int64=12
         files = filter(x -> contains(x, xmatch) && endswith(x, ".nc"), readdir())
@@ -1267,11 +1351,12 @@ module pyjl
             #xf = round(xf, digits=3)
             yf = ds[ycrd].values|>first
             #yf = round(yf, digits=3)
-            gridfile_content = ["GRID\tLIST\tof\t$var", #var is var in files
-            "YY\tMM\tDD\tHH\t$xf",
-            "YY\tMM\tDD\tHH\t$yf",
-            "YY\tMM\tDD\tHH\t$gridres",
-            "YY\tMM\tDD\tHH\tListe\n"]
+            gridfile_content = [
+                "GRID\tLIST\tof\t$var", #var is var in files
+                "YY\tMM\tDD\tHH\t$gridres",
+                "YY\tMM\tDD\tHH\t$xf",
+                "YY\tMM\tDD\tHH\t$yf",
+                "YY\tMM\tDD\tHH\tListe\n"]
             open(onam, "w") do out
                 write(out, join(gridfile_content, "\n"))
             end
@@ -1327,13 +1412,166 @@ module pyjl
         println("Replaced paths in $filename")
     end
 
+    """
 
+    """
+    function plot_ds_shapefile(
+        ds::PyObject, 
+        shapefile_path::AbstractString;
+        timevec::AbstractString="t",
+        myvar::AbstractString="pre", 
+        mycrs::AbstractString="EPSG:25832", 
+        kwargs...)
 
+        # Load the shapefile
+        shp = gpd.read_file(shapefile_path)
+        # Reproject the shapefile
+        shp = shp.to_crs(crs=mycrs)
+        
+        #ob = xr.open_dataset(pt)
+        #ds = ob.where(ob[myvar] > 0, drop=true)
+        
+        plt.rc("font", family="serif", serif=["cmr10"])
+        # Plot the mean of the variable
+        # if any(x -> occursin(timevec, x), collect(ds.coords))
+        #     ds[myvar].mean(timevec).plot()
+        # else
+        #     ds[myvar].plot()
+        # end
+        ds[myvar].plot()
+        # Plot the outline of the shapefile
+        shp.boundary.plot(ax=plt.gca(), 
+            color="grey", linewidth=1.75, 
+            linestyle="dotted")
+
+        ds = ds.close()
+        plt.show()
+        return nothing
+    end
+
+    """
+    get_boundaries reads from xr.dataset
+    acts like terras ext function
+    """
+    function get_boundaries(dataset)
+        xmin = minimum(dataset["x"])
+        xmax = maximum(dataset["x"])
+        ymin = minimum(dataset["y"])
+        ymax = maximum(dataset["y"]) 
+        bounds = (xmin, xmax, ymin, ymax)
+        return convert.(Float64, bounds)
+    end
+
+    """
+    Extract the date and time components
+    """
+    function convert_pytime_to_datetime(py_time)
+        
+        year = py_time[:year]
+        month = py_time[:month]
+        day = py_time[:day]
+        hour = py_time[:hour]
+        minute = py_time[:minute]
+        second = py_time[:second]
+    
+        # Create a Julia DateTime object
+        return DateTime(year, month, day, hour, minute, second)
+    end
+
+    """
+    Extract the date and time components
+    ```extract_remo_to_stations(x::String, cvar::String, fn::String)```
+    takes a wasim station file, a variable name and a netcdf file
+    """
+    function extract_remo_to_stations(x::String, cvar::String, fn::String)
+        ss,od = wa.waread(x;pts_and_data=true)
+        if !endswith(fn,".nc")
+            @error "fn has to be a netcdf file!"
+            return
+        end
+        ds = xr.open_dataset(fn)
+        df = ds.sel(x=ss.xc, y=ss.yc,method="nearest").to_dataframe().reset_index()
+        dt = convert_pytime_to_datetime.(df["time"])
+        jdf = DataFrame(date=dt,tmp=convert.(Float64,df[cvar]))
+        rename!(jdf, :tmp=>"sim")
+        jdf.date = convert.(Date,jdf.date)
+        xm = mall(jdf,od)
+        return xm
+    end
+
+    """
+    fast nc plotter
+    ´´´
+    xrnc(x::Union{String,Regex}; maskval=0, key::String)
+    ´´´
+    takes dx.isel(Dict(lastdim=>0)) #first timestep
+    """
+    function xrnc(x::Union{String,Regex}; maskval=0, key::String="")
+        if isa(x,Regex)
+            v = readdir();
+            z = v[map(k->occursin(x,k),v)]
+            println(z)
+            z = z[map(k->endswith(k,"nc"),z)][end]
+            x = z
+        end
+        xr = pyimport("xarray")
+        plt = pyimport("matplotlib.pyplot")
+        dx = xr.open_dataset(x,mask_and_scale=true)
+        if length(key) > 0
+            m = key
+        else
+            m = dx.keys()|>collect|>last
+        end
+        #m = dx.keys()|>collect|>last
+        @info "key is $m"
+        lastdim = dx.dims|>collect|>last
+        #dx[m].where(dx[m]>maskval).isel(lastdim=lyr).plot(cmap="turbo")
+        #,dx[lastdim]|>first
+        dx = dx.isel(Dict(lastdim=>0)) #first timestep
+        dx[m].where(dx[m]>maskval).plot(cmap="turbo")
+        ti=basename(x)
+        plt.title(ti)
+        plt.show()
+    end
+
+    """
+    fast rioxarray plotter
+    ´´´
+    rp(x::Union{String,Regex},maskval=0;returnras=false)
+    ´´´
+    """
+    function rp(x::Union{String,Regex},maskval=0;returnras=false)
+        if isa(x,Regex)
+            v = readdir();
+            z = v[map(k->occursin(x,k),v)]
+            x = first(z)
+            println("$x will be masked with $maskval")
+        end
+        rio = pyimport("rioxarray")
+        plt = pyimport("matplotlib.pyplot")
+        ##dx.values[dx.values .> maskval]
+        dx = rio.open_rasterio(x,mask_and_scale=true,band_as_variable=true)
+        #firstdim = dx.dims|>collect|>first
+        m = dx.variables |> collect |> last #usually "band_1"
+        #dx.plot(cmap="turbo")
+        #dx["band_1"].where(dx.band_1 > 320).plot()
+        dx[m].where(dx[m] > maskval).plot(cmap="turbo")
+        #dx[firstdim].where(dx[firstdim]>maskval).plot(cmap="turbo")
+        ti=basename(x)
+        plt.title(ti)
+        plt.show()
+        if returnras
+            return dx
+        end
+    end
+
+      
 
 end #end of module #endof
 
 @info "running using PyCall; pygui(true) now..."
 using PyCall; pygui(true) 
+@info "invoke to Main by\n using .pyjl\n ..."
 
 #@doc PyPlot.boxplot
 #pyjl.pybar(r"sb05")

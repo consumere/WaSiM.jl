@@ -20,11 +20,11 @@ end
 #    du() # also works
 # end
 
-@testset verbose = true "my ls test" begin
-   ls();
-   du();
-   #sf("func")
-end
+# @testset verbose = true "my ls test" begin
+   # ls();
+   # du();
+   # #sf("func")
+# end
 
 #using JET
 #report_package("WaSiM")

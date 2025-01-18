@@ -1,28 +1,18 @@
-#functions
 
-#module smfc
+src_path = @__DIR__
 
-using DelimitedFiles, Grep, Printf, Statistics, Dates, DataFrames, CSV, PrettyTables
-#@time using DelimitedFiles, Grep, Printf, Statistics, Dates, DataFrames, CSV, PrettyTables
+using Grep, Printf, Statistics, Dates, DataFrames, CSV #, PrettyTables
 import InteractiveUtils.clipboard
-#printstyled("DelimitedFiles, Grep, Printf, Statistics,
-#	Dates, DataFrames, CSV, PrettyTables loaded\n",color=:green)
-
-# println("\nto edit this script:
-    # @less (ssup()) or @edit (ssup())\n\t",
-    # "fdi() for dirinfo, ls() for fileinfo")
-
-#printstyled("loc $here\n now initializing...\n",color=:green)
-
-src_path = "../"
+import DelimitedFiles
+#printstyled("Grep, Printf, Statistics, Dates, DataFrames, CSV loaded\n",color=:green)
 
 #test for shortcuts
 const t = true
 const f = false
 
-
 function ssup()
     thisfile=src_path*"/smallfuncs.jl"
+    #include("C:/Users/Public/Documents/Python_Scripts/julia/smallfuncs.jl")
     include(thisfile)
 end
 
@@ -70,6 +60,42 @@ end
 #wcl("evar")
 #wcl(glob("wq")|>first,true)
 
+"""
+wslpath to windows
+"""
+function towin(file_path::Union{String, Nothing})
+    if isnothing(file_path)
+        lw = split(pwd(), '/')[3]
+        rst = join(split(pwd(), '/')[4:end], '/')
+        win_path = string(uppercase(lw), ":/", rst)
+    else
+        lw = split(file_path, '/')[3]
+        rst = join(split(file_path, '/')[4:end], '/')
+        win_path = string(uppercase(lw), ":/", rst)
+    end
+    return win_path
+end
+
+"""
+windows path to wsl
+"""
+function towsl(file_path::String)
+    #if isnothing(file_path) Union{String, Nothing}
+    #if length(file_path) == 1
+    if isempty(file_path)
+        drive = lowercase(pwd()[1])
+        rst = replace(pwd()[3:end], "\\" => "/")
+        wsl_path = string("/mnt/", drive, rst)
+    elseif occursin(r"mnt"i, file_path)
+        wsl_path = file_path
+    else
+        drive = lowercase(file_path[1])
+        rst = replace(file_path[3:end], "\\" => "/")
+        wsl_path = string("/mnt/", drive, rst)
+    end
+    return wsl_path
+end
+
 #faster and pure julia:
 function vgrep(regex, file_ending)
     files = filter(file -> endswith(file, file_ending), readdir())
@@ -89,10 +115,17 @@ function vgrep(regex, file_ending)
     end
 end
 
-function vg(snippet::AbstractString, file_ending::AbstractString)
-    files = filter(file -> endswith(file, file_ending), readdir())
+"""
+dirpt passed to readdir
+```
+function vg(snippet::AbstractString, file_ending::AbstractString; dirpt=pwd())
+```
+"""
+function vg(snippet::AbstractString, file_ending::AbstractString; dirpt=pwd())
+    files = filter(file -> endswith(file, file_ending), readdir(dirpt;join=true))
     # loop over each file
     for file in files
+        #printstyled("check file $file\n",color=:light_red)
         open(file) do f
             counter = 0 # Zähler initialisieren
             for line in eachline(f)
@@ -107,15 +140,95 @@ function vg(snippet::AbstractString, file_ending::AbstractString)
     end
 end
 
-function vgjl(snippet::AbstractString)
+"""
+```
+vgjl(snippet::Union{AbstractString,Symbol};searchpath=nothing)
+```
+"""
+function vgjl(snippet::Union{AbstractString,Symbol};searchpath=nothing)
+    owd = abspath(pwd())
+    if snippet isa Symbol
+        snippet = string(snippet)
+    end
+    if isnothing(searchpath)
+        script_dir = src_path
+    else
+        script_dir = searchpath
+        printstyled("looking for jl files in $script_dir ...\n",color=:yellow)
+    end
+
+    cd(script_dir)
+
+    files = []
+    if (any(x->isdir(x),readdir()))
+        for (looproot, dirs, filenames) in walkdir(script_dir)
+            for filename in filenames
+                if (occursin(r"jl$",filename))
+                    push!(files, joinpath(looproot, filename))
+                end
+            end
+        end
+    else
+        printstyled("no dirs in $script_dir !\n",color=:light_red)
+        for filename in (filter(x->isfile(x),readdir(;join=false)))
+                if (occursin(r"jl$",filename))
+                push!(results, filename)
+            end
+        end
+    end
+
+    for file in files
+        open(file) do f
+            counter = 0 # Initialize the counter
+            for line in eachline(f)
+                counter += 1 # Increment the counter
+                if Base.contains(line, snippet)
+                    printstyled("$counter:\t", color=:light_red)
+                    printstyled("$file:\t", color=:light_magenta, underline=true, blink=false, bold=true)
+                    printstyled("$line\n", color=:green, bold=true)
+                end
+            end
+        end
+    end
+    cd(owd)
+end
+
+"""
+recursive grep
+```
+vgjlrec(snippet::AbstractString;owd = src_path)
+```
+"""
+function vgjlrec(snippet::AbstractString;owd = src_path)
+    for (root, dirs, files) in walkdir(owd)
+        for file in files
+            if (endswith(file, ".jl"))
+                pt=(joinpath(root, file))
+                open(pt) do f
+                    counter = 0 # Zähler initialisieren
+                    for line in eachline(f)
+                        counter += 1 # Zähler erhöhen
+                        if contains(line,snippet)
+                            printstyled("$counter:\t",color=:light_red)
+                            printstyled("$pt:\t",color=:light_magenta,underline = true,blink = false,bold=true)
+                            printstyled("$line\n",color=:green,bold=true)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+function vgjlo(snippet::AbstractString)
     owd = abspath(pwd())
     platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
 
     if platform == "windows"
-        script_dir = dirname(pathof(WaSiM))
+        script_dir = "C:/Users/Public/Documents/Python_Scripts/julia"
     else
         # Assuming you want to use a different path for Linux/WSL, adjust as needed
-        script_dir = dirname(pathof(WaSiM))
+        script_dir = "/mnt/c/Users/Public/Documents/Python_Scripts/julia"
     end
 
     cd(script_dir)
@@ -142,16 +255,45 @@ function vgjl(snippet::AbstractString)
     cd(owd)
 end
 
+function vgro(snippet::AbstractString)
+    owd = abspath(pwd())
+    platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
+
+    if platform == "windows"
+        script_dir = rsrc_path
+    else
+        # Assuming you want to use a different path for Linux/WSL, adjust as needed
+        script_dir = towsl(rsrc_path)
+    end
+
+    cd(script_dir)
+
+    files = filter(file -> endswith(file, ".R"), readdir())
+    for file in files
+        open(file) do f
+            counter = 0 # Zähler initialisieren
+            for line in eachline(f)
+                counter += 1 # Zähler erhöhen
+                if Base.contains(line,snippet)
+                    printstyled("$counter:\t",color=:light_red)
+                    printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true)
+                    printstyled("$line\n",color=:green,bold=true)
+                end
+            end
+        end
+    end
+    cd(owd)
+end
 
 function vgr(snippet::AbstractString)
     #owd = abspath(pwd())
     platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
 
     if platform == "windows"
-        script_dir = "D:/Fernerkundungsdaten/Klassifikation/R-Sessions"
+        script_dir = rsrc_path
     else
         # Assuming you want to use a different path for Linux/WSL, adjust as needed
-        script_dir = "/mnt/d/Fernerkundungsdaten/Klassifikation/R-Sessions"
+        script_dir = towsl(rsrc_path)
     end
 
     files = filter(file -> endswith(file, ".R"), readdir(script_dir,join=true))
@@ -172,17 +314,80 @@ function vgr(snippet::AbstractString)
     end
 end
 
-
-function vgpy(snippet::AbstractString)
+function vgrr(snippet::AbstractString;script_dir::String="$(dirname(src_path))/rfile")
     #owd = abspath(pwd())
     platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
 
     if platform == "windows"
-        script_dir = "C:/Users/Public/Documents/Python_Scripts"
+        script_dir = script_dir
     else
         # Assuming you want to use a different path for Linux/WSL, adjust as needed
-        script_dir = "/mnt/c/Users/Public/Documents/Python_Scripts"
+        script_dir = towsl(script_dir)
     end
+
+    files = filter(file -> endswith(file, ".R"), readdir(script_dir,join=true))
+    for file in files
+        open(file) do f
+            counter = 0 # Zähler initialisieren
+            for line in eachline(f)
+                counter += 1 # Zähler erhöhen
+                if Base.contains(line,snippet)
+                    printstyled("$counter:\t",color=:light_red)
+                    printstyled(rpad("$file:",50),color=:light_magenta)
+                    printstyled(lpad("$line\n",30),color=:green,bold=true)
+                end
+            end
+        end
+    end
+end
+
+function vgpyo(snippet::AbstractString)
+    owd = abspath(pwd())
+    platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
+
+    if platform == "windows"
+        script_dir = dirname(src_path)
+    else
+        # Assuming you want to use a different path for Linux/WSL, adjust as needed
+        script_dir = towsl((dirname(src_path)))
+    end
+
+    cd(script_dir)
+
+
+    files = filter(file -> endswith(file, ".py"), readdir())
+    for file in files
+        open(file) do f
+            counter = 0 # Zähler initialisieren
+            for line in eachline(f)
+                counter += 1 # Zähler erhöhen
+                if Base.contains(line,snippet)
+                    printstyled("$counter:\t",color=:light_red)
+                    printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true)
+                    printstyled("$line\n",color=:green,bold=true)
+                end
+            end
+        end
+    end
+    cd(owd)
+end
+
+"""
+```
+vgpy(snippet::AbstractString)
+vgpy(String(:head)) #searches for head in all python files
+```
+"""
+function vgpy(snippet::AbstractString)
+    #owd = abspath(pwd())
+    # platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
+    # if platform == "windows"
+    #     script_dir = dirname(src_path)
+    # else
+    #     # Assuming you want to use a different path for Linux/WSL, adjust as needed
+    #     script_dir = towsl(dirname(src_path))
+    # end
+    script_dir = dirname(src_path)
 
     files = filter(file -> endswith(file, ".py"), readdir(script_dir,join=true))
     for file in files
@@ -204,17 +409,26 @@ end
 
 """
 Usage: vgctl("set \$TS")
+``` vgctl(snippet::AbstractString) ```
 """
 function vgctl(snippet::AbstractString)
     owd = pwd()
     platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
 
-    if platform == "windows"
+    if gethostname() == "P085PHIL017165" && platform == "windows"
+        paths = ["D:/Wasim/regio/control",
+                "D:/Wasim/rcm/control",
+                "D:/Wasim/brend/control",
+                "D:/Wasim/sinn/control",
+                "D:/Wasim/sinn/input/control",
+                "D:/Wasim/saale/control"]
+    elseif platform == "windows"
         nwd = "D:/Wasim/regio/control/"
         nwd2 = "D:/temp/saale/control/"
         nwd3 = "D:/Wasim/Tanalys/DEM/brend_fab/control/"
         nwd4 = "D:/Wasim/Goldbach/revision/control/"
         nwd5 = "D:/Wasim/streu/control/"
+        paths = [nwd, nwd2, nwd3, nwd4, nwd5]
     else
         # Modify these paths for your WSL setup
         nwd = "/mnt/d/Wasim/regio/control/"
@@ -222,23 +436,27 @@ function vgctl(snippet::AbstractString)
         nwd3 = "/mnt/d/Wasim/Tanalys/DEM/brend_fab/control/"
         nwd4 = "/mnt/d/Wasim/Goldbach/revision/control/"
         nwd5 = "/mnt/d/Wasim/streu/control/"
+        paths = [nwd, nwd2, nwd3, nwd4, nwd5]
     end
 
-    paths = [nwd, nwd2, nwd3, nwd4, nwd5]
 
+
+    #check if path exists
     for path in paths
-        cd(path)
-        println("Searching in directory: $path")
-        files = filter(file -> endswith(file, ".ctl"), readdir())
-        for file in files
-            open(file) do f
-                counter = 0
-                for line in eachline(f)
-                    counter += 1
-                    if Base.contains(line, snippet)
-                        printstyled("$counter: $path", color=:light_red)
-                        printstyled("$file:\t", color=:light_magenta, underline=true, blink=false, bold=true)
-                        printstyled("$line\n", color=:green, bold=true)
+        if isdir(path)
+            cd(path)
+            println("Searching in directory: $path ...")
+            files = filter(file -> endswith(file, ".ctl"), readdir())
+            for file in files
+                open(file) do f
+                    counter = 0
+                    for line in eachline(f)
+                        counter += 1
+                        if Base.contains(line, snippet)
+                            printstyled("$counter: $path", color=:light_red)
+                            printstyled("$file:\t", color=:light_magenta, underline=true, blink=false, bold=true)
+                            printstyled("$line\n", color=:green, bold=true)
+                        end
                     end
                 end
             end
@@ -248,37 +466,75 @@ function vgctl(snippet::AbstractString)
     cd(owd)
 end
 
-function rglob(prefix::AbstractString)
-    rootdir=pwd();
+# function rglob(prefix::AbstractString)
+#     rootdir=pwd();
+#     results = []
+#     if (any(x->isdir(x),readdir()))
+#         for (looproot, dirs, filenames) in walkdir(rootdir)
+#             for filename in filenames
+#                 #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
+#                 if (occursin(Regex(prefix,"i"),filename))
+#                     push!(results, joinpath(looproot, filename))
+#                 end
+#             end
+#         end
+#     else
+#         printstyled("no dirs in $rootdir !\n",color=:light_red)
+#         for filename in (filter(x->isfile(x),readdir(;join=false)))
+#             #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
+#             if (occursin(Regex(prefix,"i"),filename))
+#                 push!(results, filename)
+#             end
+#         end
+#     end
+#     return results
+# end
+
+# function rglob(prefix::Regex)
+#     rootdir="."
+#     results = []
+#     for (looproot, dirs, filenames) in walkdir(rootdir)
+#         for filename in filenames
+#             if (occursin(prefix,filename))
+#                 push!(results, joinpath(looproot, filename))
+#             end
+#         end
+#     end
+#     return results
+# end
+"""
+function rglob(pattern::Union{AbstractString, Regex}, rootdir::AbstractString=pwd())
+"""
+function rglob(pattern::Union{AbstractString, Regex}, rootdir::AbstractString=pwd())
+    #check it rootdir is a dir
+    rootdir = isdir(rootdir) ? rootdir : throw(ArgumentError("rootdir is not a directory!"))
     results = []
-    if (any(x->isdir(x),readdir()))
+     # checks if all items in rootdir are directories
+    if (any(x->isdir(joinpath(rootdir, x)), readdir(rootdir)))
         for (looproot, dirs, filenames) in walkdir(rootdir)
             for filename in filenames
-                #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
-                if (occursin(Regex(prefix,"i"),filename))
-                    push!(results, joinpath(looproot, filename))
+                if pattern isa AbstractString
+                    if (occursin(Regex("$(pattern)", "i"), filename))
+                        push!(results, joinpath(looproot, filename))
+                    end
+                else
+                    if (occursin(pattern, filename))
+                        push!(results, joinpath(looproot, filename))
+                    end
                 end
             end
         end
     else
-        printstyled("no dirs in $rootdir !\n",color=:light_red)
-        for filename in (filter(x->isfile(x),readdir(;join=false)))
-            #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
-            if (occursin(Regex(prefix,"i"),filename))
-                push!(results, filename)
-            end
-        end
-    end
-    return results
-end
-
-function rglob(prefix::Regex)
-    rootdir="."
-    results = []
-    for (looproot, dirs, filenames) in walkdir(rootdir)
-        for filename in filenames
-            if (occursin(prefix,filename))
-                push!(results, joinpath(looproot, filename))
+        printstyled("no dirs in $rootdir !\n", color=:light_red)
+        for filename in (filter(x->isfile(x), readdir(rootdir; join=true)))
+            if pattern isa AbstractString
+                if (occursin(Regex("$(pattern)", "i"), filename))
+                    push!(results, filename)
+                end
+            else
+                if (occursin(pattern, filename))
+                    push!(results, filename)
+                end
             end
         end
     end
@@ -288,12 +544,45 @@ end
 """
 go dir up
 """
-function cdb()
+function cdu()
     dirname(pwd())|>cd
     pwd()|>println
 end
 
-cdu() = cdb()
+
+visited_dirs = [pwd()]
+
+"""
+go to last dir
+"""
+function cdb()
+    if length(visited_dirs) == 1
+        println("No previous directory visited.")
+    else
+        pop!(visited_dirs)
+        dir = visited_dirs[end]
+        cd(dir)
+        println("Went back to directory: ", dir)
+    end
+end
+
+function cdd(dir)
+    try
+        cd(dir)
+        dir = abspath(dir)
+        push!(visited_dirs, dir)
+        println("Working directory: ", dir)
+    catch e
+        println("Error: ", e,
+            "\n Directory not found.\n
+            visited_dirs: $visited_dirs")
+    end
+end
+
+# prev_location = ENV["OLDPWD"]
+# run(`cd $prev_location`)
+# # List PowerShell's Environmental Variables
+# Get-Childitem -Path Env:* | Sort-Object Name
 
 #like jdd to vector of strings.
 function fdd(;cwd=pwd())
@@ -327,6 +616,7 @@ function fdd(;cwd=pwd())
     return(s)
 end
 
+
 function vgr(regex, file_ending)
     rootdir=pwd()
     println("starting on: $rootdir...\n searching for >> $regex << with file ending >> $file_ending <<\n")
@@ -348,6 +638,36 @@ function vgr(regex, file_ending)
                 counter += 1 # Zähler erhöhen
                 if occursin(Regex(regex,"i"), line)
                     println("$file: $counter:\t $line")
+                end
+            end
+        end
+    end
+end
+
+function vgrfiles(snippet::AbstractString)
+    # platform = Sys.iswindows() ? "windows" : "linux"  # Check the platform
+
+    # if platform == "windows"
+    #     script_dir = rsrc_path
+    # else
+    #     # Assuming you want to use a different path for Linux/WSL, adjust as needed
+    #     script_dir = towsl(rsrc_path)
+    # end
+
+    script_dir = rsrc_path
+
+    files = filter(file -> endswith(file, ".R"), readdir(script_dir,join=true))
+    for file in files
+        open(file) do f
+            counter = 0 # Zähler initialisieren
+            for line in eachline(f)
+                counter += 1 # Zähler erhöhen
+                if Base.contains(line,snippet)
+                    printstyled("$counter:\t",color=:light_red)
+                    printstyled(rpad("$file:",50),color=:light_magenta)
+                    #printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true)
+                    printstyled(lpad("$line\n",30),color=:green,bold=true)
+                    #underline = true
                 end
             end
         end
@@ -488,12 +808,25 @@ function tff2(x::Vector{String})
     end
 end
 
+"""
+greps from current dir iRegex
+"""
+function glob(x::AbstractString)
+    filter(file -> occursin(Regex(x,"i"),file), readdir())
+end
+
+"""
+greps from current dir Regex
+"""
+function glob(x::Regex)
+    filter(file -> occursin(x,file), readdir())
+end
 
 """
 fdi(;xm::Regex=r"*")
 lists dirs if isdir(dir) & occursin(xm,dir)
 """
-function fdi(cwd::AbstractString;xm::Regex=r"")
+function fdi(;cwd::AbstractString=pwd(),xm::Regex=r"")
         dirs = (length(cwd)>1) ? readdir(cwd) : readdir(pwd())
         for dir in dirs
             if isdir(dir) & occursin(xm,dir)
@@ -501,7 +834,6 @@ function fdi(cwd::AbstractString;xm::Regex=r"")
             end
         end
     end
-
 
 
 function jdd()
@@ -531,7 +863,10 @@ function dd()
     @printf("%-40s %15.3f GB\n","$(cwd):",osize/1024^3);
 end
 
-function ct(ext::AbstractString)
+"""
+prints sorted sizes of dirs and returns a vector of the dirs
+"""
+function xct(ext::AbstractString)
     cwd = pwd()
     osize = 0
     fz = 0
@@ -641,30 +976,9 @@ function dd()
     @printf("%-40s %15.3f GB\n","$(cwd):",osize/1024^3);
 end
 
-function ct(ext::AbstractString)
-    cwd = pwd()
-    osize = 0
-    fz = 0
-    m = []
-    for (root, dirs, files) in walkdir(cwd)
-     for file in files
-     if isfile(file) && occursin(Regex(ext),file)
-	 nm=joinpath(root, file)
-	 osize = stat(nm).size
-	 @printf("%-40s %15.2f MB\n","$(nm):",osize/1024^2);
-	 fz += stat(nm).size
-	 push!(m,(nm))
-     end
-    end
-    end
-     n=repeat(" - -",10)
-     println(n*" sum of ",ext*n)
-     @printf("%-40s %15.2f MB\n","$(cwd):",fz/1024^2);
-     println(n,length(m)," matches "*n,"\n")
-     return(m)
-end
 
-function ct()
+
+function xct()
     cwd = pwd()
     osize = 0
     fz = 0
@@ -750,25 +1064,27 @@ end
 end
 
 function homg()
-    pt="D:/Wasim/Goldbach/revision/"
+    pt = Sys.iswindows() ? "D:\\Wasim\\Goldbach\\revision\\" : "/home/wasim/Goldbach/revision/"
     cd(pt)
-    println("you are here: ",pwd())
+    println("you are here: ", pwd())
 end
 
 function hombr()
-    pt="D:/Wasim/Tanalys/DEM/brend_fab/out/m4/"
+    pt = Sys.iswindows() ? "D:\\Wasim\\Tanalys\\DEM\\brend_fab\\out\\m4\\" : "/home/wasim/Tanalys/DEM/brend_fab/out/m4/"
     cd(pt)
-    println("you are here: ",pwd())
+    println("you are here: ", pwd())
 end
 
 function hometeo()
-    cd("D:/Wasim/Tanalys/DEM/Input_V2/meteo/")
-    println("you are here: ",pwd())
+    pt = Sys.iswindows() ? "D:\\Wasim\\Tanalys\\DEM\\Input_V2\\meteo\\" : "/home/wasim/Tanalys/DEM/Input_V2/meteo/"
+    cd(pt)
+    println("you are here: ", pwd())
 end
 
 function homreg()
-    cd("D:/Wasim/regio/out/");
-    println("you are here: ",pwd())
+    pt = Sys.iswindows() ? "D:\\Wasim\\regio\\out\\" : "/home/wasim/regio/out/"
+    cd(pt)
+    println("you are here: ", pwd())
     fdi()
 end
 
@@ -784,20 +1100,32 @@ end
 
 
 function homg()
-    cd("D:/Wasim/Goldbach/");
+    if platform == "unix"
+        cd("/mnt/d/Wasim/Goldbach/revision/");
+    else
+        cd("D:/Wasim/Goldbach/revision/");
+    end
+
     println("you are here: ",pwd())
     fdi()
 end
 
 function home()
-    cd("D:/Wasim/");
+    if platform == "unix"
+        cd("/mnt/d/Wasim/");
+    else
+        cd("D:/Wasim/");
+    end
     println("you are here: ",pwd())
     fdi()
 end
 
 function homqm()
-    pt="D:/remo/qm/"
-    cd(pt)
+    if platform == "unix"
+        cd("/mnt/d/Wasim/Goldbach/revision/qm/");
+    else
+        cd("D:/Wasim/Goldbach/revision/qm/");
+    end
     println("you are here: ",pwd())
 end
 
@@ -839,12 +1167,12 @@ macro vpy(s) vgpy(s);end
 macro vr(s) vgr(s);end
 #@vr "climate"
 macro vct(s) vgctl(s);end
-#@vct "das ist"
+#@vct "pre-REcor.winlist"
 macro rg(s) rglob(s);end
 macro glb(s) glob(s);end
 macro gl(s) glob(s)|>first;end
 macro hd(df) df[1:4,:];end
-#fastplot
+#fp == fastplot
 macro fp(s) dfp(Regex(s));end
 macro flog(s) dfl(Regex(s));end
 macro ncrm() ncrem=src_path*"/ncremover.jl";include(ncrem);end
@@ -858,6 +1186,38 @@ macro rcall() pt=src_path*"/rcall.jl";include(pt);end
 macro rgof() pt=src_path*"/RCall_gof.jl";include(pt);end
 macro pj() pt=src_path*"/pyjl.jl";include(pt);end
 macro pyjl() pt=src_path*"/pyjl.jl";include(pt);end
+
+# using TOML
+# #TOML is short for Tom’s Obvious Minimal Language and is a configuration file format
+# #that should be “easy to parse into data structures in a wide variety of languages”
+# macro toml_str(s::String)
+#     TOML.parse(s)::Dict{String, <:Any}
+# end
+
+# toml"""
+# ki11 = 6.6
+# dr11 = 1
+# kb11 = 0.4
+# q011 = 0.02
+# """
+
+# dx = toml"""ki11 = 6.6
+# dr11 = 1
+# kb11 = 0.4
+# q011 = 0.02"""|>DataFrame
+# #DataFrame(dx)
+# findall
+# findfirst
+# findlast
+# findnext
+# findprev
+
+# fx=raw"D:\Wasim\regio\control\rcm200_r6.ctl"
+# for (i, line) in enumerate(eachline(fx))
+#     if findfirst("dr11", line) !== nothing
+#         println("Line $i: $line")
+#     end
+# end
 
 function regand(v::Vector{String},x1::AbstractString,y1::AbstractString)
     needle=join([x1,y1],"+.*");
@@ -888,10 +1248,10 @@ end
 join([x1,y1],"+.*")
 r"this+.*that"
 """
-function regand(v::Vector{String},x1::AbstractString,y1::AbstractString)
+function regand(x1::AbstractString,y1::AbstractString)
     needle=join([x1,y1],"+.*");
-    z = v[(broadcast(x->occursin(Regex(needle,"i"),x),v))]
-return(z)
+    z = Regex(needle,"i")
+    return(z)
 end
 
 function regand(v::Vector{String},xv::Tuple{String, String})
@@ -982,13 +1342,7 @@ function latx()
     end
 end
 
-# ll=latx
-
-function ll()
-    readdir(;join=true)
-end
-
-
+ll=latx
 
 """
 grabs methods
@@ -1425,10 +1779,14 @@ function tf(x::Union{AbstractString,Regex})
     jlt(dfonly(x))
 end
 
+"""
+water-balance.jl
+"""
 function waba()
-    wpth="C:/Users/Public/Documents/Python_Scripts/julia/water-balance.jl"
+    #wpth="C:/Users/Public/Documents/Python_Scripts/julia/water-balance.jl"
+    wpth=src_path*"/water-balance.jl"
     include(wpth)
-    yd=waread("waba-input.wa")|>yrsum
+    #yd=waread("waba-input.wa")|>yrsum
     @info "waba done !"
 end
 
@@ -1478,15 +1836,20 @@ function readbetween(io::IO, start::String, stop::String)
     return output
 end
 
-function readbetween(io::IO, start::Regex, stop::Regex)
+function readbetween(io::IO, start::Regex, stop::Regex; skipline::Int64=0)
+    # Skip the first `skip` lines
+    # for _ in 1:skipline
+    #     readlines(io)
+    # end
     output = Vector{String}()
-    while !eof(io)
-        line = readline(io)
-        if occursin(start,line)
+    #eachline readlines(io)[skipline:end]
+    for line in readlines(io)[skipline:end]
+        if occursin(start, line)
             push!(output, line)
             while !eof(io)
-                line = readline(io)
-                if occursin(stop,line)
+                #line = readline(io)
+                line = line
+                if occursin(stop, line)
                     skip(io, length(line))
                     break
                 end
@@ -1501,15 +1864,15 @@ end
 """
 prints out the function definition
 """
-function zp(func::Any)
+function zp(func::Any;skip::Int64=500)
     #pt = joinpath(@__DIR__,"func-win.jl")
     pt = src_path*"/func-win.jl"
-    _str = "$(func)"
-    readbetween(open(pt),Regex(_str),r"^\s*function")
+    #_str = "$(func)"
+    _str = func
+    printstyled(first(readbetween(open(pt),Regex(_str),r"^\s*function";
+        skipline=skip)),color=:green)
 end
 
-macro wajs() pt="C:\\Users\\Public\\Documents\\Python_Scripts\\julia\\wajs.jl";include(pt);end
-macro bash_str(s) open(`bash`,"w",stdout) do io; print(io, s); end;end
 
 #@bash_str "which python" #redirects to wsl bash
 # @bash_str "python -V"
@@ -1530,8 +1893,16 @@ function op()
     #pwrs""" explorer . """
     #open(`powershell -noprofile explorer . `,"w",stdout)
     #open(`cmd.exe /c start . `,"w",stdout)
-    #this wrks in wsl, too
-    run(`cmd.exe /c start .`)
+    if platform == "osx"
+        run(`open .`)
+    elseif platform == "linux"
+        #run(`gio open .`)
+        #this wrks in wsl, too
+        run(`cmd.exe /c start .`)
+    elseif platform == "windows"
+        #this wrks in wsl, too
+        run(`cmd.exe /c start .`)
+    end
 end
 
 macro pwp_str(s) open(`powershell`,"w",stdout) do io; print(io, s); end;end
@@ -1888,17 +2259,26 @@ function looks_like_number(str::AbstractString)
     end
 end
 
+function lln(str::Any)
+    try
+        parse(Number, str)
+        return true
+    catch
+        return false
+    end
+end
+
+"""
+pyreader, reads all as stings, conversion later.
+"""
 function pyread(x::Union{String,Regex})
-    """
-    pyreader, reads all as stings, conversion later.
-    """
     if x isa Regex
         x = dfonly(x)|>first
     end
     pd = pyimport("pandas")
     df = pd.read_table(x,
         engine="c",
-        verbose=true,
+        #verbose=true, #depricated
         low_memory=false,
         header=0,
         skipinitialspace=true,
@@ -1987,11 +2367,11 @@ function read_df(s::Union{String,Regex})
     return df
 end
 
+"""
+Read wasim ts with DelimitedFiles.readdlm, skipto line 3
+no header column
+"""
 function wread(x::String;skip=3)
-    """
-    Read wasim ts with DelimitedFiles.readdlm, skipto line 3
-    no header column
-    """
     df = DelimitedFiles.readdlm(x, '\t', Float64, '\n';
         header=false,skipstart=skip)
     df = DataFrame(df,:auto)
@@ -2010,11 +2390,11 @@ function wread(x::String;skip=3)
     metadata!(df, "filename", x, style=:note);
 end
 
+"""
+Read wasim ts with DelimitedFiles.readdlm, skipto line 3
+no header column
+"""
 function wread(x::Regex;skip=3)
-    """
-    Read wasim ts with DelimitedFiles.readdlm, skipto line 3
-    no header column
-    """
     rgx = glob(x)|>first
     println("loading $rgx ...")
     df = DelimitedFiles.readdlm(rgx, '\t', Float64, '\n';
@@ -2049,54 +2429,32 @@ function cdof(x::Union{String,DataFrame})
             d = collect(DataFrames.metadata(x))[1][2]
             cd(dirname(d))
         catch
-            @error "no basename in $x !"
+            @error "no basename in present!"
+            return nothing
         end
     else
-        cd(dirname(x))
+        try
+            cd(dirname(x))
+        catch
+            @error "cd errored!"
+            return nothing
+        end
     end
     d=pwd()
     println("current dir: $d")
 end
 
-cdinto = cdof
+println("script loc is $(src_path)/smallfuncs.jl")
 
-#k=raw"C:/Users/Public/Documents/Python_Scripts/julia/smallfuncs.jl"
-
-# k=src_path*"/smallfuncs.jl"
-# println("script loc is $k")
-
-#homedir()|>cd
-
-function pyplot_df(df::DataFrame;log=false)
-    x = df.date
-    ln = (filter(x -> !occursin(r"date|month|year", x), names(df)))
-
-    for col in ln
-        y = df[!, Symbol(col)]
-        PyPlot.plot(x, y, label=col)
-    end
-
-    if log
-        PyPlot.yscale("log")
-    end
-
-    PyPlot.xlabel("Date")
-    PyPlot.ylabel("")
-    PyPlot.legend()
-    ti = only(values(DataFrames.metadata(df)))
-    PyPlot.title(ti)
-    PyPlot.grid(true)
-end
-
-function fsz(;rec=false)
-    """
-    Returns the total size of all files in the current directory non recursively.
-    """
+"""
+Returns the total size of all files in the current directory non recursively.
+"""
+function fsz(rootdir::String=".";rec=false)
     total_size = 0
-    files = readdir()  # Get a list of files in the current directory
+    files = readdir(rootdir)  # Get a list of files in the current directory
 
     for file in files
-        filepath = joinpath(pwd(), file)  # Get the full path of the file
+        filepath = joinpath(rootdir, file)  # Get the full path of the file
         if isfile(filepath)
             size = stat(filepath).size  # Get the file size
             total_size += size
@@ -2110,7 +2468,7 @@ function fsz(;rec=false)
     printstyled("Total size of $nr files in $(pwd()): $total_size_mb MB\n", color=:green)
 
     if rec
-        dirs = readdir()
+        dirs = readdir(rootdir)
         for dir in dirs
             if isdir(dir)
                 cd(dir)
@@ -2136,14 +2494,14 @@ function fsize()
     return(odf)
 end
 
-#when Df loaded
+
+"""
+Read the text file, preserve line 1 as header column
+Instead of using CSV.read, we use CSV.File to create a lazy representation of the file.
+This avoids reading the entire file into memory at once,
+which can be more memory-efficient for large datasets.
+"""
 function waread2(x::String)
-    """
-    Read the text file, preserve line 1 as header column
-    Instead of using CSV.read, we use CSV.File to create a lazy representation of the file.
-    This avoids reading the entire file into memory at once,
-    which can be more memory-efficient for large datasets.
-    """
     ms = ["-9999", "lin", "log", "--"]
     df = CSV.File(x; delim="\t", header=1, normalizenames=true, missingstring=ms, types=Float64) |> DataFrame
     dropmissing!(df,1)
@@ -2154,13 +2512,71 @@ function waread2(x::String)
     return df
 end
 
+"""
+basic tsv reader, takes arguments from CSV.File
+df = CSV.File(x;kw...)|>DataFrame|>z->dropmissing(z,1)
+"""
+function tsread(x::Union{String,Regex};kw...)
+    if x isa String
+        printstyled("reading $x\n",color=:light_red)
+    else x isa Regex
+        x = first(dfonly(x))
+        printstyled("reading $x\n",color=:light_red)
+    end
+    #ms = ["-9999","-9999.0","lin", "log", "--","nan","NaN","inf","-inf","inf.0","-inf.0"]
+    #df = CSV.File(x;missingstring=ms,kw...)|>DataFrame|>z->dropmissing(z,1)
+    df = CSV.File(x;kw...)|>DataFrame|>z->dropmissing(z,1)
+    DataFrames.metadata!(df, "filename", x, style=:note)
+    for x in names(df)
+        if startswith(x,"_")
+            newname=replace(x,"_"=>"C", count=1)
+            rename!(df,Dict(x=>newname))
+        end
+    end
+    return df
+end
+
+
+"""
+dwd gkd reader
+"""
+function dwdread(x::Union{String,Regex};skip=10,dec=',',header=9,kw...)
+    if x isa String
+        printstyled("reading $x\n",color=:light_red)
+    else x isa Regex
+        x = first(dfonly(x))
+        printstyled("reading $x\n",color=:light_red)
+    end
+    #like tsread(pt;skipto=10,decimal=',',header=9)
+    df = CSV.File(x;skipto=skip,decimal=dec,header=header,kw...)|>DataFrame|>z->dropmissing(z,1)
+    DataFrames.metadata!(df, "filename", x, style=:note)
+    for x in names(df)
+        if startswith(x,"_")
+            newname=replace(x,"_"=>"C", count=1)
+            rename!(df,Dict(x=>newname))
+        end
+        if occursin(r"datum"i,x)
+            newname=replace(x,"$x"=>"date", count=1)
+            rename!(df,Dict(x=>newname))
+        end
+        if occursin(r"Prüf"i,x)
+            select!(df, Not(x))
+        end
+    end
+    return df
+end
+
+
 
 """
 Fastest Reader. is also dfr.
 Read the text file, preserve line 1 as header column
 """
-function dfr(x::String)
+function dfr(x::Union{String,Regex})
     ms = ["-9999","lin","log","--"]
+    if x isa Regex
+        x = first(dfonly(x))
+    end
     df = try
      CSV.read(x, DataFrame;
         delim="\t",
@@ -2189,38 +2605,12 @@ function dfr(x::String)
     return df
 end
 
+
 """
-dfr = waread
+removes empty TS;
+use with caution!
 """
-function dfr(x::Regex)
-    """
-    Read the text file, preserve line 1 as header column
-    """
-    x = dfonly(x)|>first
-    ms = ["-9999","lin","log","--"]
-    df = CSV.read(x, DataFrame; delim="\t", header=1, missingstring=ms, normalizenames=true, types=Float64)
-    df = dropmissing(df, 1)
-    dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
-    df.date = dt2
-    df = select(df, Not(1:4))
-    metadata!(df, "filename", x, style=:note)
-    #renamer
-    for x in names(df)
-        if startswith(x,"_")
-        newname=replace(x,"_"=>"C", count=1)
-        rename!(df,Dict(x=>newname))
-        end
-    end
-    return df
-end
-
-
-
 function rmeq()
-    """
-    removes empty TS;
-    use with caution!
-    """
     #x = pwd()
 
     # files = filter(file -> (occursin(Regex(x, "i"), file) &
@@ -2248,6 +2638,9 @@ function rmeq()
     end
 end
 
+"""
+function to cb windowspath
+"""
 function pew()
     try
         in = clipboard()
@@ -2260,6 +2653,9 @@ function pew()
     end
 end
 
+"""
+function to cb wslpath
+"""
 function pe()
     try
     inp = clipboard()
@@ -2380,14 +2776,13 @@ function pkgversion(pkg::String)
 end
 
 
-
 """
 newer version with copy df and switched func positions
 """
-function wawrite(df::DataFrame,file::AbstractString)
+function wawrite2(df::DataFrame,file::AbstractString;
+        hourint::Int=24,
+        misval::Union{Number,Missing}=-9999)
     dout = copy(df)
-    #dout[!,Cols(r"date")]
-    #in("date",names(dout))
     if in("year",names(dout))
         @warn "yearcol found!"
         CSV.write(file, dout,
@@ -2397,31 +2792,35 @@ function wawrite(df::DataFrame,file::AbstractString)
     dout.YY = map(x ->year(x),dout.date)
     dout.MM = map(x ->month(x),dout.date)
     dout.DD = map(x ->day(x),dout.date)
-    dout[!, "HH"] .= 0
+    dout[!, "HH"] .= hourint
     dout = dout[!,Cols([:YY,:MM,:DD,:HH],Not(Cols(r"date")))]
     CSV.write(file, dout,
-    transform = (col, val) -> something(val, missing), delim="\t")
+    transform = (col, val) -> something(val, misval), delim="\t")
     nothing
 end
 
+
+
 """
 writes df to file, no date conversion
+```
+writedf(df::Union{DataFrame,String},file::Union{DataFrame,String};sep::String="\\t")
+```
 """
-function writedf(df::Union{DataFrame,String},file::Union{DataFrame,String})
+function writedf(df::Union{DataFrame,String},file::Union{DataFrame,String};sep::String="\t")
     if df isa String
         @info "write DataFrame to $df !"
         CSV.write(df, file,
         transform = (col, val) -> something(val, missing),
-            delim="\t")
+            delim=sep)
         return
     end
     @info "write DataFrame to $file !"
     CSV.write(file, df,
     transform = (col, val) -> something(val, missing),
-        delim="\t")
+        delim=sep)
     nothing
 end
-
 """
 writes describe(df) to file, no date conversion
 """
@@ -2434,17 +2833,30 @@ end
 
 """
 read df to datetime
+df = CSV.read(pt,DataFrame)
+df = df[5:end,:]
+rename!(df,1 => :date)
+fo = dateformat"yyyy mm dd HH MM"
+df.date = [DateTime(d, fo) for d in df.date]
 """
-function dfrdt(x::String)
+function dfrdt(x::Union{Regex,String})
+    if x isa(Regex)
+        try
+            x = first(dfonly(x))
+        catch
+            @error "no match for $x ! "
+        end
+    end
     ms = ["-9999","lin","log","--"]
     df = CSV.read(x, DataFrame;
         delim="\t", header=1, missingstring=ms,
         maxwarnings = 1, #silencewarnings = true,
         normalizenames=true, types=Float64)
     df = dropmissing(df, 1)
-    dt2 = map(row -> Dates.DateTime(Int(row[1]), Int(row[2]), Int(row[3]),
-    Int(row[4]),0,0,0),  #note that: Dates.DateTime,dateformat"yyyy mm dd HH MM SS s"
-    eachrow(df))
+    dt2 = map(row -> Dates.DateTime(Int(row[1]),
+        Int(row[2]), Int(row[3]),
+        Int(row[4]),0,0,0),  #note that: Dates.DateTime,dateformat"yyyy mm dd HH MM SS s"
+        eachrow(df))
     df.date = dt2
     df = select(df, Not(1:4))
     DataFrames.metadata!(df, "filename", x, style=:note)
@@ -2490,9 +2902,6 @@ function ptb(x::DataFrame)
     clipboard(strs)
 end
 
-
-
-#macro jlcnt() pt=src_path*"/win/ccnt.jl";include(pt);end
 function count_files(path::String, level::Int64)
     n = 0  # Number of files
     s = 0  # Total size in bytes
@@ -2519,14 +2928,6 @@ function count_files(path::String, level::Int64)
     return n, s
 end
 
-"""
-see also tovec in wa.
-"""
-function dfvec(df::DataFrame,col::Int64)
-    getproperty(df,propertynames(df)[col])
-end
-
-
 function jlcnt(path=pwd(), level=0)
     n, s = count_files(path, 0)
     printstyled("Directory: $path\n",color=:yellow)
@@ -2534,29 +2935,19 @@ function jlcnt(path=pwd(), level=0)
     printstyled("Total size: $(round(s / (1024 * 1024), digits=2)) MB\n",color=:yellow)
 end
 
-"""
-basic tsv reader, takes arguments from CSV.File
-CSV.File(x;kw...)|>DataFrame|>z->dropmissing(z,1)
-"""
-function tsread(x::Union{String,Regex};kw...)
-    if x isa String
-        printstyled("reading $x\n",color=:light_red)
-    else x isa Regex
-        x = first(dfonly(x))
-        printstyled("reading $x\n",color=:light_red)
-    end
-    #ms = ["-9999","-9999.0","lin", "log", "--"]
-    #missingstring=ms,
-    #df = CSV.read(x,DataFrame;kw...)
-    df = CSV.File(x;kw...)|>DataFrame|>z->dropmissing(z,1)
-    DataFrames.metadata!(df, "filename", x, style=:note)
-    for x in names(df)
-        if startswith(x,"_")
-            newname=replace(x,"_"=>"C", count=1)
-            rename!(df,Dict(x=>newname))
-        end
-    end
-    return df
+
+#import Pkg
+#Pkg.gc(; collect_delay=Second(0))
+
+# #pwd is home
+# pcmd = `perl -E '$z=$ENV{PWD}=~ s#mnt\S##r =~s/(\w)/\U$1:/mr =~s[/][]r;say $z'`
+#X=`$pwd.Path`
+#run(pcmd)
+# #readchomp(pipeline(pcmd))
+# pwd()
+
+function getdirs(kw...)
+    printstyled(filter(x->isdir(x),readdir(kw...)),color=:blue)
 end
 
 """
@@ -2642,7 +3033,9 @@ function qtab(;todf=true)
     end
 end
 
-
+"""
+returns DataFame with qgk Vals recursively
+"""
 function getq(;prefix::AbstractString="qgko")
     rootdir = pwd()
     results = []
@@ -2698,21 +3091,68 @@ function getq(;prefix::AbstractString="qgko")
 end
 
 """
+
+tries to parse all columns to float, except of date.
+"""
+function dfloat(x::DataFrame)
+    df = copy(x)
+    for colname in names(df)
+        if eltype(df[!, colname]) != Date && eltype(df[!, colname]) == String
+            #&& eltype(df[!, colname]) != Float64
+            df[!, colname] .= tryparse.(Float64, df[!, colname])
+        end
+    end
+    return df
+end
+
+"""
+tries to parse all columns to float, except of date.
+"""
+function dfloat!(df::DataFrame)
+    for colname in names(df)
+        if eltype(df[!, colname]) != Date && eltype(df[!, colname]) == String
+            df[!, colname] .= tryparse.(Float64, df[!, colname])
+        end
+    end
+end
+
+
+"""
+another reader, faster date conversion
+"""
+function wadd(x::String)
+    ms = ["-9999", "lin", "log", "--"]
+    df = CSV.File(x; delim="\t", header=1, normalizenames=true, missingstring=ms) |> DataFrame
+    dropmissing!(df,1)
+    #df.date = Date.(map(row -> string(row...), eachrow(select(df, 1:3))), DateFormat("yyyymmdd"))
+    df.date = Date.(
+        map(row -> string(join(row,"-")),
+        eachrow(select(df, 1:3))),
+        DateFormat("yyyy-mm-dd"))
+    select!(df, Not(1:4))
+    metadata!(df, "filename", x, style=:note)
+    return df
+end
+
+
+"""
     sf(pattern::Union{AbstractString, Regex}, rootdir::AbstractString=pwd())
 
 Search for files in a directory and its subdirectories that match a given pattern.
 
 # Arguments
-- `pattern::Union{AbstractString, Regex}`: The pattern to match. Can be a string or a regex.
+- `pattern::Union{AbstractString, Regex, Symbol}`: The pattern to match. Can be a string or a regex.
 - `rootdir::AbstractString=pwd()`: The root directory to start the search from. Defaults to the current working directory.
 
 # Returns
 - A list of file paths that match the pattern.
 """
-function sf(pattern::Union{AbstractString, Regex}, rootdir::AbstractString=pwd())
+function sf(pattern::Union{AbstractString, Regex, Symbol}, rootdir::AbstractString=pwd())
     # Check if rootdir is a directory
     rootdir = isdir(rootdir) ? rootdir : throw(ArgumentError("rootdir is not a directory!"))
-
+    if pattern isa Symbol #  NOT redundant, see below
+        pattern = Regex("$(pattern)", "i")
+    end
     # Convert pattern to regex if it's a string
     pattern = pattern isa AbstractString ? Regex("$(pattern)", "i") : pattern
 
@@ -2731,13 +3171,156 @@ function sf(pattern::Union{AbstractString, Regex}, rootdir::AbstractString=pwd()
             end
         end
     else
-        printstyled("no dirs in $rootdir !\n", color=:light_red)
+        printstyled("no subdirs in $rootdir !\n", color=:light_red)
         for filename in filter(isfile, readdir(rootdir; join=true))
             check_and_add(filename, results)
         end
     end
 
     return results
+end
+
+"""
+like Grep.grep("x",df)
+"""
+function findindf(df::DataFrame, x::Union{AbstractString,Regex})
+    filter(row -> any(occursin(x,
+        string(value)) for value in row),
+            eachrow(df))
+end
+
+function qall(;recursive=false)
+    if recursive
+        files = rglob("qgko")
+    else
+        files = glob("qgko")
+    end
+    outdf::Vector{DataFrame} = []
+    for file in files
+        # Load the file into a DataFrame
+        #x = "qgkofab.m6.2010"
+        x = file
+        try
+            df = DataFrame(CSV.File(x, header=1,
+                                delim="\t",
+                                skipto=366,
+                                ntasks=1,
+                                types = String,
+                                silencewarnings=true,
+                                ignorerepeated=true,
+                                ignoreemptyrows=true,
+                                stripwhitespace=true))
+
+            #df = CSV.read(x,DataFrame;ntasks=1)
+            println(x)
+            pattern = r"^[LIN. R]|^[LOG. R]|^CO"
+            mask = [occursin(pattern, df[i, 1]) for i in 1:nrow(df)]
+            dx = df[mask, :]
+            dx = permutedims(dx) |>dropmissing
+
+            #mapcols!(x -> parse(Float64, x), dx)
+            #mapcols(x -> x.^2, dx)
+
+            #basins = copy(df[1,5:end])
+            #AsTable(basins)
+            basins = []
+            #for i in copy(df[1,5:end])
+            for i in names(df)[5:end]
+                push!(basins,i)
+            end
+            #size(basins)
+            insert!(basins, 1, "score")
+            insert!(basins, 2, "timestep")
+            dx[!, "basin"] = basins
+
+            cn = (dx[1,:])
+            rename!(dx, 1 => cn[1], 2 => cn[2], 3 => cn[3], 4 => cn[4])
+            dout = dx[3:end,:]
+            for col in names(dout)[1:end-1]
+                dout[!, col] = parse.(Float64, replace.(dout[!, col], "," => ""))
+            end
+            #mapcols!(x -> parse(Float64, x), dout)
+            #dout = hcat(dx[!,Cols(r"bas")],dx[:,Not(Cols(r"bas"))])
+            dout = hcat(dout[:,Cols("basin")],dout[:,Not(Cols(r"bas"))])
+            dout.basin = parse.(Int64,dout[!, :basin])
+            dout.nm .= replace(file,".\\"=>"")
+            push!(outdf,dout)
+        catch
+            @warn("error! file $x can not be loaded as a DataFrame! ")
+            # Skip files that can't be loaded as a DataFrame
+            continue
+        end
+    end
+    return(outdf)
+end
+
+
+"""
+find LOG. R-SQUARE > .4 recursivley
+"""
+function findlog(;lb=.4)
+    v = qall(;recursive=true)
+    #map(x->DataFrames.subset(x,3 => ByRow(<(1))),v)
+    k = try
+        map(x->DataFrames.subset(x,3 => ByRow(>(lb))),v)
+        catch
+            @error "no df on lowerbound! "
+            return
+    end
+    df = try
+        reduce(vcat,k)
+        catch
+            @error "vcat failed! "
+            return
+    end
+
+    df = try
+        DataFrames.subset(df,3 => ByRow(<(1.0)))
+        catch
+            println(first(k))
+            @error "no df on upperbound! "
+            return
+    end
+
+
+    return df
+end
+
+"""
+looks in wasim manual
+```
+wgr("density",3)
+"T_Lower_Boundary_"|>wgr
+"kELS"|>wgr
+```
+"""
+function wgr(pattern::AbstractString, context_lines::Int=0)
+    if Sys.iswindows()
+        pt = "C:/Users/chs72fw/Documents/EFRE_GIS/Hydrologie/WaSiM-ETH/wasimvzo64_10.06.00/wasim2021-manual.txt"
+    else
+        pt = "/mnt/c/Users/chs72fw/Documents/EFRE_GIS/Hydrologie/WaSiM-ETH/wasimvzo64_10.06.00/wasim2021-manual.txt"
+    end
+    if context_lines < 0
+        println("error: context_lines should be a non-negative integer")
+        return 1
+    end
+
+    if isempty(pattern)
+        println("need args! greps wasim2021-manual.txt")
+        return 1
+    end
+    lines = readlines(pt)
+    for i in 1:length(lines)
+        if occursin(pattern, lines[i])
+            start_line = max(1, i - context_lines)
+            end_line = min(length(lines), i + context_lines)
+            for j in start_line:end_line
+                printstyled("$(j): $(lines[j])\n", color=:yellow)
+            end
+            println("-"^60)
+            #println("\n")
+        end
+    end
 end
 
 """
@@ -2785,127 +3368,98 @@ macro anno()
     esc(annot())
 end
 
-"""
-like Grep.grep("x",df)
-"""
-function findindf(df::DataFrame, x::Union{AbstractString,Regex})
-    filter(row -> any(occursin(x, 
-        string(value)) for value in row), 
-            eachrow(df))
-end
-
-function qall(;recursive=false)
-    if recursive
-        files = rglob("qgko")
-    else
-        files = glob("qgko")
-    end
-    outdf::Vector{DataFrame} = []
-    for file in files
-        # Load the file into a DataFrame
-        #x = "qgkofab.m6.2010"
-        x = file
-        try
-            df = DataFrame(CSV.File(x, header=1, 
-                                delim="\t",
-                                skipto=366,
-                                ntasks=1,
-                                types = String,
-                                silencewarnings=true,
-                                ignorerepeated=true,
-                                ignoreemptyrows=true,
-                                stripwhitespace=true))
-                                
-            #df = CSV.read(x,DataFrame;ntasks=1)
-            println(x)
-            pattern = r"^[LIN. R]|^[LOG. R]|^CO"
-            mask = [occursin(pattern, df[i, 1]) for i in 1:nrow(df)]
-            dx = df[mask, :]
-            dx = permutedims(dx) |>dropmissing
-            
-            #mapcols!(x -> parse(Float64, x), dx)
-            #mapcols(x -> x.^2, dx)
-
-            #basins = copy(df[1,5:end])
-            #AsTable(basins)
-            basins = []
-            #for i in copy(df[1,5:end])
-            for i in names(df)[5:end]
-                push!(basins,i)
-            end
-            #size(basins)
-            insert!(basins, 1, "score")
-            insert!(basins, 2, "timestep")
-            dx[!, "basin"] = basins
-
-            cn = (dx[1,:])
-            rename!(dx, 1 => cn[1], 2 => cn[2], 3 => cn[3], 4 => cn[4])
-            dout = dx[3:end,:]
-            for col in names(dout)[1:end-1]
-                dout[!, col] = parse.(Float64, replace.(dout[!, col], "," => ""))
-            end          
-            #mapcols!(x -> parse(Float64, x), dout)
-            #dout = hcat(dx[!,Cols(r"bas")],dx[:,Not(Cols(r"bas"))])
-            dout = hcat(dout[:,Cols("basin")],dout[:,Not(Cols(r"bas"))])
-            dout.basin = parse.(Int64,dout[!, :basin])
-            dout.nm .= replace(file,".\\"=>"")
-            push!(outdf,dout)
-        catch
-            @warn("error! file $x can not be loaded as a DataFrame! ")
-            # Skip files that can't be loaded as a DataFrame
-            continue
-        end
-    end
-    return(outdf)
-end
-
 
 """
-find LOG. R-SQUARE > .4 recursivley
-"""
-function findlog(;lb=.4)
-    v = qall(;recursive=true)
-    #map(x->DataFrames.subset(x,3 => ByRow(<(1))),v)
-    k = try 
-        map(x->DataFrames.subset(x,3 => ByRow(>(lb))),v)
-        catch
-            @error "no df on lowerbound! "
-            return
-    end
-    df = try 
-        reduce(vcat,k) 
-        catch
-            @error "vcat failed! "
-            return
-    end
-    
-    df = try 
-        DataFrames.subset(df,3 => ByRow(<(1.0)))
-        catch
-            println(first(k))
-            @error "no df on upperbound! "
-            return
-    end
-    
-    
-    return df
-end
-
-
-"""
-Like parse, but returns either a value of the requested type, 
+Like parse, but returns either a value of the requested type,
 or missing if the string does not contain a valid number.
-``` 
+```
 mytryparse(T, str) = something(tryparse(T, str), missing)
 ```
 """
 mytryparse(T, str) = something(tryparse(T, str), missing)
 
 
-#end #endof of smfc module
+#endof func declaration
 
-# println("you are here: ")
-# printstyled(pwd()*"\n",color=:green)
+println("you are here: ")
+printstyled(pwd()*"\n",color=:green)
 
-#import Pkg
-#Pkg.gc(; collect_delay=Second(0))
+
+# clear the hist file
+# cd "/home/cris/.julia/logs"
+# perl -ne 'print unless /^#/;' repl_history.jl > clean_hist.txt
+
+## if gr fails, try to plot GR.histogram(randn(1000))
+# import GR
+# function fixgr()
+#     GR.histogram(randn(1000))
+#     GR.GRPreferences.diagnostics()
+# end
+# fixgr()
+# function gz(prefix::AbstractString)
+#     rootdir="."
+#     results = []
+#     if (any(x->isdir(x),readdir()))
+#         for (looproot, dirs, filenames) in walkdir(rootdir)
+#             for filename in filenames
+#                 #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
+#                 if (occursin(Regex(prefix,"i"),filename))
+#                     push!(results, joinpath(looproot, filename))
+#                 end
+#             end
+#         end
+#     else
+#         printstyled("no dirs in $rootdir !\n",color=:light_red)
+#         for filename in (filter(x->isfile(x),
+#             readdir(;join=false)))
+#             #if (startswith(filename, prefix)) && (!occursin(r"txt|yrly|nc|png|svg",filename))
+#             if (occursin(Regex(prefix,"i"),filename))
+#                 push!(results, filename)
+#             end
+#         end
+#     end
+#     return results
+# end
+
+# ##in NEW session:
+# using PackageCompiler
+# pt,nm=("C:/Users/chs72fw/.julia/sysimages",
+#     "win_ts_plots.so")
+# # joinpath(pt,nm)
+# create_sysimage([:StatsPlots,
+#     :Plots,:PlotThemes,
+#     :DataFrames,
+#     :CSV,:Dates],sysimage_path=joinpath(pt,nm))
+#julia --startup-file=no --sysimage "C:/Users/chs72fw/.julia/sysimages/win_ts_plots.so" C:\Users\Public\Documents\Python_Scripts\julia\waba-rev.jl
+#C:/Users/Public/Documents/Python_Scripts
+
+
+# using PackageCompiler
+# pt,nm=("C:/Users/chs72fw/.julia/sysimages",
+#     "win_makie.so")
+# create_sysimage([
+#     :CairoMakie,
+#     :DataFrames,
+#     :CSV,:Dates],sysimage_path=joinpath(pt,nm))
+
+
+# pt,nm=("C:/Users/chs72fw/.julia/sysimages",
+#     "windf.so")
+# create_sysimage([
+#     :Grep,
+#     :DataFrames,
+#     :CSV,:Dates],sysimage_path=joinpath(pt,nm))
+
+#######################
+# sqrt(a) === a^0.5
+# log(a^0.5) === 0.5*log(a)
+# log(a^2) === 2*log(a)
+# m,n = 20,15
+# log(m * n) === log(m) + log(n)
+# log(m ÷ n) === log(m) - log(n) #f
+# log(m / n) === log(m) - log(n)  #but rounded, its true
+# round(log(m / n),digits=3) === round(log(m) - log(n),digits=3)  #true
+
+# cd(raw"J:\jras")
+# using PackageCompiler
+# create_sysimage(;sysimage_path="all.so")
