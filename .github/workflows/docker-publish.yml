@@ -22,12 +22,13 @@ on:
   # schedule:
   # - cron: '27 4 * * *'
   push:
+    # branches: [ "dev2" ]
     # branches: [ "dev" ]
     branches: ["main"]
     # Publish semver tags as releases.
     tags: ["v*.*.*"]
   pull_request:
-    # branches: [ "dev" ]
+    # branches: [ "dev2" ]
     branches: ["main"]
 
 env:
