@@ -10,13 +10,15 @@ module pyjl
 
     #import DelimitedFiles 
     #@info "dont forget using PyCall; pygui(true) in vscode!"
-    export allkge, dfvec, doy, doyplot, 
-    fdoy, fkge, hekge, looks_like_number, 
+    export dfvec, doy, doyplot, 
+    fdoy, fkge, hekge, allkge, allkgedf,
     plot_mean_with_shapefile, polygonize_raster, 
     pybar, pybox, pydf, pydf_to_julia, pyhydro, pyplot_df, 
-    pyread, pyread_meteo, xrfacets, xrp, xrplot, xrcont,
-    replace_path_in_file
+    pyread_meteo, xrfacets, xrp, xrplot, xrcont,
+    replace_path_in_file, polygonize_raster
     
+    #looks_like_number, pyread,
+
     #gpd, he, plt, xr #are not exported, but used in the functions
 
     @pyimport hydroeval as he
@@ -165,31 +167,45 @@ module pyjl
         return dropmissing(df)
     end
 
+    
     """
     no transposing
     """
     function pydf_to_julia(py_df::PyObject)
         # Convert each column of the Python DataFrame to a Julia array
+        py_df = py_df.reset_index(inplace=false)
         col_names = py_df.columns  # Get the column names from the Python DataFrame
-        col_arrays = [convert(Array, py_df[col]) for col in col_names]
+        col_arrays = try
+            [convert(Array, py_df[col]) for col in col_names]
+        catch
+            @error "error in converting!"
+            return
+        end
+        cas = [convert(Vector{Float64}, z) for z in col_arrays]
         # Create a Julia DataFrame using the converted arrays and column names
-        julia_df = DataFrame(Symbol(col) => arr for (col, arr) in zip(col_names, col_arrays))    
+        julia_df = DataFrame(Symbol(col) => arr for (col, arr) in zip(col_names, cas))
+        #julia_df = DataFrame(Symbol(col) => arr for (col, arr) in zip(col_names, col_arrays))
         return julia_df
-    end 
-    
+    end
+
     """
     Convert each column of the Python DataFrame to a Julia array
     """
     function pydf(py_df::PyObject)
-        # fn = filename
-        # pyo = py"""waread3($fn).reset_index(drop=False)"""
-        # pdf = wa.pydf(pyo)
-        # names(pdf)
-        # dfp(pdf)
+        #py_df.reset_index(inplace=true)
+        py_df = py_df.reset_index(inplace=false)
         col_names = py_df.columns  # Get the column names from the Python DataFrame
         col_names = convert(Array, col_names)
-        col_arrays = [convert(Array, py_df[col]) for col in col_names]
-        jdf = DataFrame(col_arrays, :auto)
+        col_arrays = try
+            [convert(Array, py_df[col]) for col in col_names]
+        catch
+            @error "error in converting!"
+            return
+        end
+        #col_arrays = [convert(Array, df[col]) for col in col_names]
+        cas = [convert(Vector{Float64}, z) for z in col_arrays]
+        #julia_df = DataFrame(Symbol(col) => arr for (col, arr) in zip(col_names, cas))
+        jdf = DataFrame(cas, :auto)
         #size(jdf)
         fn = try
             py_df.filename
@@ -197,10 +213,35 @@ module pyjl
             @info "no filename present"
         end
 
-        metadata!(jdf, "filename", fn, style=:note);
-        rename!(jdf, col_names);
+        metadata!(jdf, "filename", fn, style=:note)
+        rename!(jdf, col_names)
         return jdf
     end
+    
+    # """
+    # Convert each column of the Python DataFrame to a Julia array
+    # """
+    # function pydf(py_df::PyObject)
+    #     # fn = filename
+    #     # pyo = py"""waread3($fn).reset_index(drop=False)"""
+    #     # pdf = wa.pydf(pyo)
+    #     # names(pdf)
+    #     # dfp(pdf)
+    #     col_names = py_df.columns  # Get the column names from the Python DataFrame
+    #     col_names = convert(Array, col_names)
+    #     col_arrays = [convert(Array, py_df[col]) for col in col_names]
+    #     jdf = DataFrame(col_arrays, :auto)
+    #     #size(jdf)
+    #     fn = try
+    #         py_df.filename
+    #     catch
+    #         @info "no filename present"
+    #     end
+
+    #     metadata!(jdf, "filename", fn, style=:note);
+    #     rename!(jdf, col_names);
+    #     return jdf
+    # end
 
     function pyread_meteo(s::AbstractString;hdr=0)
         pd = pyimport("pandas")
@@ -845,6 +886,44 @@ module pyjl
     end
 
     """
+    iterates through all folders and gives a kgedf
+    ``` 
+    allkgedf(dirpath::String=pwd();suffix::String="qoutjl")
+    ```
+    """
+    function allkgedf(dirpath::String=pwd();suffix::String="qoutjl")
+        dirs = readdir(dirpath; join=true)
+        dirs = filter(isdir, dirs)  # Keep only directories
+        res = DataFrame()  # Initialize an empty DataFrame
+
+        for d in dirs
+            try
+                #data = allkge(; dirpath=d)  # Call allkge for each directory
+                #note: no basename to get the whole path
+                data = rename(hcat(vcat(map(hekge,
+                    filter( x->endswith(x,suffix),
+                    readdir(d,join=true) ))...),
+                    filter(x->endswith(x,suffix),
+                    readdir(d,join=true))),Dict(:5=>"fn"))
+
+                if isa(data, DataFrame)
+                    append!(res, data)  # Append DataFrame rows
+                else
+                    push!(res, data)  # Push individual rows
+                end
+            catch e
+                if e isa MethodError && occursin("rename", string(e))
+                    @warn "Failed to rename due to incompatible arguments in directory $d. Skipping..."
+                else
+                    rethrow(e)  # Re-throw any other unexpected errors
+                end
+            end
+        end
+        return sort(res,1,rev=true)
+    end
+
+
+    """    
     allkge(;dirpath::String=pwd(),suffix::String="qoutjl")
     KGE, r, α, β = he.kge(dfvec(ts,1),dfvec(ts,2))
     """
@@ -853,8 +932,7 @@ module pyjl
             filter( x->endswith(x,suffix),
             readdir(dirpath,join=true) ))...),
             basename.(filter(x->endswith(x,suffix),
-            readdir(dirpath,join=true)))),
-            Dict(5=>"fn"))
+            readdir(dirpath,join=true)))),Dict(:5=>"fn"))
         return odf
     end
 
@@ -1565,8 +1643,53 @@ module pyjl
         end
     end
 
-      
+    """
+    pycall function to polygonize a raster
+        store it to geojson
+    ```
+    polygonize_raster(input_raster_path::String, output_path::String;toshapefile=true,epsg=25832)
+    ```
+    """
+    function polygonize_raster(input_raster_path::String, output_path::String; toshapefile=true, epsg=25832)
+        gdal = pyimport("osgeo.gdal")
+        ogr = pyimport("osgeo.ogr")
+        osr = pyimport("osgeo.osr")
 
+        # Open the raster dataset
+        dataset = gdal.Open(input_raster_path)
+
+        # Get the first band
+        band = dataset.GetRasterBand(1)
+
+        if toshapefile
+            # Get the "ESRI Shapefile" driver
+            driver = gdal.GetDriverByName("ESRI Shapefile")
+        else
+            driver = gdal.GetDriverByName("GeoJSON")
+        end
+
+        # Create a new shapefile dataset
+        out_ds = driver.Create(output_path, 0, 0, 0, gdal.GDT_Unknown)
+
+        # Create a spatial reference object
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(epsg)
+
+        # Create a new layer
+        layer = out_ds.CreateLayer("polygonized", srs, ogr.wkbPolygon)
+
+        # Polygonize the raster
+        try
+            gdal.Polygonize(band, py"None", layer, -1, [], callback=py"None")
+            @info "new shapefile created at: $output_path ..."
+        catch
+            @error "gdal.Polygonize failed ..."
+        end
+
+        # Close the dataset to write it to the disk
+        out_ds = py"None"
+    end
+    
 end #end of module #endof
 
 @info "running using PyCall; pygui(true) now..."
@@ -1596,33 +1719,3 @@ using PyCall; pygui(true)
 # # Column names see doc he.kge
 # col_names = ["KGE", "r", "α", "β"]
 # df = DataFrame(Dict(col_names.=>kge_matrix))
-
-
-
-
-##############################################
-# using PyCall
-# @pyimport datatable as dt
-# function dtread(file_path)
-#     DT = dt.fread(
-#         file=file_path,
-#         skip_to_string="YY",
-#         #header=false,
-#         na_strings=["-9999", "-9999.0", "-999", "-999.0",
-#                         "-",
-#                         "[A-z]",
-#                         "lin","log","LIN","LOG"],
-#         fill=true
-#     )
-#     #map(x->DateTime(join(string.(x[1:4]),"-"),dateformat"yyyy-mm-dd-HH"),eachrow(DT))
-#     date = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(DT))
-#     dat = eachcol(DT)[Not(1:4)] 
-#     df = DataFrame(date = date)
-#     #colnames = dt.fread(file_path,skip_to_string="HH",fill=true).name 
-#     #colnames = (colnames)[5:end] 
-#     for (i, col) in enumerate(dat)
-#         df[!, Symbol("col", i)] = col
-#         #df[!, Symbol(colnames[i])] = col
-#     end
-#     return df
-# end

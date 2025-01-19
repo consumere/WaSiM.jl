@@ -15,6 +15,7 @@ module cmk
     import NCDatasets
     import ArchGDAL
     import GeoInterface
+    import GeoFormatTypes
 
     #very useful
     CairoMakie.set_theme!(theme_latexfonts())
@@ -29,11 +30,11 @@ module cmk
     export dfpl, ctov, cloudplot, cloudplot2, 
     tsbar, tsdf, tsp, tsp2, tsp3, tspblack
 
+    """
+    filters internal WaSiM stats of routed discharge files
+    works recursively
+    """
     function qgk(;rootdir=".", prefix="qgk")
-        """
-        filters internal WaSiM stats of routed discharge files
-        works recursively
-        """
         files = []
         for (looproot, dirs, filenames) in walkdir(rootdir)
             for filename in filenames
@@ -279,13 +280,13 @@ module cmk
         
     end
 
+    """
+    --- main reader ---
+    delim: if no argument is provided, 
+    parsing will try to detect the most consistent delimiter on the 
+        first 10 rows of the file
+    """
     function waread(x::AbstractString)
-        """
-        --- main reader ---
-        delim: if no argument is provided, 
-        parsing will try to detect the most consistent delimiter on the 
-            first 10 rows of the file
-        """
         ms=["-9999","lin","log"]
         df::DataFrame = CSV.read(x,DataFrame,
         missingstring=ms,
@@ -355,7 +356,8 @@ module cmk
 
         ms = ["-9999", "lin", "log", "--"]
         df = CSV.File(inF; delim="\t", header=1, 
-            normalizenames=true, missingstring=ms,
+            normalizenames=true, 
+            missingstring=ms,
             #maxwarnings=2, 
             silencewarnings=true, 
             types=Float64, kwargs...) |> DataFrame
@@ -366,29 +368,29 @@ module cmk
         return df
     end
 
-    """
-    Fastest Reader. is also dfr.
-    Read the text file, preserve line 1 as header column
-    """
-    function waread(x::String)
-        ms = ["-9999","lin","log","--"]
-        df = CSV.read(x, DataFrame; 
-            delim="\t", header=1, missingstring=ms, 
-            maxwarnings = 1, #silencewarnings = true,
-            normalizenames=true, types=Float64)
-        df = dropmissing(df, 1)
-        dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
-        df.date = dt2
-        df = select(df, Not(1:4))
-        DataFrames.metadata!(df, "filename", x, style=:note)
-        for x in names(df)
-            if startswith(x,"_")
-                newname=replace(x,"_"=>"C", count=1)
-                rename!(df,Dict(x=>newname))
-            end
-        end
-        return df 
-    end
+    # """
+    # Fastest Reader. is also dfr.
+    # Read the text file, preserve line 1 as header column
+    # """
+    # function waread(x::String)
+    #     ms = ["-9999","lin","log","--"]
+    #     df = CSV.read(x, DataFrame; 
+    #         delim="\t", header=1, missingstring=ms, 
+    #         maxwarnings = 1, #silencewarnings = true,
+    #         normalizenames=true, types=Float64)
+    #     df = dropmissing(df, 1)
+    #     dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
+    #     df.date = dt2
+    #     df = select(df, Not(1:4))
+    #     DataFrames.metadata!(df, "filename", x, style=:note)
+    #     for x in names(df)
+    #         if startswith(x,"_")
+    #             newname=replace(x,"_"=>"C", count=1)
+    #             rename!(df,Dict(x=>newname))
+    #         end
+    #     end
+    #     return df 
+    # end
 
     """
     Read the text file, preserve line 1 as header column
@@ -584,7 +586,6 @@ module cmk
         return 1 - sqrt((r - 1)^2 + (α - 1)^2 + (β - 1)^2)
     end
 
-   
     function tree()
         dir = pwd()
         dirs = readdir(dir)
@@ -647,27 +648,6 @@ module cmk
             println("$p\n")
         end
     end
-
-    # function lplot(df::DataFrame)
-    #     nm = propertynames(df)[1:end-1];
-    #     o = DataFrames.metadata(df)|>collect
-    #     ti = basename(o[1][2])
-    #     @df df plot(:date,cols(nm[1:end-1]),yaxis=:log,title=ti)     
-    # end
-
-    # function lplot(df::String)
-    #     df=waread(df)
-    #     nm = propertynames(df)[1:end-1];
-    #     o = collect(DataFrames.metadata(df))[1][2] |>basename
-    #     @df df plot(:date,cols(nm[1:end-1]),yaxis=:log,title=o)     
-    # end
-
-    # function lplotf(df::String)
-    #     df=waread(df)
-    #     nm = propertynames(df)[1:end-1];
-    #     o = collect(DataFrames.metadata(df))[1][2] |>basename
-    #     @df df plot(:date,cols(nm[1:end-1]),yaxis=:log,title=o)     
-    # end
 
     function getnames(dfs::Vector)
         nms = [];
@@ -831,11 +811,11 @@ module cmk
         return(z)
     end
 
+    """
+    old, but working version
+    newer see wawrite
+    """
     function writewa(file::AbstractString, df::DataFrame)
-        """
-        old, but working version
-        newer see wawrite
-        """
         dout = df
         dout.YY = map(x ->year(x),dout.date)
         dout.MM = map(x ->month(x),dout.date)
@@ -935,68 +915,6 @@ module cmk
     end
 
 
-
-    function vgro(snippet::AbstractString)
-        owd=pwd()
-        cd("D:/Fernerkundungsdaten/Klassifikation/R-Sessions")
-        files = filter(file -> endswith(file, ".R"), readdir())
-        for file in files
-            open(file) do f
-                counter = 0 # Zähler initialisieren
-                for line in eachline(f)
-                    counter += 1 # Zähler erhöhen
-                    if contains(line,snippet)
-                        printstyled("$counter:\t",color=:light_red) 
-                        printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled("$line\n",color=:green,bold=true) 
-                    end
-                end
-            end
-        end
-        cd(owd)
-    end
-
-    function vgr(snippet::AbstractString)
-        owd="D:/Fernerkundungsdaten/Klassifikation/R-Sessions"
-        files = filter(file -> endswith(file, ".R"), readdir(owd,join=true))
-        for file in files
-            open(file) do f
-                counter = 0 # Zähler initialisieren
-                for line in eachline(f)
-                    counter += 1 # Zähler erhöhen
-                    if contains(line,snippet)
-                        printstyled("$counter:\t",color=:light_red) 
-                        printstyled(rpad("$file:",50),color=:light_magenta)
-                        #printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled(lpad("$line\n",30),color=:green,bold=true)
-                        #underline = true 
-                    end
-                end
-            end
-        end
-    end
-
-    function vgpy(snippet::AbstractString)
-        owd="C:/Users/Public/Documents/Python_Scripts"
-        files = filter(file -> endswith(file, ".py"), readdir(owd,join=true))
-        for file in files
-            open(file) do f
-                counter = 0 # Zähler initialisieren
-                for line in eachline(f)
-                    counter += 1 # Zähler erhöhen
-                    if contains(line,snippet)
-                        printstyled("$counter:\t",color=:light_red) 
-                        printstyled(rpad("$file:",50),color=:light_magenta)
-                        #printstyled("$file:\t",color=:light_magenta,underline = true,blink = false,bold=true) 
-                        printstyled(lpad("$line\n",30),color=:green,bold=true)
-                        #underline = true 
-                    end
-                end
-            end
-        end
-    end
-
-
     function rglob(prefix::String)
         rootdir="."
         results = []
@@ -1023,7 +941,6 @@ module cmk
         end
         return string.(results)
     end
-
 
     #go dir up
     function cdb()
@@ -1052,8 +969,6 @@ module cmk
         return(s)
     end
 
-
-
     function vjl(regex)
         # greps jl from julia folder
         pt = src_path;
@@ -1072,7 +987,7 @@ module cmk
         end
     end
     
-"""
+    """
     reads, reduces + merges by date
     ds = innerjoin(unique.(dfs, xcol)..., on = xcol, makeunique=true)
     example:
@@ -2687,11 +2602,11 @@ module cmk
         return DataFrame(result)
     end
         
+    """
+    skips first line after [soil_table] i.e. no of soil types
+    now returns a DataFrame
+    """
     function read_soildata(filename::String)
-        """
-        skips first line after [soil_table] i.e. no of soil types
-        now returns a DataFrame
-        """
         data = open(filename) do io
             a = readbetween(io, "soil_table", "substance_transport")
             return(a)
@@ -2782,10 +2697,96 @@ module cmk
         return DataFrame(result)
     end
 
+        
+    """
+    build_soil_dictionary from soiltable
+    see fsoil
+    soiltable = open(fn) do io
+        a = readbetween(io, "soil_table", "substance_transport")
+        return(join(a[3:end-1]," ")) #rem first 2 and last lines
+    end
+    """
+    function build_soil_dictionary(soiltable::String)
+        entries = split(soiltable, "}")
+        filter!(s -> !isempty(s), entries)
+        filter!(s -> length(s) > 2, entries)
+        entries = strip.(entries)
+        dictionary = Dict{Int,DataFrame}()
+
+        for entry in entries
+            # Extract key and value
+            m = match(r"(\d+)\s*\{", entry)
+            if m !== nothing
+                key = parse(Int, m.captures[1] |> strip)
+                println("check: $key")
+            else
+                println("No match found in string: $entry")
+            end
+
+            value_match = match(r"\{\s*(.*)", entry)
+            if value_match !== nothing
+                value = value_match.captures[1] |> strip
+                #value = match(r"\{\s*(.*)", entry).captures[1]|>strip
+                # Process value string and convert to DataFrame
+                value = replace(value, "method = MultipleHorizons;  EvapMaxDepth = 0.15;" => "")
+                value = replace(value, r";" => ",")
+                value = replace(value, r";" => "")
+                value = replace(value, r"\$" => "")
+                value = replace(value, r"#" => "")
+                value = replace(value, r"\s+" => " ")
+                value = replace(value, r"^\s+|\s+$" => "")
+                value = replace(value, r",$" => "")
+                pairs = split(value, ",")
+                # Create an empty dictionary to store the column names and values
+                #col_dict = Dict{String, Vector{String}}()
+
+                # Iterate over the key-value pairs and extract the column names and values
+                filter!(s -> !isempty(s), pairs)
+                z = []
+                for pair in pairs
+                    key2, value = split(strip(pair), " = ")
+                    push!(z, DataFrame(key2 => value))
+                end
+                # Create the DataFrame using the extracted column names and values
+                df = hcat(z...)
+                # Store key-value pair in the dictionary
+                dictionary[key] = df
+            end
+        end
+
+        return dictionary
+    end
+
+    """
+    soiltable reader wrapper func.
+    """
+    function fsoil(fn::String)
+        soiltable = open(fn) do io
+            a = readbetween(io, "soil_table", "substance_transport")
+            return (join(a[3:end-1], " "))
+        end
+        mysoildict = build_soil_dictionary(soiltable)
+        xdf = DataFrame()
+        # Iterate over the key-value pairs in the dictionary
+        for (key, df) in mysoildict
+            # Add a column named "key" with the current key value to the DataFrame
+            df.key = fill(key, size(df, 1))
+            # Append the current DataFrame to the combined DataFrame
+            append!(xdf, df)
+        end
+        #propertynames(xdf)|>cb
+        nms = [:horizon, :ksat, :theta_res, :theta_sat, :alpha, :Par_n, :thickness, :maxratio]
+        for col in nms
+            xdf[!, col] .= [parse.(Float64, split(string(x))) for x in xdf[!, col]]
+        end
+        xdf.sums = [sum(x) for x in xdf.thickness]
+        return xdf
+    end
+
+    """
+    names and size in MB via readdir
+    """
     function fsize(m::String)
-        """
-        names and size in MB via readdir
-        """
         files = filter(x -> occursin(Regex(m,"i"), x), readdir())
         fzs = [(file, filesize(file) / 2^20) for file in files]
         tot = round(sum(map(x->x[2],fzs));digits=3)
@@ -2831,16 +2832,11 @@ module cmk
         end
     end
 
+    """
+    removes empty TS; 
+    use with caution!
+    """
     function rmeq()
-        """
-        removes empty TS; 
-        use with caution!
-        """
-        #x = pwd()
-
-        # files = filter(file -> (occursin(Regex(x, "i"), file) & 
-        # (!occursin(r"xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg|txt", file))
-        # ), readdir())
         
         files = filter(file -> 
         !occursin(r"tex|pl|sh|csv|html|xml|fzt|ftz|log|ini|wq|yrly|nc|png|svg|txt", file)
@@ -2909,10 +2905,10 @@ module cmk
         return results
     end
 
+    """
+    dir_path::String, match::String;file_ending="ctl"
+    """
     function ctlg(dir_path::String, match::String;file_ending="ctl")
-        """
-        dir_path::String, match::String;file_ending="ctl"
-        """
         for file in readdir(dir_path)
             if occursin(file_ending, file)
                 fx = joinpath(dir_path, file)
@@ -2931,20 +2927,11 @@ module cmk
         end
     end
 
-    macro sdjl() fx="C:/Users/Public/Documents/Python_Scripts/julia/sd2.jl";include(fx);end
-    #@sdjl
-    macro sf(s) glob(s);end
-    macro listdir() ls();end
-
-    function rmqout()
-        map(x->rm(x),glob("qoutjl"))
-    end
-
+    """ 
+    renamer - remove beginning char _   
+    and replace it with C
+    """
     function renamer(df::DataFrame)
-        """ 
-        renamer - remove beginning char _   
-        and replace it with C
-        """
         for x in names(df)
             if startswith(x,"_")
             newname=replace(x,"_"=>"C", count=1)
@@ -2959,11 +2946,11 @@ module cmk
         return line[1:end-length(flag)]
     end
 
+    """
+    like Grep.grep("x",df)
+    Regex(x, "i"), 
+    """
     function findindf(df::DataFrame, x)
-        """
-        like Grep.grep("x",df)
-        Regex(x, "i"), 
-        """
         filter(row -> any(occursin(x,
             string(value)) for value in row), 
                 eachrow(df))
@@ -2978,12 +2965,12 @@ module cmk
                 eachrow(df))
     end
 
+    """
+    import InteractiveUtils.clipboard
+    wslpath()|>clipboard
+    cb(wslpath())
+    """
     function wslpath()
-        """
-        import InteractiveUtils.clipboard
-        wslpath()|>clipboard
-        cb(wslpath())
-        """
         # Run the `wslpath` command to convert the current directory to a WSL path
         #wsl_cmd = `wsl wslpath -a $(pwd)`
         wsl_cmd = `wsl wslpath -a .`
@@ -3010,39 +2997,14 @@ module cmk
         return wsl_path
     end
 
-    function xread(filename::String)
-        """
-        takes first line as header and drops r"[A-z]"
-        """
-        ms=["-9999","lin","log","--"]
-        df = CSV.read(filename,DataFrame, 
-            delim="\t",
-            missingstring=ms,
-            header=1, limit=10^5)
-        if typeof(df[1, 1]) != Int64
-            df = df[map(x->!occursin(r"[A-z]", x),df[:, 1]), :]
-            # map to int for dates
-            for i in 1:3
-                df[!,i]=map(x ->parse(Int,x),df[!,i])
-            end
-            #and parse dates...
-            df.date = Date.(string.(df[!,1],"-",df[!,2],"-",df[!,3]),"yyyy-mm-dd");
-            df=df[:,Not(1:4)]
-            metadata!(df, "filename", filename, style=:note); 
-        else
-            df.date = Date.(string.(df[!,1],"-",df[!,2],"-",df[!,3]),"yyyy-mm-dd");
-            df=df[:,Not(1:4)]
-            metadata!(df, "filename", filename, style=:note);  
-        end
-    end  
 
+    """
+    grabs methods
+    asin|>getm  
+    ?asin
+    @code_llvm readf|>getm|>first 
+    """
     function getm(s::Any)
-        """
-        grabs methods
-        asin|>getm  
-        ?asin
-        @code_llvm readf|>getm|>first 
-        """
         methods(s);
     end
 
@@ -3085,34 +3047,7 @@ module cmk
             end
         end
     end
-
-    function pfix(m::String)
-        """
-        names and size in MB via readdir
-        sorts and stores in df -> biggest files
-        """
-        files = filter(x -> occursin(Regex(m,"i"), x), readdir())
-        fzs = [(file, filesize(file) / 2^20) for file in files]
-        tot = round(sum(map(x->x[2],fzs));digits=3)
-        printstyled("Total Size: $tot MB\n",color=:green)
-        df = DataFrame(fzs)
-        sort!(df,2,rev=true)
-        return(df)
-    end
-    
-    function pfix()
-        """
-        names and size in MB via readdir
-        sorts and stores in df -> biggest files
-        """
-        files = readdir()
-        fzs = [(file, filesize(file) / 2^20) for file in files]
-        tot = round(sum(map(x->x[2],fzs));digits=3)
-        printstyled("Total Size: $tot MB\n",color=:green)
-        df = DataFrame(fzs)
-        sort!(df,2,rev=true)
-        return(df)
-    end
+   
 
     function mvwasim2() 
         
@@ -3144,10 +3079,10 @@ module cmk
     
     end
 
+    """
+    return 1st DFs of qgko
+    """
     function qba()
-        """
-        return 1st DFs of qgko
-        """
         x = first(glob("qgko"))
         println("loading $x ...")
             try
@@ -3182,11 +3117,11 @@ module cmk
         end
     end
 
+    """
+    Read wasim ts with DelimitedFiles.readdlm, skipto line 3 
+    no header column
+    """
     function wread(x::String;skip=3)
-        """
-        Read wasim ts with DelimitedFiles.readdlm, skipto line 3 
-        no header column
-        """
         df = DelimitedFiles.readdlm(x, '\t', Float64, '\n';
             header=false,skipstart=skip)
         df = DataFrame(df,:auto)
@@ -3207,10 +3142,10 @@ module cmk
     
     dfr = waread
 
+    """
+    grep recursive and looks for matches in files
+    """
     function grec(dir_path::String, file_ending::String, match::String)
-        """
-        grep recursive and looks for matches in files
-        """
         for (looproot, dirs, filenames) in walkdir(dir_path)
             for file in filenames
                 fx = joinpath(looproot, file)
@@ -4055,18 +3990,6 @@ module cmk
     end
 
     """
-    runs inside REPL
-    """
-    function runwasim(ctlfile)
-        try
-            exec = normpath("C:/Users/chs72fw/Documents/EFRE_GIS/Hydrologie/WaSiM-ETH/wasimvzo64_10.06.05/wasimvzo64.exe")
-            run(`$exec $ctlfile`)
-        catch e
-            println("no valid input!")
-        end
-    end
-
-    """
     usage: 
     
     nd = ctsum("thickness",infile)
@@ -4116,14 +4039,8 @@ module cmk
     """
     function ctov(df::DataFrame)
         df = df[!,Not(Cols(r"date|year|time"))]|>dropmissing   
-        nr = DataFrames.nrow(df)
-        
+        nr = DataFrames.nrow(df)        
         col_names = String[]
-        # for str in names(df)
-        #     a = [str for i in 1:nr]
-        #     push!(col_names, a)
-        # end
-    
         for str in names(df)
             a = [str for i in 1:nr]
             append!(col_names, a)
@@ -4137,15 +4054,11 @@ module cmk
         return col_names, col_vectors
     end
 
-    #https://docs.makie.org/stable/examples/plotting_functions/rainclouds/
-
-
     """
     cloudplot(df::DataFrame)
     #https://docs.makie.org/stable/examples/plotting_functions/rainclouds/
     """
     function cloudplot(df::DataFrame)
-
         ti = try
             DataFrames.metadata(df)|>only|>last|>basename
         catch
@@ -4179,8 +4092,8 @@ module cmk
             color = selected_colors)
         hideydecorations!(ax3, grid=true, ticks=true)
         hidexdecorations!(ax3, grid=true, ticks=true,  ticklabels = false)
-        ax3.xticks = (1:ncol(df),names(df))
-        #ax3.yticks = #repeat("x",3)
+        dn = select!(df,Not(Cols(r"date|year|time")))
+        ax3.xticks = (1:ncol(dn),names(dn))
         ax3.xticklabelrotation = π / 4
         ax3.xticklabelalign = (:right, :center)
 
@@ -4232,7 +4145,8 @@ module cmk
             color = selected_colors)
             #clouds=hist,
             #xticklabelrotation = π / 4,
-        ax3.xticks = (1:ncol(df),names(df))
+        dn = select!(df,Not(Cols(r"date|year|time")))
+        ax3.xticks = (1:ncol(dn),names(dn))
         ax3.xticklabelrotation = π / 4
         ax3.xticklabelalign = (:right, :center)
         return fig
@@ -4423,18 +4337,21 @@ module cmk
     end
 
     """
-    barplots yearsum timeseries
-    baryrsum
+    barplots timeseries
+    ``` 
+    tsbar(df::DataFrame;fun::Function=yrsum,kw...)
+    ```
     """
-    function tsbar(df::DataFrame;kw...)
-        df = yrsum(df)
-        #dt = df.date
-        dt = df.year
+    function tsbar(df::DataFrame;fun::Function=yrsum,lines=false,kw...)
+        df = copy(fun(df))
+        nmdt = names(df)|>first
+        dt = select(df,1)|>Matrix|>vec #first column
+        @info "fun is $fun, dt is $nmdt"
+        #dt = df.year
         fig = Figure(kw...) 
                 #resolution=(600, 400), 
                 #fonts=(;regular = "consolas")            
                 #)
-    
         
         tempo = string.(dt)
         lentime = size(df, 1)
@@ -4446,8 +4363,7 @@ module cmk
                 @warn "no metadata in df"
                 raw""
             end
-                
-        
+                        
         ax3 = Axis(fig[1, 1], 
                    title = replace(tit, r"_|so" => " "),
                    xlabel = raw" ",
@@ -4462,28 +4378,19 @@ module cmk
         # Map values in a to colors
         selected_colors = [value_to_color[value] for value in cols]
         
-        # dfm = DataFrames.stack(df)
-        # dfm.variable = string.(dfm.variable)
-        # fig = Figure()
-        # ax = Axis(fig[1,1])
-        # barplot!(ax,
-        #     dfm.year,
-        #     dfm.value,
-        #     color=dfm.year,
-        #     stack=dfm.year )
-      
-
-
         for (i, col) in enumerate(cols)
             #vals = select(df, col) |> Matrix |> vec
             vals = Vector(df[:, col]) #more efficient
-            #lines!(ax3, 1:lentime, vals; color = selected_colors[i], linewidth = 0.85)
-            # barplot!(ax3, 1:lentime, vals; 
-            # stack = df.year,
-            # color = selected_colors[i], alpha = 0.85)
+            if lines
+                lines!(ax3, dt, vals; color = selected_colors[i], linewidth = 0.85, label=col) 
+                # lines!(ax3, 1:lentime, vals,
+                #     stack = dt,
+                #     color = selected_colors[i])
+            else
             barplot!(ax3, 1:lentime, vals,
-            stack = df.year,
-            color = selected_colors[i])
+                stack = dt, #Int64.(dt), #df.year,
+                color = selected_colors[i])
+            end
         end
         
         ax3.xticks = (slice_dates, tempo[slice_dates])
@@ -4673,7 +4580,7 @@ module cmk
     """
     plots timeseries like cmk, but with a legend
     ```
-    dfpl(x::Union{Regex,String,DataFrame};leg::Bool=true,kw...)
+    dfpl(x::Union{Regex,String,DataFrame};leg::Bool=true,bar=false,kw...)
 
     kw.. passed to Axis:
     cmk.dfpl(r"wolf"i;yscale=log10)
@@ -4692,7 +4599,7 @@ module cmk
     
     https://docs.makie.org/stable/reference/blocks/legend/
     """
-    function dfpl(x::Union{Regex,String,DataFrame};leg::Bool=true,kw...)
+    function dfpl(x::Union{Regex,String,DataFrame};leg::Bool=true,bar=false,kw...)
         if isa(x,DataFrame)
             df = (x)
         else
@@ -4701,7 +4608,7 @@ module cmk
 
         dt = vec(Matrix(
             select(df,
-                first(filter(x->occursin(r"date|year",x),
+                first(filter(x->occursin(r"date|year|month",x),
                 names(df))))))
         #dt = df.date
 
@@ -4734,7 +4641,13 @@ module cmk
 
         for (i, col) in enumerate(cols)
             vals = Vector(df[:, col])
-            lines!(ax3, 1:lentime, vals; color = selected_colors[i], linewidth = 0.85, label=col)
+            if bar
+                barplot!(ax3, 1:lentime, vals; color = selected_colors[i], 
+                label=col)
+            else
+                lines!(ax3, 1:lentime, vals; color = selected_colors[i], linewidth = 0.85, label=col)
+            end
+            
         end
         
         if leg
@@ -5082,7 +4995,7 @@ module cmk
         missval::Number=0.0,
         turn=true,
         psize = (900, 700),
-        c=(:plasma,0.7),kw...)
+        c=(:deep,0.7),kw...)
     ```
     """
     function mkh(x::Union{String,Regex,Raster};
@@ -5096,7 +5009,7 @@ module cmk
         assign_missing::Bool=true,
         psize = (900, 700),
         turn=true,
-        c=(:plasma,0.7),
+        c=(:deep,0.7), #colormap = :darkterrain, :deep, :plasma
         kw...)
         #(Reverse(:plasma),0.9) -9999.000000
         if isa(x,Regex)
@@ -5159,7 +5072,7 @@ module cmk
             min_val, max_val = extrema(skipmissing(A))
             @info join(["min: ", string(min_val), ", max: ", string(max_val)], " ")
             if (typeof(A.metadata) == DimensionalData.Dimensions.LookupArrays.NoMetadata || isnothing(A.metadata))
-                @error "no metadata in raster!"
+                @info "no metadata in raster!"
             else
                 try
                     @info A.metadata.val    #|>DataFame
@@ -5266,7 +5179,6 @@ module cmk
         c=(:greys,0.7), kw... )
     
         if isa(x,Regex)
-            #fn = first(filter(z -> !endswith(z, "nc") && occursin(x, z), readdir()))
             fn = first(filter(z -> occursin(x, z), readdir()))
             if isfile(fn)
                 ds = create_raster(fn; missval=missval)
@@ -5289,6 +5201,7 @@ module cmk
                 return
             end
         end
+        lonlat = false
         if tolonlat
             ds = resample(ds;crs=ProjString("+proj=longlat +datum=WGS84"))
             lonlat = true
@@ -5833,7 +5746,7 @@ module cmk
     end
 
     """
-    ``` cumplot(df::DataFrame; leg::Bool=true, scale = identity, oneyear::Bool=false) ```
+    ```cumplot(df::DataFrame; leg::Bool=true, scale = identity, oneyear::Bool=false) ```
     plots cumulated values of each column of a dataframe
     """
     function cumplot(x::DataFrame; leg::Bool=true, scale = identity, oneyear::Bool=false)
@@ -5888,6 +5801,243 @@ module cmk
         fig
     end
 
+    """
+    plots and projects rasters
+    ``` 
+    raster_file::String; 
+        src_crs=25832, #Rasters.EPSG(25832), 
+        target_crs=Rasters.EPSG(4326),
+        lyr = 1,
+        geo_args::NamedTuple = (;), heatmap_args::NamedTuple = (;)
+    ```
+    """
+    function gmras(
+        raster_file::Union{String,Raster}; 
+        src_crs=25832, #Rasters.EPSG(25832), 
+        target_crs=Rasters.EPSG(4326),
+        lyr = 1,
+        #missval=-9999,
+        geo_args::NamedTuple = (;), 
+        heatmap_args::NamedTuple = (;),
+        cbar_args::NamedTuple = (;))
+        # Load the raster file in RAM with the specified CRS
+        # ras = read(Raster(raster_file,
+        #     crs = Rasters.EPSG(src_crs), 
+        #     missingval=-9999.000000)) #read all in RAM
+        # ras = read(Raster(raster_file,
+        #     #missingval=-9999.000000, 
+        #     crs = Rasters.EPSG(src_crs), 
+        #     mappedcrs = Rasters.EPSG(src_crs)))
+        if typeof(raster_file) <: String
+            ras = Raster(raster_file, crs = Rasters.EPSG(src_crs), 
+                mappedcrs = Rasters.EPSG(src_crs);)|>Rasters.trim
+            ti = basename(raster_file)
+                if Rasters.hasdim(ras,:t)
+                    ras = Rasters.replace_missing(ras[t=lyr], 0)
+                    @info "subsetting to layer $lyr and missval 0 ..."
+    
+                end
+                # Reproject the raster to the target CRS
+                
+                projected_ras = Rasters.warp(
+                    ras,
+                    Dict(
+                        "s_srs" => convert(GeoFormatTypes.ProjString, 
+                            Rasters.crs(ras)).val, # source CRS
+                        "t_srs" => 	convert(GeoFormatTypes.ProjString,target_crs).val
+                    )
+                )
+        else
+            projected_ras = raster_file
+            ti = ""
+        end
+        # projected_ras=Rasters.rebuild(projected_ras,
+        #     name=Symbol(basename(raster_file)))
+        # Apply GeoMakie heatmap
+        fig = GeoMakie.Figure()
+        ax = Axis(fig[1, 1],
+            aspect = DataAspect()
+            ;title = ti)
+        hm = GeoMakie.heatmap!(ax,projected_ras; 
+                #axis = (aspect = DataAspect(),),     
+                geo_args...,
+                heatmap_args...)
+        Colorbar(fig[1, 2], hm;
+                minorticksvisible=true,
+                height = Relative(0.65),
+                #minorticks=IntervalsBetween(9),
+                cbar_args...)
+        # GeoMakie.heatmap(projected_ras; 
+        #     axis = (aspect = DataAspect(),), 
+        #     geo_args..., 
+        #     heatmap_args...)        
+        fig    
+    end
+
+    """
+    plot numeric vectors as a time series
+    ``` hyd(tx, rain, flow; ylab1=L"Q [mm/d]", ylab2=L"P [mm/d]") ```
+    """
+    function hyd(tx, rain, flow; ylab1=L"Q [mm/d]", ylab2=L"P [mm/d]")
+        fig = Figure()
+        ax1 = Axis(fig[1, 1], xlabel="", ylabel=ylab1)
+        
+        # lentime = size(tx,1)
+        # tempo = string.(tx)
+        # slice_dates = range(1, lentime, step=lentime ÷ 4)
+        # ax1.xticks = (slice_dates, tempo[slice_dates])
+        #Set x-axis limits
+        #xlims!(ax1, (1,lentime))
+        #xlims!(ax1, extrema(tx))
+    
+        # Plot flow on the primary y-axis
+        lines!(ax1, tx, flow, 
+            color=:grey,
+            linestyle=:dashdotdot, linewidth=1)
+        
+        # Create a secondary y-axis for rain
+        ax2 = Axis(fig[1, 1], ylabel=ylab2, 
+            flip_ylabel=true, 
+            yticklabelcolor = :black, 
+            yaxisposition = :right)
+        linkxaxes!(ax1, ax2)
+        
+        # Set x-axis limits for the secondary y-axis
+        #xlims!(ax2, extrema(tx)...)
+    
+        # Plot rain on the secondary y-axis
+        barplot!(ax2, tx, rain, color=:cornflowerblue)
+         
+           # width=(maximum(rain) - minimum(rain)) / (length(rain) * 1.5))
+        
+        # Adjust limits
+        #ylims!(ax1, 0, maximum(flow) * 1.5)
+        #ylims!(ax2, 0, maximum(rain) * 1.5)
+        
+        # Hide the top and right spines
+        #hidespines!(ax1, :t, :r)
+        #hidespines!(ax2, :t, :l)
+        
+        # Hide the top ticks
+        #hidedecorations!(ax1, grid=false, ticks=false, label=false)
+        #hidedecorations!(ax2, grid=false, ticks=false, label=false)
+        
+        # Show the y-axis labels
+        ax1.ylabelvisible = true
+        ax2.ylabelvisible = true
+        ax2.yreversed = true        #nice
+        
+        # Add a legend if needed
+        # Legend(fig[1, 2], [l1, l2], ["Flow", "Rain"], orientation=:vertical)
+        
+        return fig
+    end
+
+    """
+    plots sorted kge results across directories
+    ```
+    results = wa.kge_recdf()
+    plot_kge(results::DataFrame)
+    or
+    cmk.plot_kge(kge_recdf();step=1)
+    ```
+    """
+    function plot_kge(results::DataFrame;step::Int=5)
+        #rootdir = joinpath(splitpath(first(results.file_path))[1:3])
+        #joinpath(splitpath(pt)[Not(1:3)])
+        rootdir = dirname(first(results.file_path))
+        fig = Figure();
+            ax = Axis(fig[1, 1], 
+                #xlabel="Directory Path", 
+                ylabel="KGE Value",
+                #yscale = :sqrt,
+                xticklabelrotation = π/4,
+                title="KGE Values Across \n$rootdir")
+            
+            # Color bars based on positive/negative values
+            colors = [val ≥ 0 ? (:blue,.75) : (:red,.55) for val in results.kge_value]
+
+            barplot!(ax, 
+                1:nrow(results), 
+                results.kge_value, 
+                color=colors)
+                #color=(:blue,.75))
+            
+            # Select only every n-th tick
+            tick_indices = 1:step:nrow(results)
+            #ax.xticks = (tick_indices, dirname.(results.file_path)[tick_indices])
+            #paths = last.(splitpath.(results.file_path))
+            paths = [joinpath(x[end-1],x[end]) for x in splitpath.(results.file_path)]
+            paths = replace.(paths, "\\" => "/") 
+            #paths = basename.(results.file_path)
+            ax.xticks = (tick_indices, paths[tick_indices])
+            fig
+    end
+
+"""
+``` 
+plot_qbb(results::DataFrame;step::Int=1,selcol::Int=2)
+y = [ findindf(x,"B_22") for x in wa.qbb() ]
+results = vcat(y...)|>DataFrame
+cmk.plot_qbb(results;selcol=3)
+or
+ydf = DataFrame(vcat([ findindf(x,"23") for x in wa.qbb() ]...))
+cmk.plot_qbb(ydf;selcol=2)
+```    
+"""
+function plot_qbb(results::DataFrame;step::Int=1,selcol::Int=2)
+    rename!(results, ncol(results)=> :file_path)
+    if results[!,selcol] isa Vector{String}
+        results[!,selcol] .= parse.(Float64,results[!,selcol])
+    end
+    rootdir = dirname(first(results.file_path))
+    fig = Figure();
+        ax = Axis(fig[1, 1], 
+            ylabel=names(results)[selcol],
+            #yscale = :sqrt,
+            xticklabelrotation = π/4,
+            title="Values Across \n$rootdir")
+        
+        # Color bars based on positive/negative values
+        colors = [val ≥ 0 ? (:blue,.75) : (:red,.55) for val in results[!,selcol]]
+
+        barplot!(ax, 
+            1:nrow(results), 
+            results[!,selcol], 
+            color=colors)
+        # Select only every n-th tick
+        tick_indices = 1:step:nrow(results)
+        paths = [joinpath(x[end-1],x[end]) for x in splitpath.(results.file_path)]
+        paths = replace.(paths, "\\" => "/") 
+        ax.xticks = (tick_indices, paths[tick_indices])
+        fig
+end
+
+"""
+``` mplot(fn::String;lyr::Int=1,umsk::Float64=0.0, turn=true, contour=false) ```
+"""
+function mplot(fn::String;lyr::Int=1,umsk::Float64=0.0, turn=true, contour=false)
+    ds = NCDatasets.Dataset(fn)
+    v = ds|>keys|>last
+    m = ds[v]
+    M = m[:,:,lyr]
+    if turn
+        M = reverse(M, dims=1)
+        M = permutedims(M, (2, 1))
+    end
+    #replace!(M,missing=>0)
+    #nc.coord(m,"x")[:] fails...
+    replace!(M, umsk => missing)
+    if contour
+        fig = contourf(M)
+    else
+        fig = heatmap(M)
+    end    
+    NCDatasets.close(ds)
+    return fig
+end
+
+    
 
 end   ##endof end of module
 

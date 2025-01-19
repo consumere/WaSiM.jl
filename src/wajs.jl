@@ -9,21 +9,20 @@ module wajs
     plotdf, plotlybaryr, tpjs, xdf
 
     function dfyrs(df::DataFrame;logy=true)
+        df = copy(df)
         ti = DataFrames.metadata(df)|>only|>last|>basename
         fact,logy = 1,0
-        y = filter(x->!occursin("date",x),names(df))
-        s = map(y -> Symbol(y),y)
+        #y = filter(x->!occursin("date",x),names(df))
+        #s = map(y -> Symbol(y),y)
         df[!, :year] = year.(df[!,:date]);
-        df = DataFrames.combine(groupby(df, :year), y .=> sum .=> y);
-        #df = df[!,Not("date")]
-        ln = Symbol.(filter(x->!occursin("year",x),names(df)))
+        ln = Symbol.(filter(x->!occursin(r"year|date|day|month"i,x),names(df)))
+        df = DataFrames.combine(groupby(df, :year), ln .=> sum .=> ln)
         nrows=size(df)[2]-1
         if nrows == 1
             ln = only(ln)
-            fig = 
-            PlotlyJS.plot(
-            PlotlyJS.scatter(x=df.year, y=df[!,ln],
-            name=ln,type="bar")
+            fig = PlotlyJS.plot(    
+                PlotlyJS.plot(x=df.year, y=df[!,ln],
+                name=ln, type="bar")
             );
             PlotlyJS.relayout!(fig,
                 height=600*fact,width=900*fact,
@@ -48,6 +47,35 @@ module wajs
                 title_text="Series of "*ti)
             end
         end
+        PlotlyJS.relayout!(fig,
+        template="seaborn",
+        #template="simple_white",
+        xaxis_rangeslider_visible=true,
+        updatemenus=[
+            Dict(
+                "type" => "buttons",
+                "direction" => "left",
+                "buttons" => [
+                    Dict(
+                        "args" => [Dict("yaxis.type" => "linear")],
+                        "label" => "Linear Scale",
+                        "method" => "relayout"
+                    ),
+                    Dict(
+                        "args" => [Dict("yaxis.type" => "log")],
+                        "label" => "Log Scale",
+                        "method" => "relayout"
+                    )
+                ],
+                "pad" => Dict("r" => 1, "t" => 10),
+                "showactive" => true,
+                "x" => 0.001,
+                "xanchor" => "left",
+                "y" => 1.1,
+                "yanchor" => "auto"
+            ),
+        ]
+        )
         display(fig)
     end
 
@@ -103,7 +131,7 @@ module wajs
     ```
     """
     function dfpjs(df::String;)
-        df = waread(df)
+        df = waread2(df)
 
         if names(df)[end]!="date"
             df = hcat(df[!,Not(Cols(r"date"))],df[:,Cols(r"date")])
@@ -196,7 +224,7 @@ module wajs
     end
 
     function dfpjs(df::Regex;)
-        df = waread(df)
+        df = waread2(df)
         if names(df)[end]!="date"
             df = hcat(df[!,Not(Cols(r"date"))],df[:,Cols(r"date")])
         end
@@ -288,7 +316,7 @@ module wajs
     end
 
     function dfbarjs(df::Regex;)
-        df = waread(df)
+        df = waread2(df)
         nrows=size(df)[2]-1
         ti = try
             DataFrames.metadata(df)|>only|>last|>basename
@@ -369,7 +397,7 @@ module wajs
     theplot optimized to PlotlyJS
     """
     function tpjs(x::Regex)
-        ndf = waread(x)
+        ndf = waread2(x)
         dropmissing!(ndf)
         #nm=names(ndf)[2]     #obscol
         #ndf = filter(nm => x -> x > 0, ndf)
@@ -635,12 +663,39 @@ module wajs
                 PlotlyJS.scatter(x=df.date, y=df[:,i],
                 name=st[i]),   row=i,     col=1);
         end
-        PlotlyJS.relayout!(p,height=600*1.5,width=900*1.5)
+        PlotlyJS.relayout!(
+            p,
+            template="seaborn",
+            height=600*1.5,width=900*1.5,
+            updatemenus=[
+                    Dict(
+                        "type" => "buttons",
+                        "direction" => "left",
+                        "buttons" => [
+                            Dict(
+                                "args" => [Dict("yaxis.type" => "linear")],
+                                "label" => "Linear Scale",
+                                "method" => "relayout"
+                            ),
+                            Dict(
+                                "args" => [Dict("yaxis.type" => "log")],
+                                "label" => "Log Scale",
+                                "method" => "relayout"
+                            )
+                        ],
+                        "pad" => Dict("r" => 1, "t" => 10),
+                        "showactive" => true,
+                        "x" => 0.11,
+                        "xanchor" => "left",
+                        "y" => 1.1,
+                        "yanchor" => "auto"
+                    )]            
+            )
         return(p)
     end
 
     function dfplot(df::AbstractString)
-        df=waread(df)
+        df=waread2(df)
         nrows=size(df)[2]-1
         st=[]
         for i in 1:size(df)[2]-1; push!(st,string(propertynames(df)[i]));end
@@ -654,14 +709,41 @@ module wajs
                 PlotlyJS.scatter(x=df.date, y=df[:,i],
                 name=st[i]),   row=i,     col=1);
         end
-        PlotlyJS.relayout!(p,height=600,width=900)
-        display(p)
+        PlotlyJS.relayout!(
+            p,
+            template="seaborn",
+            height=600*1.5,width=900*1.5,
+            updatemenus=[
+                    Dict(
+                        "type" => "buttons",
+                        "direction" => "left",
+                        "buttons" => [
+                            Dict(
+                                "args" => [Dict("yaxis.type" => "linear")],
+                                "label" => "Linear Scale",
+                                "method" => "relayout"
+                            ),
+                            Dict(
+                                "args" => [Dict("yaxis.type" => "log")],
+                                "label" => "Log Scale",
+                                "method" => "relayout"
+                            )
+                        ],
+                        "pad" => Dict("r" => 1, "t" => 10),
+                        "showactive" => true,
+                        "x" => 0.11,
+                        "xanchor" => "left",
+                        "y" => 1.1,
+                        "yanchor" => "auto"
+                    )]            
+            )
+        return(p)
     end
 
     plotdf=dfplot
 
     function pline(path::AbstractString)
-        df = wa.waread(path)
+        df = waread2(path)
 
         nrows=size(df)[2]-1
         st=[]
@@ -677,9 +759,38 @@ module wajs
                 PlotlyJS.scatter(x=df.date, y=df[:,i],
                 name=st[i]),   row=i,     col=1);
         end
-        #relayout!(p,height=600*2,width=900*2,title_text="Series of "*basename(path))
-        PlotlyJS.relayout!(p,height=600*1.5,width=900*1.5,title_text="Series of "*basename(path))
-        display(p)
+        
+        #PlotlyJS.relayout!(p,height=600*1.5,width=900*1.5,title_text="Series of "*basename(path))
+        PlotlyJS.relayout!(
+            p,
+            title_text="Series of "*basename(path),
+            template="seaborn",
+            height=600*1.5,width=900*1.5,
+            updatemenus=[
+                    Dict(
+                        "type" => "buttons",
+                        "direction" => "left",
+                        "buttons" => [
+                            Dict(
+                                "args" => [Dict("yaxis.type" => "linear")],
+                                "label" => "Linear Scale",
+                                "method" => "relayout"
+                            ),
+                            Dict(
+                                "args" => [Dict("yaxis.type" => "log")],
+                                "label" => "Log Scale",
+                                "method" => "relayout"
+                            )
+                        ],
+                        "pad" => Dict("r" => 1, "t" => 10),
+                        "showactive" => true,
+                        "x" => 0.11,
+                        "xanchor" => "left",
+                        "y" => 1.1,
+                        "yanchor" => "auto"
+                    )]            
+            )
+        return(p)
     end
 
     # function dfplotjs(df::DataFrame;logy::Bool = true,fact::Float64 = 1.0)
@@ -720,7 +831,7 @@ module wajs
     """
     function dfplotjs(df::Union{AbstractString,DataFrame};logy::Bool = true,fact::Float64 = 1.0,date_col_name::Union{String,Symbol} = "date")
         if typeof(df) == AbstractString
-            df = waread(df)
+            df = waread2(df)
         else
             df = df
         end
@@ -763,7 +874,7 @@ module wajs
     end
 
     function lplotjs(x::Regex)
-        df=waread(x)
+        df=waread2(x)
         ti = try
             DataFrames.metadata(df)|>only|>last|>basename
         catch
@@ -895,20 +1006,18 @@ module wajs
         return results
     end
 
-    #fwin=raw"C:\Users\Public\Documents\Python_Scripts\julia\func-win.jl"
-    # fwin=raw"C:\Users\chs72fw\.julia\dev\WaSiM\src\WaSiM.jl"
-    # include(fwin)
-
-    function waread2(x::String)
-        """
-        Read the text file, preserve line 1 as header column
-        Instead of using CSV.read, we use CSV.File to create a lazy representation of the file.
-        This avoids reading the entire file into memory at once, 
-        which can be more memory-efficient for large datasets.
-        """
-        ms = ["-9999", "lin", "log", "--"]
-        df = CSV.File(x; delim="\t", header=1, normalizenames=true, missingstring=ms, types=Float64) |> DataFrame
-        dropmissing!(df,1)
+    """
+    Read the text file, preserve line 1 as header column
+    Instead of using CSV.read, we use CSV.File to create a lazy representation of the file.
+    This avoids reading the entire file into memory at once,
+    which can be more memory-efficient for large datasets.
+    kwargs are passed to CSV.read
+    """
+    function waread2(x::String; kwargs...)
+        ms = ["-9999", "-9999.0", "lin", "log", "--"]
+        df = CSV.File(x; delim="\t", header=1, normalizenames=true,
+            missingstring=ms, types=Float64, kwargs...) |> DataFrame
+        dropmissing!(df, 1)
         dt2 = [Date(Int(row[1]), Int(row[2]), Int(row[3])) for row in eachrow(df)]
         select!(df, Not(1:4))
         df.date = dt2
@@ -916,48 +1025,33 @@ module wajs
         return df
     end
 
-    function waread(x::String)
-        """
-        Fastest Reader. is also dfr.
-        Read the text file, preserve line 1 as header column
-        """
-        ms = ["-9999","lin","log","--"]
-        df = CSV.read(x, DataFrame; delim="\t", header=1, missingstring=ms, normalizenames=true, types=Float64)
-        df = dropmissing(df, 1)
-        dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
-        df.date = dt2
-        df = select(df, Not(1:4))
-        DataFrames.metadata!(df, "filename", x, style=:note)
-        for x in names(df)
-            if startswith(x,"_")
-                newname=replace(x,"_"=>"C", count=1)
-                rename!(df,Dict(x=>newname))
-            end
-        end
-        return df 
+    """
+    waread2 on regex
+    kwargs... passed to CSV.File
+    Read the text file, preserve line 1 as header column
+    Instead of using CSV.read, we use CSV.File to create a lazy representation of the file.
+    This avoids reading the entire file into memory at once,
+    which can be more memory-efficient for large datasets.
+    """
+    function waread2(x::Regex; kwargs...)
+        inF = first(filter(x -> !occursin(r"yrly|nc|png|svg|grd", x), Grep.grep(x, readdir())))
+
+        ms = ["-9999", "lin", "log", "--"]
+        df = CSV.File(inF; delim="\t", header=1,
+            normalizenames=true, missingstring=ms,
+            #maxwarnings=2,
+            silencewarnings=true,
+            types=Float64, kwargs...) |> DataFrame
+        dropmissing!(df, 1)
+        df.date = [Date(Int(row[1]), Int(row[2]), Int(row[3])) for row in eachrow(df)]
+        select!(df, Not(1:4)) #since date is at last position
+        metadata!(df, "filename", x, style=:note)
+        return df
     end
 
-    function waread(x::Regex)
-        """
-        Read the text file, preserve line 1 as header column
-        """
-        x = dfonly(x)|>first
-        ms = ["-9999","lin","log","--"]
-        df = CSV.read(x, DataFrame; delim="\t", header=1, missingstring=ms, normalizenames=true, types=Float64)
-        df = dropmissing(df, 1)
-        dt2 = map(row -> Date(Int(row[1]), Int(row[2]), Int(row[3])), eachrow(df))
-        df.date = dt2
-        df = select(df, Not(1:4))
-        metadata!(df, "filename", x, style=:note)
-        #renamer
-        for x in names(df)
-            if startswith(x,"_")
-            newname=replace(x,"_"=>"C", count=1)
-            rename!(df,Dict(x=>newname))
-            end
-        end
-        return df 
-    end
+
+
+
 
     function dfonly(x1::AbstractString)
         v = filter(file -> occursin(Regex(x1,"i"),file), readdir());
