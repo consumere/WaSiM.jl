@@ -14079,55 +14079,504 @@ module WaSiM
     end
 
     """
-    plot numeric vectors as a time series
-    ``` hydrograph(t, rain, flow) ```
-    """
-    function hydrograph(t, rain, flow)
-        p = Plots.plot(
-            #twinx(),  # Create secondary y-axis
-            t, flow,
-            #links = :x,  # Link x-axis, already in twinx
-            #yminorticks = :none,
-            #label="Discharge",
-            seriescolor=:cornflowerblue,
-            #seriescolor=:lightgrey,
-            seriestype=:line,
-            xlim=extrema(t),
-            tick_direction = :out,
-            yflip=false,
-            legend=false,
-            linewidth=1,
-            linestyle=:dashdotdot,
-            ylabel="Q [mm/d]",
-            ylim=(0, maximum(flow) * 1.5)
-        )
-        Plots.plot!(
-            Plots.twinx(),  # Create secondary y-axis
-            t, rain,
-            seriestype=:bar,
-            fillcolor=:blue,
-            yflip=true,  # Flip rainfall axis
-            #ylabel="Precipitation [mm]",
-            #label="Precipitation",
-            ylabel="Niederschlag [mm]", 
-            linewidth=1.5,
-            ylim=(0,maximum(rain) * 1.5),
-            xlim=extrema(t),
-            xflip=false,
-            legend=false,
-            # border=:none, # Hide all axis
-            # formatter=Returns(""), # Hide the y-axis label
-            tick_direction = :out,
-            #showaxis = :off
-            #yticks = nothing,  # Hide y ticks initially
-            yminorticks=false 
-            #xticks=:none,      # Hide x ticks initially
-            #framestyle=:box
-            );  
+plot numeric vectors as a time series
+``` hydrograph(t, rain, flow;ylab1=L"Q [mm/d]",ylab2=L"P [mm/d]") ```
+"""
+function hydrograph(t, rain, flow; ylab1=L"Q $[mm/d]$", ylab2=L"P $[mm/d]$")
+    p = Plots.plot(
+        #twinx(),  # Create secondary y-axis
+        t, flow,
+        #links = :x,  # Link x-axis, already in twinx
+        #yminorticks = :none,
+        #label="Discharge",
+        seriescolor=:cornflowerblue,
+        #seriescolor=:lightgrey,
+        seriestype=:line,
+        xlim=extrema(t),
+        tick_direction=:out,
+        yflip=false,
+        legend=false,
+        linewidth=1,
+        linestyle=:dashdotdot,
+        ylabel=ylab1,
+        ylim=(0, maximum(flow) * 1.5)
+    )
+    Plots.plot!(
+        Plots.twinx(),  # Create secondary y-axis
+        t, rain,
+        seriestype=:bar,
+        fillcolor=:blue,
+        yflip=true,  # Flip rainfall axis
+        #ylabel="Precipitation [mm]",
+        #ylabel="Niederschlag [mm]",
+        ylabel=ylab2,
+        linewidth=1.5,
+        ylim=(0, maximum(rain) * 1.5),
+        xlim=extrema(t),
+        xflip=false,
+        legend=false,
+        # border=:none, # Hide all axis
+        # formatter=Returns(""), # Hide the y-axis label
+        tick_direction=:out,
+        #showaxis = :off
+        #yticks = nothing,  # Hide y ticks initially
+        yminorticks=false
+        #xticks=:none,      # Hide x ticks initially
+        #framestyle=:box
+    )
 
-        return p
+    return p
+end
+
+function dec(x::Function)
+    ma = first(methods(x))
+    # Use Base.Docs.doc to retrieve documentation
+    doc_str = Base.Docs.doc(x)
+
+    # Print documentation if it exists
+    if doc_str !== nothing
+        println(doc_str)
     end
 
+    # Print source file and line
+    println(ma.file, ":", ma.line)
+end
+
+function kge_recdf(path::AbstractString=pwd(), ext::AbstractString="qoutjl"; return_dataframe=true)
+    results = DataFrame(kge_value=Float64[], file_path=String[])
+    
+    for (root, _, files) in walkdir(path)
+        for file in files
+            file_path = joinpath(root, file)
+            
+            if isfile(file_path) && endswith(file, ext) && !occursin(r"xml|qgk|fzt|ftz|log|ini|wq|txt|yrly|nc|tif|jpg|png|svg", file)
+                try
+                    dd = CSV.read(file_path, DataFrame, missingstring="-9999", delim="\t")
+                    kge_value = kge2(dd)
+                    println(replace("KGE value is $kge_value on $file_path", "\\" => "/"))
+                    push!(results, 
+                        (kge_value=kge_value,
+                        file_path=replace(file_path, "\\" => "/") ))
+                catch e
+                    println("Error reading ", file_path)
+                end
+            end
+        end
+    end    
+    return return_dataframe ? sort(results,:1) : nothing
+end
+
+"""
+Calculates and plots an N-year moving average for specified columns in a DataFrame
+dfavg(df::DataFrame, dtcol::Symbol, years::Int; lab=true)
+- df: input DataFrame
+- dtcol: date column name
+- years: number of years for moving average
+- lab: whether to label the moving average line
+"""
+function dfavg(df::DataFrame, dtcol::Symbol=:date, years::Int=5; lab=true)
+    # Create a new plot
+    p = Plots.plot()
+    
+    # Get the date column and columns for moving average
+    date_data = df[!, dtcol]
+    avg_cols = setdiff(names(df), [string.(dtcol)])
+    
+    for y_col in avg_cols
+        # Convert column to numeric type to ensure calculations work
+        y_data = convert(Vector{Float64}, df[!, y_col])
+        
+        # Calculate total time span in days
+        total_days = (date_data[end] - date_data[1]).value
+        
+        # Calculate number of periods in the dataset
+        num_periods = length(date_data)
+        
+        # Calculate window size based on years and dataset characteristics
+        window_size = round(Int, years * (num_periods / (total_days / 365)))
+        
+        # Ensure window size is odd for symmetric moving average
+        window_size = window_size % 2 == 0 ? window_size + 1 : window_size
+        
+        # Perform moving average calculation
+        moving_avg = similar(y_data, Float64)
+        
+        half_window = div(window_size, 2)
+        
+        for i in 1:length(y_data)
+            # Define window bounds
+            start_idx = max(1, i - half_window)
+            end_idx = min(length(y_data), i + half_window)
+            
+            # Calculate average for the window
+            moving_avg[i] = mean(y_data[start_idx:end_idx])
+        end
+        
+        # Prepare label if requested
+        label_text = lab ? "$(y_col) $(years)-Year MA" : false
+        
+        # Plot the moving average line
+        Plots.plot!(p, date_data, moving_avg, 
+            label=label_text,
+            xlims=(minimum(date_data), maximum(date_data)),
+            linewidth=2, 
+            linestyle=:dash)
+    end
+    
+    return p
+end
+
+"""
+Calculates and plots an N-year moving average for specified columns in a DataFrame
+dfavg(df::DataFrame, dtcol::Symbol, years::Int; lab=true)
+- df: input DataFrame
+- dtcol: date column name
+- years: number of years for moving average
+- lab: whether to label the moving average line
+"""
+function dfavg!(df::DataFrame, dtcol::Symbol=:date, years::Int=5; lab=true)
+    # Get the date column and columns for moving average
+    date_data = df[!, dtcol]
+    avg_cols = setdiff(names(df), [string.(dtcol)])
+    
+    for y_col in avg_cols
+        # Convert column to numeric type to ensure calculations work
+        y_data = convert(Vector{Float64}, df[!, y_col])
+        
+        # Calculate total time span in days
+        total_days = (date_data[end] - date_data[1]).value
+        
+        # Calculate number of periods in the dataset
+        num_periods = length(date_data)
+        
+        # Calculate window size based on years and dataset characteristics
+        window_size = round(Int, years * (num_periods / (total_days / 365)))
+        
+        # Ensure window size is odd for symmetric moving average
+        window_size = window_size % 2 == 0 ? window_size + 1 : window_size
+        
+        # Perform moving average calculation
+        moving_avg = similar(y_data, Float64)
+        
+        half_window = div(window_size, 2)
+        
+        for i in 1:length(y_data)
+            # Define window bounds
+            start_idx = max(1, i - half_window)
+            end_idx = min(length(y_data), i + half_window)
+            
+            # Calculate average for the window
+            moving_avg[i] = mean(y_data[start_idx:end_idx])
+        end
+        
+        # Prepare label if requested
+        label_text = lab ? "$(y_col) $(years)-Year MA" : false
+        
+        # Plot the moving average line
+        Plots.plot!(date_data, moving_avg, 
+            label=label_text,
+            xlims=(minimum(date_data), maximum(date_data)),
+            linewidth=2, 
+            linestyle=:dash)
+    end
+    Plots.plot!()
+end
+
+"""
+merges all qbas*|qdi*|qout*, takes no arguments
+non recursive
+"""
+function floq()
+    lst = filter(x->occursin(r"qges|qbas|qdir|qi",x),readdir())
+    filter!(x->!occursin(r".nc|.txt|Layer|qinf|qi__|png",x),lst)
+    if (length(lst) < 4)
+        @error "not enough files to merge!"
+        return
+    end
+    xm = mall(lst)
+    names_xm = names(xm)
+    # Extract the prefixes from lst
+    prefixes = [split(basename(x), ".")[1] for x in lst]  # ["qbas", "qdir", "qges", "qifl"]
+    names_xm = replace.(names_xm, r"_1" => "_$(prefixes[2])" )
+    names_xm = replace.(names_xm, r"_2" => "_$(prefixes[3])" )
+    names_xm = replace.(names_xm, r"_3" => "_$(prefixes[4])" )
+    rename!(xm, names_xm)
+    #selt(xm,r"22")
+    names_xm = names(xm) #update
+    oldnames = filter(x -> occursin(r"^C", x) && !occursin("_", x), names_xm)
+    newnames = [string(old, "_", prefixes[1]) for old in oldnames]
+    rename!(xm, oldnames .=> newnames)
+    names_xm = names(xm) #update
+    oldtot = filter(x -> occursin(r"^tot_average", x) && !occursin("tot_average_", x), names_xm)
+    if !isempty(oldtot)
+        newtot = [string(old, "_", prefixes[1]) for old in oldtot]
+        rename!(xm, oldtot .=> newtot)
+    end
+    return xm
+end
+
+function rolling_mean(data, window_size::Int64 = 30)
+    if data isa DataFrame
+        data = select(data,Not(:date))
+        nm = names(data)[1]
+        @info "rolling mean of window size $window_size on column $nm ..."
+        data = vec(data[!,1])        
+    end
+    n = length(data)
+    cumsums = cumsum(data)
+    rolling_mean = zeros(n)
+    for i in window_size:n
+        sum_window = cumsums[i] - (i == window_size ? 0 : cumsums[i - window_size])
+        rolling_mean[i] = sum_window / window_size
+    end
+    return rolling_mean
+end
+
+"""
+``` 
+plot_rolling_mean(df::DataFrame,col::Any=first(propertynames(df[!,Not(:date)])),  window_size::Int64=30; kwargs...)
+```
+"""
+function plot_rolling_mean(df::DataFrame,col::Any=first(propertynames(df[!,Not(:date)])),  window_size::Int64=30; kwargs...)
+    # Extract columns
+    data = vec(df[!,col])
+    dates = df.date
+    # Compute rolling mean
+    # Option 1: Using RollingFunctions
+    # import RollingFunctions as rf
+    # rmean = rf.rollmean(data, window_size)
+    # Using custom rolling mean function
+    rmean = rolling_mean(data, window_size)
+    #replace the first lenght of window_size with Missing
+    #rmean[1:window_size-1] .= missing
+    xmiss = fill(missing, 1:window_size-1)
+    ot = vcat(xmiss,rmean[window_size:end])
+    #return(ot)
+    # Plot
+    Plots.plot(dates, ot;kwargs...)
+end 
+
+"""
+``` 
+df_rollmean(df::DataFrame,col::Any, window_size::Int64; kwargs...)
+```
+"""
+function df_rollmean(df::DataFrame,
+    ;col::Symbol=first(propertynames(df[!,Not(:date)])), window_size::Int64=30, kwargs...)
+    # Extract columns
+    data = vec(df[!,col])
+    dates = df.date
+    rmean = rolling_mean(data, window_size)
+    # Plot
+    Plots.plot(dates, rmean;kwargs...)
+end 
+
+
+"""
+```
+filter!(!isempty,func.(readall(Regex(x))))
+func = yrsum by default
+```
+"""
+function yrx(x::String;func=yrsum)
+    filter!(!isempty,func.(readall(Regex(x))))
+end
+
+"""
+Moreira, et al. (2015): Assessing drought cycles in SPI time series using a Fourier analysis.\n
+The computation of the SPI index (Guttman, 1999) in a given year `i` 
+and calendar month `j` , for a `k` timescale was performed with the following steps: 
+(i) calculation of a cumulative precipitation series `X k (i,j), i = 1,..., n; j = 1,...,12,k = 1,2,...,12,...` 
+for that calendar month `j`, where each term is the sum of the actual monthly precipitation with the precipitation 
+of the `k-1` past consecutive months; 
+(ii) fitting of a gamma distribution function `F(x)` to the monthly series; 
+(iii) computing the non-exceedance probabilities corresponding to the cumulative precipitation values;
+(iv) transforming those probabilities into the values of a standard normal variable, which are actually the SPI values
+```
+calculate_spi(df::DataFrame; 
+        precip_col::Any=first(propertynames(df[!,Not(:date)])), 
+        k::Int=1)
+```
+"""
+function calculate_spi(df::DataFrame; precip_col::Any=first(propertynames(df[!,Not(:date)])), k::Int=1)
+    
+    df = copy(df)
+    # Check if required columns exist
+    @assert "date" in names(df) "DataFrame must have a :date column"
+    #@assert precip_col in names(df) "DataFrame must have a precipitation column"
+    # Ensure data is sorted by date
+    sort!(df, :date)
+    
+    # Extract month and year from date
+    df.month = month.(df.date)
+    df.year = year.(df.date)
+    
+    # Initialize results DataFrame
+    results = DataFrame()
+    
+    # Process each month separately
+    for m in 1:12
+        # Filter data for current month
+        monthly_data = filter(row -> row.month == m, df)
+        n_years = nrow(monthly_data)
+        
+        # Calculate k-month cumulative precipitation
+        cumulative_precip = Float64[]
+        
+        for i in 1:n_years
+            if i < k
+                # For the first k-1 entries, use available data
+                push!(cumulative_precip, sum(monthly_data[max(1,i-k+1):i, precip_col]))
+            else
+                # For remaining entries, use k months
+                push!(cumulative_precip, sum(monthly_data[i-k+1:i, precip_col]))
+            end
+        end
+        
+        # Fit gamma distribution if we have non-zero precipitation values
+        if any(x -> x > 0, cumulative_precip)
+            # Estimate gamma distribution parameters
+            d = fit(Gamma, filter(x -> x > 0, cumulative_precip))
+            
+            # Calculate non-exceedance probabilities
+            probs = map(x -> if x > 0
+                            cdf(d, x)
+                        else
+                            0.0
+                        end,
+                    cumulative_precip)
+            
+            # Handle zero precipitation values
+            q = count(x -> x == 0, cumulative_precip) / length(cumulative_precip)
+            probs = map(p -> q + (1 - q) * p, probs)
+            
+            # Transform to standard normal (SPI values)
+            spi_values = quantile.(Normal(), probs)
+            
+            # Create monthly results
+            month_results = DataFrame(
+                date = monthly_data.date,
+                SPI = spi_values
+            )
+            
+            # Append to results
+            append!(results, month_results)
+        end
+    end
+    
+    # Sort final results by date
+    sort!(results, :date)
+    return results
+end
+
+"""
+Reads and merges route and qges data files, performing necessary transformations.
+    
+Parameters:
+- route_file: Path to the route.txt file
+- sim: Regex pattern or Symbol to match qges file (defaults to r"qges")
+    
+Returns:
+- DataFrame with merged and transformed data
+"""
+function merge_route_data(;route_file::AbstractString="route.txt", sim::Union{Regex,Symbol,AbstractString}=r"qges")
+    # Read route file
+    route_df = CSV.read(route_file, DataFrame, 
+        header=false,
+        skipto=8, 
+        delim="\t", 
+        footerskip=1,
+        lazystrings=false) |>
+        df -> rename!(df, [:sim, :obs, :name]) |>
+        df -> transform!(df, :name => ByRow(x -> replace(x, r"[#\s-]" => "", r"_>.*" => "")) => :name) |>
+        df -> sort!(df, :sim)
+    
+    # Find and read qges file
+    qges_file = if sim isa Union{Regex,Symbol}
+        filter(f -> occursin(isa(sim, Symbol) ? string(sim) : sim, f) && 
+               !endswith(f, ".nc"), readdir()) |> first
+    else
+        sim
+    end
+    
+    # Read qges data
+    qges_df = CSV.read(qges_file, DataFrame,
+        delim="\t",
+        header=1,
+        missingstring=["-9999", "lin", "log", "--"],
+        silencewarnings=true,
+        normalizenames=true,
+        types=Float64)
+    
+    # Process qges data
+    dropmissing!(qges_df, 1)
+    transform!(qges_df, 
+        AsTable(1:3) => ByRow(row -> Date(Int(row[1]), Int(row[2]), Int(row[3]))) => :date)
+    select!(qges_df, Not(1:4))
+
+    for x in names(qges_df)
+        if startswith(x, "_")
+            newname = replace(x, "_" => "C", count=1)
+            rename!(qges_df, Dict(x => newname))
+        end
+    end
+
+    # Rename columns based on route mapping
+    for col in names(qges_df)
+        if startswith(col, "C")
+            sim_num = match(r"_?C?(\d+)", col)
+            if sim_num !== nothing
+                sim_id = parse(Int, sim_num[1])
+                name_idx = findfirst(==(sim_id), route_df.sim)
+                if name_idx !== nothing
+                    rename!(qges_df, Dict(col => route_df.name[name_idx]))
+                end
+            end
+        end
+    end
+    
+    DataFrames.metadata!(qges_df, "filename", qges_file, style=:note)
+    mdat = first(DataFrames.metadata(qges_df))
+    fn = last(mdat)
+    @info "$route_file merged with $fn !"
+    return qges_df
+end
+
+"""
+plots the autocorrelation of a DataFrame column
+```
+ acp(df::DataFrame; col=:tot_average, maxlag::Int=nrow(df)-1, kwargs...) 
+```
+"""
+function acp(df::DataFrame; col=:tot_average, maxlag::Int=nrow(df)-1, kwargs...)
+    # Compute autocorrelations for precipitation and temperature
+    if col isa Symbol
+        col = string(col)
+    end
+    colname = names(df[!,Cols(col)])|>first
+    dfv = dropmissing(select(df, colname))
+    acvec = autocor(dfv|>Matrix|>collect, 1:maxlag)
+    
+    # Compute confidence bands
+    n = length(acvec)  # Sample size
+    conf95 = 1.96 / sqrt(n)  # 95% confidence band
+    conf99 = 2.576 / sqrt(n)  # 99% confidence band
+
+    # Create the plot
+    p = plot(
+        1:maxlag, acvec,
+        label=colname, 
+        linewidth=2, marker=:circle, color=:blue,
+        xlabel="Lag: $maxlag", ylabel="Autocorrelation";kwargs...
+    )
+    
+    # Add confidence bands
+    hline!([conf95, -conf95], color=:gray, linestyle=:solid, label="95% Confidence Band")
+    hline!([conf99, -conf99], color=:black, linestyle=:dash, label="99% Confidence Band")
+
+    # Show the plot
+    display(p)
+end
 
 
 end ##end of module endof
